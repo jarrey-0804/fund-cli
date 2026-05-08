@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [2.0.1] - 2026-05-08
+
+### Fixed
+- 修复PyPI文档链接显示为空的问题
+- 将README.md中的文档链接改为GitHub绝对链接
+- 在README.md中直接包含安装指南、使用教程、API文档、开发指南内容
+
 ## [2.0.0] - 2026-05-08
 
 ### Added
