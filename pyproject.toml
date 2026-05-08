@@ -1,6 +1,6 @@
 [project]
 name = "fund-cli"
-version = "2.0.1"
+version = "3.0.0"
 description = "专业基金分析CLI工具 - 面向机构客户"
 readme = "README.md"
 license = {text = "MIT"}
@@ -10,7 +10,7 @@ authors = [
 ]
 keywords = ["fund", "finance", "analysis", "cli", "quant", "investment"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Financial and Insurance Industry",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.10",
@@ -44,6 +44,12 @@ dependencies = [
     # AI集成 (V2.0)
     "litellm>=1.20.0",
     
+    # LangChain 生态 (V3.0 - Agent能力)
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langgraph>=0.2.0",
+    "langgraph-checkpoint>=1.0.0",
+    
     # 配置与工具
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
@@ -71,6 +77,26 @@ docs = [
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.4.0",
     "mkdocstrings[python]>=0.23.0",
+]
+
+# V3.0 可选依赖 - 生产持久化
+postgres = [
+    "langgraph-checkpoint-postgres>=1.0.0",
+]
+
+# V3.0 可选依赖 - MCP 协议支持
+mcp = [
+    "mcp>=1.0.0",
+]
+
+# V3.0 可选依赖 - 长期记忆
+memory = [
+    "chromadb>=0.5.0",
+]
+
+# V3.0 全部可选依赖
+all-extras = [
+    "fund-cli[postgres,mcp,memory]",
 ]
 
 [project.scripts]
@@ -150,6 +176,9 @@ markers = [
     "slow: marks tests as slow",
     "integration: marks integration tests",
     "network: marks tests that require network access",
+]
+filterwarnings = [
+    "ignore::langchain_core._api.deprecation.LangChainPendingDeprecationWarning",
 ]
 
 # Coverage配置

@@ -1,11 +1,14 @@
 """
-AI 分析命令（V2.0 实现）
+AI 分析命令（V3.0 - LangGraph Agent 实现）
 
-提供 AI 辅助分析功能，支持基金摘要生成、对比分析、投资建议等。
+提供 AI 辅助分析功能，支持：
+- 智能对话（Agent 驱动，支持工具调用和记忆）
+- 基金摘要生成、对比分析、投资建议等（V2.0 兼容）
 """
 
 from __future__ import annotations
 
+import uuid
 from pathlib import Path
 
 import typer
@@ -13,8 +16,135 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-app = typer.Typer(help="AI分析命令（V2.0功能）")
+app = typer.Typer(help="AI分析命令（V3.0 - Agent驱动）")
 console = Console()
+
+
+# ============================================
+# V3.0 新增命令 - Agent 驱动的智能对话
+# ============================================
+
+
+@app.command("chat")
+def ai_chat(
+    message: str = typer.Argument(..., help="输入消息"),
+    user_id: str = typer.Option("default", "--user", "-u", help="用户标识"),
+    thread_id: str = typer.Option(None, "--thread", "-t", help="会话标识（用于多轮对话）"),
+) -> None:
+    """
+    与 AI 助手对话（Agent 驱动，支持工具调用和记忆）
+
+    示例:
+        fund ai chat "分析基金000001"
+        fund ai chat "对比000001和000002" --user user123
+        fund ai chat "刚才分析的基金风险如何？" --thread xxx
+    """
+    from fund_cli.ai.agent import get_fund_agent
+
+    try:
+        agent = get_fund_agent()
+        response = agent.invoke(message, user_id, thread_id)
+        console.print(Panel(response, title="AI助手", border_style="green"))
+    except Exception as e:
+        console.print(f"[red]对话失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command("interactive")
+def ai_interactive(
+    user_id: str = typer.Option("default", "--user", "-u", help="用户标识"),
+) -> None:
+    """
+    启动交互式 AI 对话模式
+
+    示例:
+        fund ai interactive
+        fund ai interactive --user user123
+    """
+    try:
+        from prompt_toolkit import PromptSession
+        from prompt_toolkit.history import InMemoryHistory
+    except ImportError:
+        console.print("[yellow]需要安装 prompt_toolkit: pip install prompt_toolkit[/yellow]")
+        console.print("[dim]使用简单的交互模式...[/dim]")
+        _simple_interactive(user_id)
+        return
+
+    from fund_cli.ai.agent import get_fund_agent
+
+    agent = get_fund_agent()
+    session = PromptSession(history=InMemoryHistory())
+
+    console.print(
+        Panel(
+            "[bold]Fund-CLI AI 交互模式[/bold]\n"
+            "输入问题与 AI 助手对话，输入 exit 或 quit 退出",
+            border_style="blue"
+        )
+    )
+
+    thread_id = str(uuid.uuid4())
+
+    while True:
+        try:
+            user_input = session.prompt("AI> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[yellow]再见！[/yellow]")
+            break
+
+        if not user_input:
+            continue
+
+        if user_input.lower() in ("exit", "quit", "q"):
+            console.print("[yellow]再见！[/yellow]")
+            break
+
+        try:
+            response = agent.invoke(user_input, user_id, thread_id)
+            console.print(Panel(response, title="AI", border_style="green"))
+        except Exception as e:
+            console.print(f"[red]错误: {e}[/red]")
+
+
+def _simple_interactive(user_id: str) -> None:
+    """简单的交互模式（不依赖 prompt_toolkit）"""
+    from fund_cli.ai.agent import get_fund_agent
+
+    agent = get_fund_agent()
+    thread_id = str(uuid.uuid4())
+
+    console.print(
+        Panel(
+            "[bold]Fund-CLI AI 交互模式[/bold]\n"
+            "输入问题与 AI 助手对话，输入 exit 退出",
+            border_style="blue"
+        )
+    )
+
+    while True:
+        try:
+            user_input = input("AI> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[yellow]再见！[/yellow]")
+            break
+
+        if not user_input:
+            continue
+
+        if user_input.lower() in ("exit", "quit", "q"):
+            console.print("[yellow]再见！[/yellow]")
+            break
+
+        try:
+            response = agent.invoke(user_input, user_id, thread_id)
+            console.print(Panel(response, title="AI", border_style="green"))
+        except Exception as e:
+            console.print(f"[red]错误: {e}[/red]")
+
+
+# ============================================
+# V2.0 兼容命令 - 保留原有功能
+# ============================================
 
 
 @app.command("config")

@@ -117,6 +117,36 @@ class OutputConfig(BaseSettings):
     date_format: str = Field(default="%Y-%m-%d", description="日期格式")
 
 
+class DatabaseConfig(BaseSettings):
+    """数据库配置（V3.0 - Agent 持久化）"""
+
+    model_config = SettingsConfigDict(env_prefix="FUND_DB_")
+
+    use_postgres: bool = Field(default=False, description="使用 PostgreSQL 持久化对话历史")
+    host: str = Field(default="localhost", description="数据库主机")
+    port: int = Field(default=5432, description="数据库端口")
+    database: str = Field(default="fund_cli", description="数据库名")
+    user: str = Field(default="fund_cli", description="用户名")
+    password: str = Field(default="", description="密码")
+
+    @property
+    def connection_string(self) -> str:
+        """获取 PostgreSQL 连接字符串"""
+        return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+
+
+class AgentConfig(BaseSettings):
+    """Agent 配置（V3.0 - LangGraph Agent）"""
+
+    model_config = SettingsConfigDict(env_prefix="FUND_AGENT_")
+
+    enable_human_review: bool = Field(default=False, description="启用人工审核节点")
+    human_review_timeout: int = Field(default=300, description="人工审核超时时间（秒）")
+    max_tool_calls: int = Field(default=10, description="单次对话最大工具调用次数")
+    use_chroma_memory: bool = Field(default=False, description="使用 ChromaDB 长期记忆")
+    chroma_persist_dir: str = Field(default="~/.fund_cli/chroma", description="ChromaDB 持久化目录")
+
+
 class AppConfig(BaseSettings):
     """应用主配置"""
 
@@ -138,6 +168,8 @@ class AppConfig(BaseSettings):
     ai: AIConfig = Field(default_factory=AIConfig)
     log: LogConfig = Field(default_factory=LogConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
+    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    agent: AgentConfig = Field(default_factory=AgentConfig)
 
 
 # 全局配置实例
