@@ -1,0 +1,167 @@
+[project]
+name = "fund-cli"
+version = "2.0.0"
+description = "专业基金分析CLI工具 - 面向机构客户"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Fund CLI Team"}
+]
+keywords = ["fund", "finance", "analysis", "cli", "quant", "investment"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Terminals",
+]
+
+dependencies = [
+    # CLI框架
+    "typer[all]>=0.9.0",
+    "rich>=13.0.0",
+    
+    # 数据处理
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    
+    # 数据获取
+    "akshare>=1.12.0",
+    "tushare>=1.4.0",
+    
+    # 量化分析
+    "quantstats>=0.0.62",
+    "pyportfolioopt>=1.5.0",
+    
+    # 可视化
+    "plotly>=5.18.0",
+    "matplotlib>=3.8.0",
+    
+    # AI集成 (V2.0)
+    "litellm>=1.20.0",
+    
+    # 配置与工具
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "python-dateutil>=2.8.0",
+    "pyyaml>=6.0",
+    "httpx>=0.25.0",
+    "diskcache>=5.6.0",
+    "prompt_toolkit>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.5.0",
+    "types-PyYAML>=6.0.0",
+    "pandas-stubs>=2.0.0",
+]
+
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.4.0",
+    "mkdocstrings[python]>=0.23.0",
+]
+
+[project.scripts]
+fund-cli = "fund_cli.cli:app"
+fund = "fund_cli.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/your-org/fund-cli"
+Documentation = "https://fund-cli.readthedocs.io"
+Repository = "https://github.com/your-org/fund-cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fund_cli"]
+
+# Black代码格式化配置
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+)/
+'''
+
+# Ruff Linting配置
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.isort]
+known-first-party = ["fund_cli"]
+
+# MyPy类型检查配置
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+ignore_missing_imports = true
+
+# Pytest配置
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks integration tests",
+    "network: marks tests that require network access",
+]
+
+# Coverage配置
+[tool.coverage.run]
+source = ["src/fund_cli"]
+branch = true
+omit = ["*/tests/*", "*/__main__.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
