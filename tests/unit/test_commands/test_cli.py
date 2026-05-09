@@ -17,7 +17,7 @@ class TestCLI:
         result = runner.invoke(app, ["--version"])
 
         assert result.exit_code == 0
-        assert "2.0.0" in result.output
+        assert "3.1.0" in result.output
 
     def test_help(self):
         """测试帮助显示"""

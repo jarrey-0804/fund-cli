@@ -28,7 +28,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 try:
     import chromadb
@@ -79,8 +79,8 @@ class VectorMemory:
     def __init__(
         self,
         collection_name: str = "fund_cli_memory",
-        persist_directory: Optional[str] = None,
-        embedding_function: Optional[Any] = None,
+        persist_directory: str | None = None,
+        embedding_function: Any | None = None,
     ) -> None:
         """初始化向量记忆管理器。
 
@@ -135,8 +135,8 @@ class VectorMemory:
         content: str,
         category: str = "general",
         source: str = "unknown",
-        metadata: Optional[dict[str, Any]] = None,
-        memory_id: Optional[str] = None,
+        metadata: dict[str, Any] | None = None,
+        memory_id: str | None = None,
     ) -> str:
         """添加一条新的语义记忆。
 
@@ -207,8 +207,8 @@ class VectorMemory:
         self,
         query: str,
         n_results: int = 5,
-        category: Optional[str] = None,
-        where: Optional[dict[str, Any]] = None,
+        category: str | None = None,
+        where: dict[str, Any] | None = None,
     ) -> list[tuple[str, dict[str, Any]]]:
         """基于语义相似度搜索记忆。
 
@@ -270,7 +270,7 @@ class VectorMemory:
             documents = results["documents"][0]
             metadatas = results.get("metadatas", [[]])[0]
 
-            for doc, meta in zip(documents, metadatas):
+            for doc, meta in zip(documents, metadatas, strict=True):
                 output.append((doc, meta or {}))
 
         logger.debug(
@@ -286,8 +286,8 @@ class VectorMemory:
         self,
         query: str,
         n_results: int = 5,
-        category: Optional[str] = None,
-        score_threshold: Optional[float] = None,
+        category: str | None = None,
+        score_threshold: float | None = None,
     ) -> list[dict[str, Any]]:
         """获取与查询相关的记忆（带距离分数）。
 
@@ -354,7 +354,7 @@ class VectorMemory:
             distances = results.get("distances", [[]])[0]
 
             for doc_id, doc, meta, distance in zip(
-                ids, documents, metadatas, distances
+                ids, documents, metadatas, distances, strict=True
             ):
                 # 距离阈值过滤
                 if score_threshold is not None and distance > score_threshold:
@@ -421,8 +421,8 @@ class VectorMemory:
     def update_memory(
         self,
         memory_id: str,
-        content: Optional[str] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        content: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """更新已有记忆的内容或元数据。
 

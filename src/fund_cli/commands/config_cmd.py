@@ -231,7 +231,7 @@ def set_config(
         try:
             _persist_config(key, value)
             env_path = _get_env_path()
-            console.print(f"[green]✓ 配置已持久化[/green]")
+            console.print("[green]✓ 配置已持久化[/green]")
             console.print(f"  {env_var}={value}")
             console.print(f"  文件: {env_path}")
             console.print("[dim]提示: 重启应用后生效[/dim]")

@@ -12,12 +12,11 @@ from __future__ import annotations
 
 from typing import Literal
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 
 from fund_cli.ai.state import FundAgentState
 from fund_cli.ai.tools import FUND_TOOLS
-
 
 # 系统提示词
 SYSTEM_PROMPT = """你是 Fund-CLI 智能基金分析助手，专业的基金投资顾问。
@@ -168,8 +167,6 @@ def create_human_input_node():
         """等待人工输入"""
         # 在实际实现中，这里可以集成 CLI 的交互式输入
         # 目前返回一个提示消息
-        last_message = state.get("messages", [-1])[-1] if state.get("messages") else None
-
         prompt = "请提供更多信息以继续分析..."
 
         return {

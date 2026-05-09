@@ -22,8 +22,6 @@ MCP Server 实现 - 基于 FastMCP 暴露 fund-cli 数据工具
 
 from __future__ import annotations
 
-from typing import Optional
-
 try:
     from mcp.server.fastmcp import FastMCP
 except ImportError as exc:
@@ -297,14 +295,14 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
     # ------------------------------------------
     @mcp.tool()
     def screen_funds(
-        fund_type: Optional[str] = None,
-        keyword: Optional[str] = None,
-        min_scale: Optional[float] = None,
-        max_scale: Optional[float] = None,
-        min_return_1y: Optional[float] = None,
-        max_drawdown: Optional[float] = None,
-        min_sharpe: Optional[float] = None,
-        sort_by: Optional[str] = None,
+        fund_type: str | None = None,
+        keyword: str | None = None,
+        min_scale: float | None = None,
+        max_scale: float | None = None,
+        min_return_1y: float | None = None,
+        max_drawdown: float | None = None,
+        min_sharpe: float | None = None,
+        sort_by: str | None = None,
         limit: int = 10,
     ) -> str:
         """按多维度条件筛选基金。
@@ -455,7 +453,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
     @mcp.tool()
     def analyze_portfolio(
         fund_codes: str,
-        weights: Optional[str] = None,
+        weights: str | None = None,
         risk_free_rate: float = 0.03,
     ) -> str:
         """分析投资组合的风险收益特征。
@@ -577,7 +575,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
     @mcp.tool()
     def get_macro_data(
         data_type: str = "gdp",
-        period: Optional[str] = None,
+        period: str | None = None,
     ) -> str:
         """获取宏观经济数据。
 

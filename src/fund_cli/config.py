@@ -26,9 +26,18 @@ class DataConfig(BaseSettings):
     wind_username: str | None = Field(default=None, description="Wind用户名")
     wind_password: str | None = Field(default=None, description="Wind密码")
 
+    # 数据源优先级配置
+    primary_source: str = Field(default="akshare", description="主数据源")
+    source_priority: str = Field(default="akshare,tushare,wind", description="数据源优先级列表，逗号分隔")
+
     # 缓存配置
     cache_ttl: int = Field(default=3600, description="缓存过期时间（秒）")
     cache_dir: str = Field(default="~/.fund_cli/cache", description="缓存目录")
+
+    @property
+    def source_priority_list(self) -> list[str]:
+        """获取数据源优先级列表"""
+        return [s.strip() for s in self.source_priority.split(",") if s.strip()]
 
     @field_validator("cache_dir")
     @classmethod

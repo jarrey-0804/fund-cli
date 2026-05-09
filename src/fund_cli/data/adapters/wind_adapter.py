@@ -1,78 +1,98 @@
 """
-Wind 数据源适配器（占位）
+Wind 数据源适配器（占位实现）.
 
-Wind 是商业数据源，需要授权使用。
-此文件为接口预留，实际实现需要 Wind Python API。
+Wind（万得）是中国领先的金融数据提供商，特点：
+- 数据覆盖最全面
+- 需要商业授权
+- 通过 WindPy Python 接口访问
+
+当前为占位实现，待 WindPy 授权后完善。
 """
 
-from typing import Any
-
-import pandas as pd
-
-from fund_cli.data.base import (
-    DataSourceAdapter,
-    DataSourceError,
-)
-from fund_cli.data.cache import DataCache
+from fund_cli.data.adapters.mixins import DataSourceAdapterMixin
+from fund_cli.data.base import DataSourceAdapter, DataSourceError
 
 
-class WindAdapter(DataSourceAdapter):
+class WindAdapter(DataSourceAdapterMixin, DataSourceAdapter):
     """
-    Wind 数据源适配器（占位实现）
+    Wind 数据源适配器（占位实现）.
 
-    Wind 是商业数据源，需要授权和 Wind Python API。
-    当前为接口预留，实际使用需要：
-    1. 安装 Wind Python API
-    2. 配置有效的 Wind 账号
+    Wind（万得）是中国领先的金融数据提供商，特点：
+    - 数据覆盖最全面
+    - 需要商业授权
+    - 通过 WindPy Python 接口访问
+
+    当前为占位实现，待 WindPy 授权后完善。
     """
 
-    def __init__(self, cache: DataCache | None = None):
+    def __init__(self, cache=None):
         super().__init__("wind")
         self._cache = cache
+        self._api = None
 
     def is_available(self) -> bool:
-        """检查 Wind 是否可用"""
+        """检查 Wind 是否可用."""
         try:
-            from WindPy import w  # noqa: F401
-
+            from WindPy import w
             return w.isconnected()
+        except ImportError:
+            return False
         except Exception:
             return False
 
-    def get_fund_info(self, fund_code: str) -> dict[str, Any]:
-        """获取基金基础信息"""
-        raise DataSourceError("Wind 数据源暂未实现，请使用 AKShare 或 Tushare 数据源")
+    def _ensure_api(self):
+        """确保 Wind API 已连接."""
+        if self._api is None:
+            try:
+                from WindPy import w
+                w.start()
+                self._api = w
+            except ImportError as exc:
+                raise DataSourceError("WindPy 未安装。请安装 WindPy 并确保已授权。") from exc
+            except Exception as e:
+                raise DataSourceError(f"Wind 连接失败: {e}") from e
 
-    def get_fund_nav(
-        self,
-        fund_code: str,
-        start_date: Any | None = None,
-        end_date: Any | None = None,
-    ) -> pd.DataFrame:
-        """获取基金净值数据"""
-        raise DataSourceError("Wind 数据源暂未实现，请使用 AKShare 或 Tushare 数据源")
+    # P0 核心方法 - 覆盖 Mixin 的占位实现
+    def get_fund_info(self, fund_code: str) -> dict:
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
 
-    def search_funds(
-        self,
-        fund_type: str | None = None,
-        company: str | None = None,
-        min_scale: float | None = None,
-        max_scale: float | None = None,
-        keyword: str | None = None,
-        limit: int = 100,
-    ) -> pd.DataFrame:
-        """搜索基金"""
-        raise DataSourceError("Wind 数据源暂未实现，请使用 AKShare 或 Tushare 数据源")
+    def get_all_fund_names(self):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
 
-    def get_fund_list(self, fund_type: str | None = None) -> pd.DataFrame:
-        """获取基金列表"""
-        raise DataSourceError("Wind 数据源暂未实现，请使用 AKShare 或 Tushare 数据源")
+    def get_fund_nav(self, fund_code: str, start_date=None, end_date=None):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
 
-    def get_benchmark_nav(
-        self,
-        benchmark_code: str,
-        start_date: Any | None = None,
-        end_date: Any | None = None,
-    ) -> pd.DataFrame:
-        """获取基准指数数据"""
-        raise DataSourceError("Wind 数据源暂未实现，请使用 AKShare 或 Tushare 数据源")
+    def get_etf_spot(self):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
+
+    def get_lof_spot(self):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
+
+    def get_fund_manager(self, fund_code: str):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
+
+    def get_fund_holdings(self, fund_code: str, report_date=None):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
+
+    def get_fund_asset_allocation(self, fund_code: str, date=None):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
+
+    def get_fund_rating(self, fund_code: str):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
+
+    def get_fund_fee(self, fund_code: str):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")
+
+    def batch_get_fund_nav(self, fund_codes, start_date=None, end_date=None):
+        self._ensure_api()
+        raise DataSourceError("WindAdapter P0 方法待实现（需要 WindPy 授权）")

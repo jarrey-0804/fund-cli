@@ -8,7 +8,6 @@ AI 工具定义
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Optional
 
 from langchain_core.tools import tool
 
@@ -282,10 +281,10 @@ def get_fund_manager(fund_code: str) -> str:
 
 @tool
 def search_funds(
-    fund_type: Optional[str] = None,
-    keyword: Optional[str] = None,
-    min_scale: Optional[float] = None,
-    max_scale: Optional[float] = None,
+    fund_type: str | None = None,
+    keyword: str | None = None,
+    min_scale: float | None = None,
+    max_scale: float | None = None,
     limit: int = 10
 ) -> str:
     """搜索/筛选基金，支持按类型、关键词、规模筛选。
@@ -546,10 +545,10 @@ def analyze_investment_advice(fund_code: str, risk_profile: str = "moderate") ->
 
 @tool
 def filter_funds_by_performance(
-    min_return_1y: Optional[float] = None,
-    max_drawdown: Optional[float] = None,
-    min_sharpe: Optional[float] = None,
-    fund_type: Optional[str] = None,
+    min_return_1y: float | None = None,
+    max_drawdown: float | None = None,
+    min_sharpe: float | None = None,
+    fund_type: str | None = None,
     limit: int = 10
 ) -> str:
     """按业绩指标筛选基金。
@@ -657,7 +656,7 @@ def filter_funds_by_performance(
 @tool
 def analyze_portfolio(
     fund_codes: str,
-    weights: Optional[str] = None,
+    weights: str | None = None,
     risk_free_rate: float = 0.03
 ) -> str:
     """分析投资组合的风险收益特征。
@@ -1383,7 +1382,7 @@ def get_macro_pmi(source: str = "official") -> str:
                         pmi = row.get('pmi', row.get('PMI', row.get('非制造业PMI', '未知')))
                         records.append(f"  {period}: PMI={pmi}")
                 if records:
-                    results.append(f"官方非制造业PMI:\n" + "\n".join(records))
+                    results.append("官方非制造业PMI:\n" + "\n".join(records))
         except Exception:
             pass
 
@@ -1399,7 +1398,7 @@ def get_macro_pmi(source: str = "official") -> str:
                         pmi = row.get('pmi', row.get('PMI', row.get('服务业PMI', '未知')))
                         records.append(f"  {period}: PMI={pmi}")
                 if records:
-                    results.append(f"财新服务业PMI:\n" + "\n".join(records))
+                    results.append("财新服务业PMI:\n" + "\n".join(records))
         except Exception:
             pass
 
@@ -1434,7 +1433,7 @@ def get_macro_interest_rate() -> str:
                     rate = row.get('rate', row.get('利率', '未知'))
                     items.append(f"{period}: {rate}")
             if items:
-                results.append(f"基准利率:\n    " + "\n    ".join(items))
+                results.append("基准利率:\n    " + "\n    ".join(items))
 
         if lpr_df is not None and hasattr(lpr_df, 'tail') and not (hasattr(lpr_df, 'empty') and lpr_df.empty):
             lpr_df = lpr_df.tail(3)
@@ -1446,7 +1445,7 @@ def get_macro_interest_rate() -> str:
                     lpr_5y = row.get('lpr_5y', row.get('LPR5Y', row.get('5年期以上', '未知')))
                     items.append(f"{period}: 1年期={lpr_1y}, 5年期={lpr_5y}")
             if items:
-                results.append(f"LPR利率:\n    " + "\n    ".join(items))
+                results.append("LPR利率:\n    " + "\n    ".join(items))
 
         # SHIBOR上海银行间同业拆放利率
         try:
@@ -1460,7 +1459,7 @@ def get_macro_interest_rate() -> str:
                         rate = row.get('rate', row.get('利率', '未知'))
                         items.append(f"{period}: {rate}")
                 if items:
-                    results.append(f"SHIBOR:\n    " + "\n    ".join(items))
+                    results.append("SHIBOR:\n    " + "\n    ".join(items))
         except Exception:
             pass
 
@@ -1475,7 +1474,7 @@ def get_macro_interest_rate() -> str:
                         period = row.get('date', row.get('日期', '未知'))
                         items.append(f"{period}: {dict(row)}")
                 if items:
-                    results.append(f"SHIBOR-LPR:\n    " + "\n    ".join(items))
+                    results.append("SHIBOR-LPR:\n    " + "\n    ".join(items))
         except Exception:
             pass
 
@@ -1491,7 +1490,7 @@ def get_macro_interest_rate() -> str:
                         rate = row.get('rate', row.get('利率', '未知'))
                         items.append(f"{period}: {rate}")
                 if items:
-                    results.append(f"HIBOR:\n    " + "\n    ".join(items))
+                    results.append("HIBOR:\n    " + "\n    ".join(items))
         except Exception:
             pass
 
@@ -1507,7 +1506,7 @@ def get_macro_interest_rate() -> str:
                         rate = row.get('rate', row.get('利率', '未知'))
                         items.append(f"{period}: {rate}")
                 if items:
-                    results.append(f"美国联邦基金利率:\n    " + "\n    ".join(items))
+                    results.append("美国联邦基金利率:\n    " + "\n    ".join(items))
         except Exception:
             pass
 
@@ -1523,7 +1522,7 @@ def get_macro_interest_rate() -> str:
                         rate = row.get('rate', row.get('利率', '未知'))
                         items.append(f"{period}: {rate}")
                 if items:
-                    results.append(f"欧洲央行利率:\n    " + "\n    ".join(items))
+                    results.append("欧洲央行利率:\n    " + "\n    ".join(items))
         except Exception:
             pass
 
@@ -1539,7 +1538,7 @@ def get_macro_interest_rate() -> str:
                         rate = row.get('rate', row.get('利率', '未知'))
                         items.append(f"{period}: {rate}")
                 if items:
-                    results.append(f"日本央行利率:\n    " + "\n    ".join(items))
+                    results.append("日本央行利率:\n    " + "\n    ".join(items))
         except Exception:
             pass
 
@@ -1555,7 +1554,7 @@ def get_macro_interest_rate() -> str:
                         rate = row.get('rate', row.get('利率', '未知'))
                         items.append(f"{period}: {rate}")
                 if items:
-                    results.append(f"英国央行利率:\n    " + "\n    ".join(items))
+                    results.append("英国央行利率:\n    " + "\n    ".join(items))
         except Exception:
             pass
 
@@ -1614,7 +1613,7 @@ def get_macro_money_supply() -> str:
                             item += f", 同比={yoy}"
                         items.append(item)
                 if items:
-                    results.append(f"FDI外商直接投资:\n    " + "\n    ".join(items))
+                    results.append("FDI外商直接投资:\n    " + "\n    ".join(items))
         except Exception:
             pass
 
@@ -1630,7 +1629,7 @@ def get_macro_money_supply() -> str:
                         value = row.get('value', row.get('杠杆率', '未知'))
                         items.append(f"{period}: {value}")
                 if items:
-                    results.append(f"宏观杠杆率:\n    " + "\n    ".join(items))
+                    results.append("宏观杠杆率:\n    " + "\n    ".join(items))
         except Exception:
             pass
 

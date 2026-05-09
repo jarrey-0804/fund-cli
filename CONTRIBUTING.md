@@ -6,7 +6,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-org/fund-cli.git
+git clone https://github.com/jarrey-0804/fund-cli.git
 cd fund-cli
 
 # 创建虚拟环境
@@ -82,6 +82,35 @@ black src tests --line-length=100
 ruff check src tests
 ```
 
+## 文档贡献
+
+我们欢迎文档改进！文档使用 MkDocs 构建：
+
+```bash
+# 安装文档依赖
+pip install -e ".[docs]"
+
+# 本地预览
+mkdocs serve
+
+# 构建
+mkdocs build
+```
+
+文档文件位于 `docs/` 目录，遵循以下规范：
+- 使用中文撰写
+- 使用标准 Markdown 语法
+- 命令示例包含预期输出
+
+## PR 提交前检查清单
+
+- [ ] 所有测试通过 (`pytest tests/ -v`)
+- [ ] 代码检查通过 (`ruff check src/`)
+- [ ] 类型检查通过 (`mypy src/fund_cli/core/ src/fund_cli/data/`)
+- [ ] 新增功能有对应测试
+- [ ] 文档已同步更新
+- [ ] 遵循 Conventional Commits 提交规范
+
 ## 问题反馈
 
 如果您发现了bug或有功能建议，请通过以下方式反馈：
@@ -93,3 +122,7 @@ ruff check src tests
 ## 许可证
 
 通过贡献代码，您同意您的贡献将在MIT许可证下发布。
+
+## 行为准则
+
+本项目遵循 [贡献者公约](CODE_OF_CONDUCT.md)，参与项目即表示同意遵守该准则。

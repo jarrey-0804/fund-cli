@@ -259,13 +259,15 @@ def generate_report(
 
         if format == "html":
             from fund_cli.core.reporters.html_reporter import HtmlReporter
+            from fund_cli.core.reporter import Reporter
 
-            reporter = HtmlReporter()
+            reporter: Reporter = HtmlReporter()
             ext = ".html"
         elif format == "markdown":
             from fund_cli.core.reporters.markdown_reporter import MarkdownReporter
+            from fund_cli.core.reporter import Reporter
 
-            reporter = MarkdownReporter()
+            reporter = MarkdownReporter()  # type: ignore[assignment]
             ext = ".md"
         else:
             console.print(f"[red]不支持的格式: {format}[/red]")

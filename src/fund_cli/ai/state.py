@@ -7,7 +7,8 @@ Agent 状态定义
 
 from __future__ import annotations
 
-from typing import Annotated, Optional, Sequence, TypedDict
+from collections.abc import Sequence
+from typing import Annotated, TypedDict
 
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
@@ -43,13 +44,13 @@ class FundAgentState(TypedDict):
     needs_human_review: bool
 
     # 人工审核结果 - 存储人工反馈
-    human_feedback: Optional[str]
+    human_feedback: str | None
 
     # 最终响应 - Agent 的最终输出
-    final_response: Optional[str]
+    final_response: str | None
 
     # 错误信息 - 记录执行过程中的错误
-    error: Optional[str]
+    error: str | None
 
 
 class ChatState(TypedDict):
@@ -86,7 +87,7 @@ class AnalysisState(TypedDict):
     parameters: dict
 
     # 分析结果
-    results: Optional[dict]
+    results: dict | None
 
     # 错误信息
-    error: Optional[str]
+    error: str | None

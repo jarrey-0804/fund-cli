@@ -1,0 +1,96 @@
+site_name: Fund CLI 文档
+site_description: 专业基金分析CLI工具 - 面向机构客户
+site_author: Fund CLI Team
+site_url: https://fund-cli.readthedocs.io
+repo_url: https://github.com/jarrey-0804/fund-cli
+repo_name: jarrey-0804/fund-cli
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: zh
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换到深色模式
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换到浅色模式
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_inheritance_diagram: true
+            members_order: source
+            heading_level: 3
+            separate_signature: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - 首页: index.md
+  - 安装指南: installation.md
+  - 使用教程:
+      - 快速入门: usage/index.md
+      - 基金筛选与数据管理: usage/filter-and-data.md
+      - 基金分析: usage/analysis.md
+      - 基金对比: usage/comparison.md
+      - AI分析: usage/ai-analysis.md
+      - 组合优化: usage/optimization.md
+      - 报告生成: usage/report-generation.md
+      - 持仓与经理分析: usage/holding-and-manager.md
+      - 监控预警: usage/monitoring.md
+      - 交互式模式: usage/interactive.md
+  - API参考:
+      - 概览: api/reference.md
+      - 核心模块: api/core.md
+      - 分析模块: api/analysis.md
+      - AI模块: api/ai.md
+      - 数据层: api/data.md
+      - 优化器: api/optimizers.md
+      - 报告生成器: api/reporters.md
+  - 开发指南: development.md
+  - 贡献指南: contributing.md

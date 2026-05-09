@@ -4,6 +4,7 @@
 
 **专业基金分析CLI工具 - 面向机构客户**
 
+[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/jarrey-0804/fund-cli)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -16,6 +17,36 @@
 
 Fund CLI 是一款面向机构客户的专业基金分析命令行工具，提供基金筛选、业绩分析、组合对比、风险监控等功能。基于开源技术栈构建，支持多数据源接入和AI辅助分析。
 
+## v3.1 新特性
+
+### 多数据源架构
+- **统一适配器接口**: 支持 Tushare、AKShare、Wind 三大数据源
+- **数据源网关**: 熔断器 + 降级 + 重试机制，保障数据获取稳定性
+- **数据标准化**: 跨数据源字段映射、日期格式统一、基金代码标准化
+
+### 报告引擎增强
+- **5种报告格式**: HTML、Markdown、PDF、Word、PowerPoint
+- **4类报告模板**: 单基金研究、投资组合、市场资金流向、合规风控
+- **Jinja2模板引擎**: 支持自定义模板和过滤器
+
+### AI分析增强
+- **双后端支持**: 规则引擎（零配置）+ OpenAI API（高精度）
+- **智能分析**: 基金/组合摘要、风险提示、投资建议、亮点/风险点提取
+
+### v3.0 新特性
+
+- **AI Agent 对话** - 基于 LangGraph 的智能对话系统
+  - 12+ 数据接口工具自动调用
+  - 多轮对话上下文保持
+  - 记忆系统（可选 ChromaDB）
+- **MCP 协议支持** - Model Context Protocol 集成
+- **持仓分析** - 行业分布、集中度、风格分析
+- **基金经理分析** - 业绩、稳定性、管理规模
+- **组合优化** - 均值方差/最大夏普/风险平价
+- **归因分析** - Brinson 归因模型
+- **监控预警** - 净值变动监控和预警
+- **交互式模式** - REPL 交互式命令行
+
 ## 核心功能
 
 - **基金筛选** - 多维度筛选条件，支持业绩、风险、规模等指标
@@ -23,7 +54,9 @@ Fund CLI 是一款面向机构客户的专业基金分析命令行工具，提�
 - **基金对比** - 多基金横向对比分析
 - **组合优化** - 基于现代投资组合理论的资产配置优化
 - **AI分析** (V2.0) - AI辅助投资分析和报告生成
-- **多数据源** - 支持AKShare、Tushare、Wind等数据源
+- **多数据源架构** (v3.1) - Tushare/AKShare/Wind 统一接入，熔断降级机制
+- **报告引擎** (v3.1) - HTML/Markdown/PDF/Word/PPT 5种格式报告
+- **AI增强** (v3.1) - 规则引擎 + OpenAI 双后端智能分析
 
 ---
 
@@ -53,6 +86,16 @@ pip install -e ".[dev]"
 ```bash
 fund --version
 fund --help
+```
+
+### Docker 部署
+
+```bash
+# 拉取镜像并运行
+docker run --rm -e FUND_DATA_TUSHARE_TOKEN=your_token fund-cli:latest fund --help
+
+# 使用 docker-compose
+docker compose up fund-cli
 ```
 
 ---
@@ -92,6 +135,19 @@ fund ai advice --risk-level 中等
 
 # AI风险评估
 fund ai risk 000001
+```
+
+### 报告生成功能 (v3.1)
+
+```bash
+# 生成单基金研究报告
+fund report --type single_fund --fund 000001 --format pdf
+
+# 生成投资组合报告
+fund report --type portfolio --funds 000001,000002 --format html
+
+# 列出可用模板
+fund list-templates
 ```
 
 ### 组合优化
@@ -221,13 +277,54 @@ fund-cli/
 │   ├── config.py          # 配置管理
 │   ├── core/              # 核心模块
 │   ├── data/              # 数据层
+│   │   ├── adapters/      # 数据源适配器 (v3.1)
+│   │   ├── gateway.py     # 数据源网关 (v3.1)
+│   │   └── normalizer.py  # 数据标准化 (v3.1)
 │   ├── analysis/          # 分析模块
-│   ├── ai/                # AI模块 (V2.0)
+│   ├── ai/                # AI模块 (V2.0/V3.1)
+│   ├── report/            # 报告引擎 (v3.1)
 │   ├── commands/          # CLI命令
 │   └── utils/             # 工具函数
 ├── tests/                 # 测试代码
 ├── docs/                  # 文档
 └── examples/              # 示例脚本
+```
+
+## 架构设计
+
+### 多数据源架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      DataSourceGateway                       │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │  熔断器     │  │  降级策略   │  │  重试机制           │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│ TushareAdapter│    │ AKShareAdapter│    │  WindAdapter  │
+└───────────────┘    └───────────────┘    └───────────────┘
+```
+
+### 报告引擎架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      ReportEngine                            │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │  Template   │  │  Data       │  │  Export             │  │
+│  │  Engine     │  │  Provider   │  │  Adapters           │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│  HTML/Markdown│    │  PDF (Weasy)  │    │ Word/PPT      │
+└───────────────┘    └───────────────┘    └───────────────┘
 ```
 
 ---

@@ -27,7 +27,7 @@ class PortfolioAnalyzer(Analyzer):
         self,
         data: pd.DataFrame,
         weights: dict[str, float] | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         执行组合分析
@@ -139,7 +139,7 @@ class PortfolioAnalyzer(Analyzer):
                     "return": float(annual_return),
                     "contribution": float(weight * annual_return),
                 }
-        return contribution
+        return contribution  # type: ignore[return-value]
 
     def get_metrics(self) -> list[str]:
         """获取可计算的指标列表"""

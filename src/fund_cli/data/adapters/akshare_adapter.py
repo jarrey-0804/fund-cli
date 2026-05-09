@@ -534,7 +534,7 @@ class AKShareAdapter(DataSourceAdapter):
         """
         cache_key = f"fund_info_ths:{code}"
         if self._cache and self._cache.exists(cache_key):
-            return self._cache.get(cache_key)
+            return self._cache.get(cache_key)  # type: ignore[return-value]
 
         ak = self._get_akshare()
         try:
@@ -650,7 +650,7 @@ class AKShareAdapter(DataSourceAdapter):
         """
         cache_key = f"fund_overview:{code}"
         if self._cache and self._cache.exists(cache_key):
-            return self._cache.get(cache_key)
+            return self._cache.get(cache_key)  # type: ignore[return-value]
 
         ak = self._get_akshare()
         try:
@@ -1287,20 +1287,20 @@ class AKShareAdapter(DataSourceAdapter):
     def get_fund_bond_holdings(
         self,
         code: str,
-        year: str | None = None,
+        year: int | None = None,  # type: ignore[override]
     ) -> pd.DataFrame:
         """
         获取基金债券持仓
 
         Args:
             code: 基金代码
-            year: 年份，如 "2024"，默认为当前年份
+            year: 年份，如 2024，默认为当前年份
 
         Returns:
             债券持仓 DataFrame
         """
         if year is None:
-            year = str(datetime.now().year)
+            year = datetime.now().year
 
         cache_key = f"fund_bond_holdings:{code}:{year}"
         if self._cache and self._cache.exists(cache_key):
@@ -1308,7 +1308,7 @@ class AKShareAdapter(DataSourceAdapter):
 
         ak = self._get_akshare()
         try:
-            df = ak.fund_portfolio_bond_hold_em(symbol=code, date=year)
+            df = ak.fund_portfolio_bond_hold_em(symbol=code, date=str(year))
             if df.empty:
                 raise DataNotFoundError(f"基金 {code} 债券持仓数据不存在")
 
@@ -1341,20 +1341,20 @@ class AKShareAdapter(DataSourceAdapter):
     def get_fund_industry_allocation(
         self,
         code: str,
-        year: str | None = None,
+        year: int | None = None,  # type: ignore[override]
     ) -> pd.DataFrame:
         """
         获取基金行业配置
 
         Args:
             code: 基金代码
-            year: 年份，如 "2024"，默认为当前年份
+            year: 年份，如 2024，默认为当前年份
 
         Returns:
             行业配置 DataFrame
         """
         if year is None:
-            year = str(datetime.now().year)
+            year = datetime.now().year
 
         cache_key = f"fund_industry_allocation:{code}:{year}"
         if self._cache and self._cache.exists(cache_key):
@@ -1362,7 +1362,7 @@ class AKShareAdapter(DataSourceAdapter):
 
         ak = self._get_akshare()
         try:
-            df = ak.fund_portfolio_industry_allocation_em(symbol=code, date=year)
+            df = ak.fund_portfolio_industry_allocation_em(symbol=code, date=str(year))
             if df.empty:
                 raise DataNotFoundError(f"基金 {code} 行业配置数据不存在")
 
@@ -1395,7 +1395,7 @@ class AKShareAdapter(DataSourceAdapter):
         self,
         code: str,
         indicator: str = "累计买入",
-        year: str | None = None,
+        year: int | None = None,  # type: ignore[override]
     ) -> pd.DataFrame:
         """
         获取基金重大变动(累计买入/卖出)
@@ -1403,13 +1403,13 @@ class AKShareAdapter(DataSourceAdapter):
         Args:
             code: 基金代码
             indicator: 指标类型，可选 {"累计买入","累计卖出"}
-            year: 年份，如 "2024"，默认为当前年份
+            year: 年份，如 2024，默认为当前年份
 
         Returns:
             重大变动 DataFrame
         """
         if year is None:
-            year = str(datetime.now().year)
+            year = datetime.now().year
 
         cache_key = f"fund_portfolio_change:{code}:{indicator}:{year}"
         if self._cache and self._cache.exists(cache_key):
@@ -1420,7 +1420,7 @@ class AKShareAdapter(DataSourceAdapter):
             df = ak.fund_portfolio_change_em(
                 symbol=code,
                 indicator=indicator,
-                date=year,
+                date=str(year),
             )
             if df.empty:
                 raise DataNotFoundError(f"基金 {code} 重大变动数据不存在")

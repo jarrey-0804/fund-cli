@@ -22,7 +22,7 @@ from fund_cli.ai.tools import FUND_TOOLS
 
 # 可选导入 - 记忆系统
 try:
-    from fund_cli.ai.memory import VectorMemory
+    from fund_cli.ai.memory import VectorMemory  # noqa: F401
 
     __all_extra = ["VectorMemory"]
 except ImportError:

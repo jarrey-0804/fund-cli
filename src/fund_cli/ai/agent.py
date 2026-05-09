@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Optional
+from typing import Any
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage
@@ -53,9 +53,9 @@ class FundAgent:
 
     def __init__(
         self,
-        llm: Optional[BaseChatModel] = None,
-        checkpointer=None,
-        enable_human_review: Optional[bool] = None,
+        llm: BaseChatModel | None = None,
+        checkpointer: Any = None,
+        enable_human_review: bool | None = None,
     ):
         """
         初始化 Fund Agent
@@ -185,7 +185,7 @@ class FundAgent:
         self,
         user_input: str,
         user_id: str = "default",
-        thread_id: Optional[str] = None
+        thread_id: str | None = None
     ) -> str:
         """
         异步调用 Agent
@@ -246,7 +246,7 @@ class FundAgent:
         self,
         user_input: str,
         user_id: str = "default",
-        thread_id: Optional[str] = None
+        thread_id: str | None = None
     ) -> str:
         """
         同步调用 Agent
@@ -312,11 +312,11 @@ class FundAgent:
 
 
 # 全局 Agent 实例（单例模式）
-_fund_agent: Optional[FundAgent] = None
+_fund_agent: FundAgent | None = None
 
 
 def get_fund_agent(
-    llm: Optional[BaseChatModel] = None,
+    llm: BaseChatModel | None = None,
     checkpointer=None,
     force_new: bool = False
 ) -> FundAgent:

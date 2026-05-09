@@ -26,7 +26,7 @@ class AttributionAnalyzer(Analyzer):
         data: pd.DataFrame,
         benchmark_weights: dict[str, float] | None = None,
         portfolio_weights: dict[str, float] | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         执行归因分析

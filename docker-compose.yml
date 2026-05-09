@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  fund-cli:
+    build: .
+    image: fund-cli:3.1.0
+    container_name: fund-cli
+    environment:
+      - FUND_DATA_TUSHARE_TOKEN=${TUSHARE_TOKEN}
+      - FUND_AI_API_KEY=${AI_API_KEY}
+    volumes:
+      - ./data:/app/data
+      - fund-cache:/home/fundcli/.fund_cli/cache
+    command: fund --help
+
+  # 可选：PostgreSQL持久化
+  postgres:
+    image: postgres:15-alpine
+    container_name: fund-cli-postgres
+    environment:
+      POSTGRES_USER: fundcli
+      POSTGRES_PASSWORD: fundcli
+      POSTGRES_DB: fundcli
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    profiles:
+      - with-db
+
+volumes:
+  fund-cache:
+  postgres-data:

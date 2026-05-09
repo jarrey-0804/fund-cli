@@ -5,6 +5,41 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [3.1.0] - 2026-05-09
+
+### Added
+- 多数据源架构（v3.1核心特性）
+  - TushareAdapter: P0级别18个核心方法，适配Tushare 2025.11 API变更
+  - AKShareAdapter: AKShare数据源适配器
+  - WindAdapter: Wind金融终端适配器（占位实现）
+  - DataSourceGateway: 数据源网关，提供熔断器、降级、重试机制
+  - DataNormalizer: 跨数据源数据标准化（字段映射、日期、代码、数值）
+  - DataSourceAdapterMixin: 120+抽象方法占位实现
+- 报告引擎增强
+  - Reporter基类扩展: render_to_template, export_pdf, export_docx, export_pptx
+  - TemplateEngine: Jinja2模板引擎，自定义过滤器(percentage/format_number/color_class)
+  - 4类报告模板: 单基金研究、投资组合、市场资金流向、合规风控
+  - PdfReporter: WeasyPrint HTML转PDF
+  - DocxReporter: python-docx Word报告
+  - PptxReporter: python-pptx PPT报告
+- AI分析增强
+  - AIAnalyzer: 基金/组合智能分析
+  - RuleBasedBackend: 规则引擎（无需API）
+  - OpenAIBackend: OpenAI API后端
+  - AnalysisResult: 摘要、风险提示、投资建议、亮点、风险点
+- CLI命令扩展
+  - fund report: 报告生成命令
+  - fund list-templates: 列出可用模板
+
+### Changed
+- DataManager集成DataSourceGateway，支持多源自动降级
+- 改进代码质量: ruff lint + mypy类型检查全部通过
+- 新增35个端到端集成测试
+
+### Fixed
+- 修复TushareAdapter抽象方法实现问题
+- 修复DataNormalizer类型转换问题
+
 ## [2.0.1] - 2026-05-08
 
 ### Fixed

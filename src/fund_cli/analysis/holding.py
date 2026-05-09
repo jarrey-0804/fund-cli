@@ -34,7 +34,7 @@ class HoldingAnalyzer(Analyzer):
         Returns:
             综合分析结果字典
         """
-        result = {}
+        result: dict[str, Any] = {}
         if "industry" in data.columns:
             result["industry_distribution"] = self.industry_distribution(data)
         result["top_holdings"] = self.top_holdings(data)

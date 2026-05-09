@@ -54,7 +54,7 @@ class DataCache:
         """
         # 将参数序列化为字符串
         key_data = json.dumps({"args": args, "kwargs": kwargs}, sort_keys=True, default=str)
-        key_hash = hashlib.md5(key_data.encode()).hexdigest()[:8]
+        key_hash = hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()[:8]
         return f"{prefix}:{key_hash}"
 
     def get(self, key: str) -> Any | None:

@@ -1734,3 +1734,773 @@ class TestPhaseThreeFourTools:
         actual_names = [t.name for t in FUND_TOOLS]
         for name in phase34_tool_names:
             assert name in actual_names, f"工具 {name} 不在FUND_TOOLS列表中"
+
+
+# ============================================
+# Agent 高级测试
+# ============================================
+
+
+class TestFundAgentAdvanced:
+    """FundAgent 高级测试"""
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_agent_with_custom_llm(self, mock_get_config, mock_chat_openai):
+        """测试使用自定义LLM初始化"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        # Mock LLM
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+
+        agent = FundAgent(llm=mock_llm)
+
+        assert agent.llm == mock_llm
+        # 不应该调用 ChatOpenAI
+        mock_chat_openai.assert_not_called()
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_agent_with_custom_checkpointer(self, mock_get_config, mock_chat_openai):
+        """测试使用自定义checkpointer初始化"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+        from langgraph.checkpoint.memory import MemorySaver
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        custom_checkpointer = MemorySaver()
+        agent = FundAgent(checkpointer=custom_checkpointer)
+
+        assert agent.checkpointer == custom_checkpointer
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_agent_create_default_llm_openai(self, mock_get_config, mock_chat_openai):
+        """测试创建默认LLM - OpenAI"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.model = "gpt-4"
+        mock_config.ai.temperature = 0.7
+        mock_config.ai.max_tokens = 2000
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        mock_chat_openai.assert_called_once()
+        call_kwargs = mock_chat_openai.call_args.kwargs
+        assert call_kwargs['model'] == "gpt-4"
+        assert call_kwargs['temperature'] == 0.7
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_agent_create_default_llm_qwen(self, mock_get_config, mock_chat_openai):
+        """测试创建默认LLM - Qwen"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "qwen"
+        mock_config.ai.qwen_model = "qwen-max"
+        mock_config.ai.temperature = 0.5
+        mock_config.ai.max_tokens = 1000
+        mock_config.ai.qwen_api_key = "qwen-key"
+        mock_config.ai.qwen_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        mock_chat_openai.assert_called_once()
+        call_kwargs = mock_chat_openai.call_args.kwargs
+        assert call_kwargs['model'] == "qwen-max"
+        assert call_kwargs['base_url'] == "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_agent_build_workflow(self, mock_get_config, mock_chat_openai):
+        """测试构建工作流"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        # 验证工作流已构建
+        assert agent.workflow is not None
+        assert agent.app is not None
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_agent_invoke_sync(self, mock_get_config, mock_chat_openai):
+        """测试同步调用Agent"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+        from langchain_core.messages import AIMessage
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        # 验证方法存在
+        assert hasattr(agent, 'invoke')
+        assert callable(agent.invoke)
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_agent_ainvoke_async(self, mock_get_config, mock_chat_openai):
+        """测试异步调用Agent"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        # 验证方法存在
+        assert hasattr(agent, 'ainvoke')
+        assert callable(agent.ainvoke)
+
+        reset_fund_agent()
+
+
+class TestFundAgentStateManagement:
+    """FundAgent 状态管理测试"""
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_get_history(self, mock_get_config, mock_chat_openai):
+        """测试获取对话历史"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        # 获取历史
+        history = agent.get_history("test_user", "test_thread")
+
+        # 应该返回列表（可能为空）
+        assert isinstance(history, list)
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_clear_history(self, mock_get_config, mock_chat_openai):
+        """测试清除对话历史"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        # 清除历史
+        result = agent.clear_history("test_user", "test_thread")
+
+        # MemorySaver 始终返回 True
+        assert result is True
+
+        reset_fund_agent()
+
+
+class TestFundAgentSingleton:
+    """FundAgent 单例模式测试"""
+
+    def test_get_fund_agent_creates_singleton(self):
+        """测试获取Agent单例"""
+        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent, _fund_agent
+
+        reset_fund_agent()
+
+        with patch('fund_cli.ai.agent.ChatOpenAI') as mock_chat:
+            mock_llm = MagicMock()
+            mock_llm.bind_tools.return_value = mock_llm
+            mock_chat.return_value = mock_llm
+
+            with patch('fund_cli.ai.agent.get_config') as mock_config:
+                mock_cfg = MagicMock()
+                mock_cfg.ai.provider = "openai"
+                mock_cfg.ai.api_key = "test"
+                mock_config.return_value = mock_cfg
+
+                agent1 = get_fund_agent()
+                agent2 = get_fund_agent()
+
+                assert agent1 is agent2
+
+        reset_fund_agent()
+
+    def test_get_fund_agent_force_new(self):
+        """测试强制创建新Agent"""
+        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent
+
+        reset_fund_agent()
+
+        with patch('fund_cli.ai.agent.ChatOpenAI') as mock_chat:
+            mock_llm = MagicMock()
+            mock_llm.bind_tools.return_value = mock_llm
+            mock_chat.return_value = mock_llm
+
+            with patch('fund_cli.ai.agent.get_config') as mock_config:
+                mock_cfg = MagicMock()
+                mock_cfg.ai.provider = "openai"
+                mock_cfg.ai.api_key = "test"
+                mock_config.return_value = mock_cfg
+
+                agent1 = get_fund_agent()
+                agent2 = get_fund_agent(force_new=True)
+
+                assert agent1 is not agent2
+
+        reset_fund_agent()
+
+    def test_reset_fund_agent_clears_singleton(self):
+        """测试重置Agent清除单例"""
+        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent, _fund_agent
+        import fund_cli.ai.agent as agent_module
+
+        reset_fund_agent()
+
+        with patch('fund_cli.ai.agent.ChatOpenAI') as mock_chat:
+            mock_llm = MagicMock()
+            mock_llm.bind_tools.return_value = mock_llm
+            mock_chat.return_value = mock_llm
+
+            with patch('fund_cli.ai.agent.get_config') as mock_config:
+                mock_cfg = MagicMock()
+                mock_cfg.ai.provider = "openai"
+                mock_cfg.ai.api_key = "test"
+                mock_config.return_value = mock_cfg
+
+                get_fund_agent()
+
+                # 验证单例已创建
+                assert agent_module._fund_agent is not None
+
+                # 重置
+                reset_fund_agent()
+
+                # 验证单例已清除
+                assert agent_module._fund_agent is None
+
+
+class TestFundAgentHumanReview:
+    """FundAgent 人工审核测试"""
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_human_review_enabled_explicitly(self, mock_get_config, mock_chat_openai):
+        """测试显式启用人工审核"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent(enable_human_review=True)
+
+        assert agent.enable_human_review is True
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_human_review_disabled_explicitly(self, mock_get_config, mock_chat_openai):
+        """测试显式禁用人工审核"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_config.agent.enable_human_review = True
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        # 显式禁用应该覆盖配置
+        agent = FundAgent(enable_human_review=False)
+
+        assert agent.enable_human_review is False
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_human_review_from_config(self, mock_get_config, mock_chat_openai):
+        """测试从配置读取人工审核设置"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_config.agent.enable_human_review = True
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        assert agent.enable_human_review is True
+
+        reset_fund_agent()
+
+
+class TestFundAgentCheckpointer:
+    """FundAgent Checkpointer 测试"""
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_create_checkpointer_memory_saver(self, mock_get_config, mock_chat_openai):
+        """测试创建MemorySaver"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+        from langgraph.checkpoint.memory import MemorySaver
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_config.database.use_postgres = False
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        assert isinstance(agent.checkpointer, MemorySaver)
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_create_checkpointer_postgres_fallback(self, mock_get_config, mock_chat_openai):
+        """测试PostgreSQL不可用时回退到MemorySaver"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+        from langgraph.checkpoint.memory import MemorySaver
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_config.database.use_postgres = True
+        mock_config.database.connection_string = "postgresql://test:test@localhost/fund_cli"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        # PostgresSaver 未安装时应回退到 MemorySaver
+        agent = FundAgent()
+
+        assert isinstance(agent.checkpointer, MemorySaver)
+
+        reset_fund_agent()
+
+
+class TestNodesAdvanced:
+    """节点高级测试"""
+
+    def test_system_node_adds_message(self):
+        """测试系统节点添加消息"""
+        from fund_cli.ai.nodes import create_system_node
+        from langchain_core.messages import HumanMessage
+
+        node = create_system_node()
+        state = {
+            "messages": [HumanMessage(content="测试")],
+            "user_id": "test"
+        }
+
+        result = node(state)
+
+        # 应该添加了系统消息
+        assert len(result["messages"]) > 0
+
+    def test_system_node_existing_system_message(self):
+        """测试已有系统消息时不重复添加"""
+        from fund_cli.ai.nodes import create_system_node
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        node = create_system_node()
+        state = {
+            "messages": [
+                SystemMessage(content="已有系统消息"),
+                HumanMessage(content="测试")
+            ],
+            "user_id": "test"
+        }
+
+        result = node(state)
+
+        # 已有系统消息时返回空字典
+        assert result == {}
+
+    def test_llm_node_calls_llm(self):
+        """测试LLM节点调用LLM"""
+        from fund_cli.ai.nodes import create_llm_node
+        from langchain_core.messages import HumanMessage, AIMessage
+
+        mock_llm = MagicMock()
+        mock_llm_with_tools = MagicMock()
+        mock_llm_with_tools.invoke.return_value = AIMessage(content="AI响应")
+        mock_llm.bind_tools.return_value = mock_llm_with_tools
+
+        node = create_llm_node(mock_llm)
+        state = {
+            "messages": [HumanMessage(content="测试")],
+            "user_id": "test"
+        }
+
+        result = node(state, {})
+
+        # 应该调用LLM
+        mock_llm_with_tools.invoke.assert_called_once()
+        assert "messages" in result
+        assert "current_step" in result
+
+    def test_error_handler_node_with_error(self):
+        """测试错误处理节点-有错误"""
+        from fund_cli.ai.nodes import create_error_handler_node
+
+        node = create_error_handler_node()
+        state = {
+            "error": "测试错误",
+            "messages": []
+        }
+
+        result = node(state)
+
+        assert "messages" in result
+        assert "final_response" in result
+        assert "测试错误" in result["final_response"]
+
+    def test_error_handler_node_no_error(self):
+        """测试错误处理节点-无错误"""
+        from fund_cli.ai.nodes import create_error_handler_node
+
+        node = create_error_handler_node()
+        state = {
+            "error": None,
+            "messages": []
+        }
+
+        result = node(state)
+
+        # 无错误时返回空字典
+        assert result == {}
+
+    def test_human_input_node(self):
+        """测试人工输入节点"""
+        from fund_cli.ai.nodes import create_human_input_node
+
+        node = create_human_input_node()
+        state = {
+            "messages": [],
+            "user_id": "test"
+        }
+
+        result = node(state)
+
+        assert "messages" in result
+        assert "current_step" in result
+        assert result["current_step"] == "waiting_for_input"
+
+    def test_summary_node_with_ai_message(self):
+        """测试总结节点-有AI消息"""
+        from fund_cli.ai.nodes import create_summary_node
+        from langchain_core.messages import AIMessage, HumanMessage
+
+        node = create_summary_node()
+        state = {
+            "messages": [
+                HumanMessage(content="问题"),
+                AIMessage(content="这是AI的回复")
+            ]
+        }
+
+        result = node(state)
+
+        assert "final_response" in result
+        assert result["final_response"] == "这是AI的回复"
+
+    def test_summary_node_no_ai_message(self):
+        """测试总结节点-无AI消息"""
+        from fund_cli.ai.nodes import create_summary_node
+        from langchain_core.messages import HumanMessage
+
+        node = create_summary_node()
+        state = {
+            "messages": [HumanMessage(content="问题")]
+        }
+
+        result = node(state)
+
+        assert "final_response" in result
+        assert result["final_response"] == "分析完成。"
+
+
+class TestRouterNodeAdvanced:
+    """路由节点高级测试"""
+
+    def test_router_with_tool_calls(self):
+        """测试路由节点-有工具调用"""
+        from fund_cli.ai.nodes import router_node
+        from langchain_core.messages import AIMessage
+
+        state = {
+            "messages": [
+                AIMessage(
+                    content="",
+                    tool_calls=[{
+                        "name": "get_fund_info",
+                        "args": {"fund_code": "000001"},
+                        "id": "call_123",
+                        "type": "tool_call"
+                    }]
+                )
+            ]
+        }
+
+        result = router_node(state)
+        assert result == "tools"
+
+    def test_router_without_tool_calls(self):
+        """测试路由节点-无工具调用"""
+        from fund_cli.ai.nodes import router_node
+        from langchain_core.messages import AIMessage
+
+        state = {
+            "messages": [
+                AIMessage(content="这是回复")
+            ]
+        }
+
+        result = router_node(state)
+        assert result == "end"
+
+    def test_router_empty_messages(self):
+        """测试路由节点-空消息列表"""
+        from fund_cli.ai.nodes import router_node
+
+        state = {"messages": []}
+
+        result = router_node(state)
+        assert result == "end"
+
+    def test_router_with_human_message_last(self):
+        """测试路由节点-最后一条是人类消息"""
+        from fund_cli.ai.nodes import router_node
+        from langchain_core.messages import AIMessage, HumanMessage
+
+        state = {
+            "messages": [
+                AIMessage(content="AI回复"),
+                HumanMessage(content="用户追问")
+            ]
+        }
+
+        result = router_node(state)
+        assert result == "end"
+
+
+class TestStateStructures:
+    """状态结构测试"""
+
+    def test_fund_agent_state_fields(self):
+        """测试FundAgentState字段"""
+        from fund_cli.ai.state import FundAgentState
+        from typing import get_type_hints
+
+        hints = get_type_hints(FundAgentState)
+
+        required_fields = [
+            'messages', 'user_id', 'thread_id', 'user_input',
+            'current_step', 'tool_results', 'needs_human_review',
+            'human_feedback', 'final_response', 'error'
+        ]
+
+        for field in required_fields:
+            assert field in hints, f"缺少字段: {field}"
+
+    def test_chat_state_fields(self):
+        """测试ChatState字段"""
+        from fund_cli.ai.state import ChatState
+        from typing import get_type_hints
+
+        hints = get_type_hints(ChatState)
+
+        assert 'messages' in hints
+        assert 'user_id' in hints
+
+    def test_analysis_state_fields(self):
+        """测试AnalysisState字段"""
+        from fund_cli.ai.state import AnalysisState
+        from typing import get_type_hints
+
+        hints = get_type_hints(AnalysisState)
+
+        assert 'messages' in hints
+        assert 'fund_codes' in hints
+        assert 'analysis_type' in hints
+        assert 'parameters' in hints
+        assert 'results' in hints
+        assert 'error' in hints
+
+
+class TestAgentIntegrationAdvanced:
+    """Agent集成高级测试"""
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_agent_workflow_nodes(self, mock_get_config, mock_chat_openai):
+        """测试Agent工作流节点"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent()
+
+        # 验证工作流节点
+        # StateGraph 的 nodes 属性包含所有节点
+        nodes = agent.workflow.nodes
+        node_names = list(nodes.keys())
+
+        assert "system" in node_names
+        assert "llm" in node_names
+        assert "tools" in node_names
+        assert "summary" in node_names
+
+        reset_fund_agent()
+
+    @patch('fund_cli.ai.agent.ChatOpenAI')
+    @patch('fund_cli.ai.agent.get_config')
+    def test_agent_with_human_review_workflow(self, mock_get_config, mock_chat_openai):
+        """测试启用人工审核的工作流"""
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
+
+        reset_fund_agent()
+
+        mock_config = MagicMock()
+        mock_config.ai.provider = "openai"
+        mock_config.ai.api_key = "test-key"
+        mock_get_config.return_value = mock_config
+
+        mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_chat_openai.return_value = mock_llm
+
+        agent = FundAgent(enable_human_review=True)
+
+        # 验证工作流包含 human_review 节点
+        nodes = agent.workflow.nodes
+        node_names = list(nodes.keys())
+
+        assert "human_review" in node_names
+
+        reset_fund_agent()

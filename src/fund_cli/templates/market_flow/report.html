@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>市场资金流向报告</title>
+{% endblock %}
+
+{% block header %}
+{{ super() }}
+<div class="summary-box">
+<strong>市场概况：</strong>上证指数 {{ index_value }}（{{ index_change }}）| 北向资金 {{ north_flow }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h2>一、大盘资金流向</h2>
+<table>
+<tr><th>类型</th><th>净流入（亿元）</th></tr>
+{% for item in market_flow %}
+<tr>
+    <td>{{ item.name }}</td>
+    <td class="{{ item.value | color_class }}">{{ item.value }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h2>二、行业板块资金流向（TOP10）</h2>
+<table>
+<tr><th>排名</th><th>行业</th><th>净流入（亿元）</th></tr>
+{% for item in sector_flow %}
+<tr>
+    <td>{{ loop.index }}</td>
+    <td>{{ item.name }}</td>
+    <td class="{{ item.value | color_class }}">{{ item.value }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h2>三、北向资金</h2>
+<table>
+<tr><th>日期</th><th>沪股通（亿元）</th><th>深股通（亿元）</th><th>合计（亿元）</th></tr>
+{% for item in north_flow_detail %}
+<tr>
+    <td>{{ item.date }}</td>
+    <td class="{{ item.sh | color_class }}">{{ item.sh }}</td>
+    <td class="{{ item.sz | color_class }}">{{ item.sz }}</td>
+    <td class="{{ item.total | color_class }}">{{ item.total }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

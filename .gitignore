@@ -87,6 +87,17 @@ dmypy.json
 .DS_Store
 Thumbs.db
 
+# Docker
+.dockerignore
+
+# CI/CD
+.github/
+
+# Build
+build/
+dist/
+*.egg-info/
+
 # Project specific
 *.log
 *.tmp

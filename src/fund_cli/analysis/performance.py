@@ -46,11 +46,11 @@ class PerformanceAnalyzer(Analyzer):
                 raise ImportError("QuantStats 未安装，请运行: pip install quantstats") from e
         return self._qs
 
-    def analyze(
+    def analyze(  # type: ignore[override]
         self,
         returns: pd.Series,
         benchmark: pd.Series | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         执行业绩分析

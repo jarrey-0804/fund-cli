@@ -316,7 +316,7 @@ class AIAnalyzer:
             "max_drawdown": abs(max_drawdown),
             "volatility": volatility,
             "downside_deviation": downside_deviation,
-            "sortino_ratio": sortino_ratio,
+            "sortino_ratio": sortino_ratio,  # type: ignore[dict-item]
             "beta": beta,
         }
 

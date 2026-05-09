@@ -240,7 +240,7 @@ def ai_summarize(
     """
     from fund_cli.ai.analyzer import AIAnalyzer
     from fund_cli.analysis.performance import PerformanceAnalyzer
-    from fund_cli.data.adapters import get_adapter
+    from fund_cli.data.adapters import get_adapter  # type: ignore[attr-defined]
 
     try:
         # 获取基金数据
@@ -250,7 +250,7 @@ def ai_summarize(
 
         # 计算业绩指标
         perf_analyzer = PerformanceAnalyzer()
-        metrics = perf_analyzer.calculate_metrics(nav_data)
+        metrics = perf_analyzer.calculate_metrics(nav_data)  # type: ignore[attr-defined]
 
         # 生成AI摘要
         ai_analyzer = AIAnalyzer()
@@ -287,7 +287,7 @@ def ai_compare(
     """
     from fund_cli.ai.analyzer import AIAnalyzer
     from fund_cli.analysis.performance import PerformanceAnalyzer
-    from fund_cli.data.adapters import get_adapter
+    from fund_cli.data.adapters import get_adapter  # type: ignore[attr-defined]
 
     try:
         codes = [c.strip() for c in fund_codes.split(",")]

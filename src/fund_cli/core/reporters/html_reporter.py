@@ -9,7 +9,7 @@ from fund_cli.core.reporter import Reporter
 class HtmlReporter(Reporter):
     """HTML报告生成器 (FUND-ANALYZE-011)"""
 
-    def generate(self, fund_code: str, metrics: dict[str, Any], **kwargs) -> str:
+    def generate(self, fund_code: str, metrics: dict[str, Any], nav_data: Any = None, benchmark_data: Any = None, **kwargs) -> str:  # type: ignore[override]
         kwargs.get("nav_data")
         html = f"""<!DOCTYPE html>
 <html lang="zh-CN">

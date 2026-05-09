@@ -283,4 +283,4 @@ def get_provider(config: AIConfig | None = None) -> LLMProvider:
             f"不支持的提供商: {provider_name}. " f"支持的提供商: {', '.join(providers.keys())}"
         )
 
-    return provider_class(config)
+    return provider_class(config)  # type: ignore[abstract]

@@ -10,6 +10,7 @@ from typing import Any
 import pandas as pd
 
 from fund_cli.config import get_config
+from fund_cli.core.data_gateway import DataSourceGateway
 from fund_cli.data.adapters.akshare_adapter import AKShareAdapter
 from fund_cli.data.base import DataSourceAdapter, DataSourceError
 from fund_cli.data.cache import DataCache
@@ -23,36 +24,115 @@ class DataManager:
     - 自动数据源选择
     - 数据缓存
     - 统一的数据访问接口
+    - 多数据源注册和切换
     """
 
     def __init__(
         self,
         cache: DataCache | None = None,
-        primary_source: str = "akshare",
+        primary_source: str | None = None,
     ):
         """
         初始化数据管理器
 
         Args:
             cache: 缓存管理器
-            primary_source: 主数据源名称
+            primary_source: 主数据源名称，默认使用配置中的设置
         """
         self.config = get_config()
         self._cache = cache or DataCache(
             cache_dir=self.config.data.cache_dir,
             default_ttl=self.config.data.cache_ttl,
         )
-        self._primary_source = primary_source
+        self._primary_source = primary_source or self.config.data.primary_source
         self._adapters: dict[str, DataSourceAdapter] = {}
+        self._gateway = DataSourceGateway()
 
         # 初始化数据源
         self._init_adapters()
 
     def _init_adapters(self) -> None:
-        """初始化数据源适配器"""
-        # AKShare（默认数据源）
+        """
+        初始化数据源适配器
+
+        根据配置自动检测并注册可用的数据源适配器：
+        - AKShare（默认数据源，零配置）
+        - Tushare（需要 FUND_DATA_TUSHARE_TOKEN）
+        - Wind（需要 WindPy 库且 wind_enabled=True）
+        """
+        # AKShare（默认数据源，零配置）
         if self.config.data.akshare_enabled:
-            self._adapters["akshare"] = AKShareAdapter(cache=self._cache)
+            try:
+                self._adapters["akshare"] = AKShareAdapter(cache=self._cache)
+                self._gateway.register_adapter("akshare", self._adapters["akshare"])
+                print("[DataManager] 已注册 AKShareAdapter")
+            except Exception as e:
+                print(f"[DataManager] 注册 AKShareAdapter 失败: {e}")
+
+        # Tushare（需要 Token）
+        if self.config.data.tushare_token:
+            try:
+                from fund_cli.data.adapters.tushare_adapter import TushareAdapter
+                self._adapters["tushare"] = TushareAdapter(cache=self._cache)
+                self._gateway.register_adapter("tushare", self._adapters["tushare"])
+                print("[DataManager] 已注册 TushareAdapter")
+            except ImportError:
+                print("[DataManager] Tushare 未安装，跳过注册")
+            except Exception as e:
+                print(f"[DataManager] 注册 TushareAdapter 失败: {e}")
+        else:
+            print("[DataManager] Tushare Token 未配置，跳过注册")
+
+        # Wind（需要 wind_enabled=True）
+        if self.config.data.wind_enabled:
+            try:
+                from fund_cli.data.adapters.wind_adapter import WindAdapter
+                wind_adapter = WindAdapter(cache=self._cache)
+                if wind_adapter.is_available():
+                    self._adapters["wind"] = wind_adapter
+                    self._gateway.register_adapter("wind", wind_adapter)
+                    print("[DataManager] 已注册 WindAdapter")
+                else:
+                    print("[DataManager] Wind 不可用，跳过注册")
+            except ImportError:
+                print("[DataManager] WindPy 未安装，跳过注册")
+            except Exception as e:
+                print(f"[DataManager] 注册 WindAdapter 失败: {e}")
+
+        # 设置主数据源
+        if self._primary_source not in self._adapters:
+            # 如果配置的主数据源不可用，选择第一个可用的
+            if self._adapters:
+                self._primary_source = list(self._adapters.keys())[0]
+                print(f"[DataManager] 主数据源 {self._primary_source} 不可用，使用 {self._primary_source}")
+
+        print(f"[DataManager] 当前可用数据源: {list(self._adapters.keys())}, 主数据源: {self._primary_source}")
+
+    def register_adapter(self, name: str, adapter: DataSourceAdapter) -> None:
+        """
+        注册新的数据源适配器
+
+        Args:
+            name: 适配器名称
+            adapter: 适配器实例
+        """
+        self._adapters[name] = adapter
+        print(f"[DataManager] 已注册适配器: {name}")
+
+    @property
+    def available_sources(self) -> list[str]:
+        """获取可用数据源列表"""
+        return list(self._adapters.keys())
+
+    @property
+    def source_priority(self) -> list[str]:
+        """获取数据源优先级列表"""
+        return self.config.data.source_priority_list
+
+    @property
+    def gateway(self) -> DataSourceGateway:
+        """获取数据源网关实例"""
+        return self._gateway
 
     def get_adapter(self, source: str | None = None) -> DataSourceAdapter:
         """
@@ -302,7 +382,7 @@ class DataManager:
     def get_fund_bond_holdings(
         self,
         code: str,
-        year: str | None = None,
+        year: int | None = None,
     ) -> pd.DataFrame:
         """获取基金债券持仓"""
         return self._adapter.get_fund_bond_holdings(code, year)
@@ -310,7 +390,7 @@ class DataManager:
     def get_fund_industry_allocation(
         self,
         code: str,
-        year: str | None = None,
+        year: int | None = None,
     ) -> pd.DataFrame:
         """获取基金行业配置"""
         return self._adapter.get_fund_industry_allocation(code, year)
@@ -319,7 +399,7 @@ class DataManager:
         self,
         code: str,
         indicator: str = "累计买入",
-        year: str | None = None,
+        year: int | None = None,
     ) -> pd.DataFrame:
         """获取基金重大变动(累计买入/卖出)"""
         return self._adapter.get_fund_portfolio_change(code, indicator, year)
@@ -375,7 +455,7 @@ class DataManager:
     def get_fund_dividends(
         self,
         year: int | None = None,
-        fund_type: str | None = None,
+        fund_type: str = "",  # type: ignore[assignment]
         page: int = -1,
     ) -> pd.DataFrame:
         """基金分红"""
@@ -384,7 +464,7 @@ class DataManager:
     def get_fund_splits(
         self,
         year: int | None = None,
-        fund_type: str | None = None,
+        fund_type: str = "",  # type: ignore[assignment]
         page: int = -1,
     ) -> pd.DataFrame:
         """基金拆分"""

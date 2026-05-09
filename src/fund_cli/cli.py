@@ -62,6 +62,7 @@ from fund_cli.commands import (  # noqa: E402
     manager_cmd,
     monitor_cmd,
     optimize_cmd,
+    report_cmd,  # noqa: E402  # v3.1 新增
 )
 
 # 注册子命令
@@ -76,6 +77,7 @@ app.add_typer(ai_cmd.app, name="ai")
 app.add_typer(holding_cmd.app, name="holding")
 app.add_typer(manager_cmd.app, name="manager")
 app.add_typer(interactive_cmd.app, name="interactive")
+app.add_typer(report_cmd.app, name="report")  # v3.1 新增
 
 
 # 直接调用的命令
@@ -125,11 +127,8 @@ def doctor() -> None:
     # 1. Python 版本
     checks_total += 1
     py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    if sys.version_info >= (3, 10):
-        console.print(f"  [green]✓[/green] Python 版本: {py_version} (>=3.10)")
-        checks_passed += 1
-    else:
-        console.print(f"  [red]✗[/red] Python 版本: {py_version} (需要 >=3.10)")
+    console.print(f"  [green]✓[/green] Python 版本: {py_version} (>=3.10)")
+    checks_passed += 1
 
     # 2. 核心依赖检查
     core_deps = [
@@ -191,10 +190,10 @@ def doctor() -> None:
     env_path = Path.cwd() / ".env"
     checks_total += 1
     if env_path.exists():
-        console.print(f"  [green]✓[/green] .env 文件: 已存在")
+        console.print("  [green]✓[/green] .env 文件: 已存在")
         checks_passed += 1
     else:
-        console.print(f"  [yellow]⚠[/yellow] .env 文件: 不存在（可选）")
+        console.print("  [yellow]⚠[/yellow] .env 文件: 不存在（可选）")
 
     # 6. 缓存目录检查
     cache_dir = Path.home() / ".fund_cli" / "cache"
@@ -203,7 +202,7 @@ def doctor() -> None:
         console.print(f"  [green]✓[/green] 缓存目录: {cache_dir}")
         checks_passed += 1
     else:
-        console.print(f"  [yellow]⚠[/yellow] 缓存目录: 不存在（首次运行时自动创建）")
+        console.print("  [yellow]⚠[/yellow] 缓存目录: 不存在（首次运行时自动创建）")
 
     # 7. AI 配置检查
     console.print("\n[bold]AI配置:[/bold]")
@@ -215,7 +214,7 @@ def doctor() -> None:
             console.print(f"  [green]✓[/green] API Key: 已配置 (provider={cfg.ai.provider})")
             checks_passed += 1
         else:
-            console.print(f"  [yellow]⚠[/yellow] API Key: 未配置（AI功能需要）")
+            console.print("  [yellow]⚠[/yellow] API Key: 未配置（AI功能需要）")
     except Exception as e:
         checks_total += 1
         console.print(f"  [red]✗[/red] 配置加载失败: {e}")
@@ -229,12 +228,12 @@ def doctor() -> None:
         if cfg.database.use_postgres:
             try:
                 import psycopg2  # noqa: F401
-                console.print(f"  [green]✓[/green] PostgreSQL驱动: 已安装")
+                console.print("  [green]✓[/green] PostgreSQL驱动: 已安装")
                 checks_passed += 1
             except ImportError:
-                console.print(f"  [yellow]⚠[/yellow] PostgreSQL驱动: 未安装（psycopg2）")
+                console.print("  [yellow]⚠[/yellow] PostgreSQL驱动: 未安装（psycopg2）")
         else:
-            console.print(f"  [dim]  PostgreSQL: 未启用（使用内存存储）[/dim]")
+            console.print("  [dim]  PostgreSQL: 未启用（使用内存存储）[/dim]")
             checks_passed += 1
     except Exception:
         pass

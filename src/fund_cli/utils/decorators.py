@@ -56,7 +56,9 @@ def retry(
                     if attempt < max_attempts - 1:
                         time.sleep(delay)
 
-            raise last_exception
+            if last_exception is not None:
+                raise last_exception
+            raise RuntimeError(f"{func.__name__} 在 {max_attempts} 次尝试后仍失败")
 
         return wrapper
 

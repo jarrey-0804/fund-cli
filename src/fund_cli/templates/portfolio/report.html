@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block head %}
+<title>投资组合分析报告</title>
+{% endblock %}
+
+{% block header %}
+{{ super() }}
+<div class="summary-box">
+<strong>组合概况：</strong>包含 {{ funds | length }} 只基金 | 总资产：{{ total_asset }} | 评估日期：{{ now() }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h2>一、组合持仓</h2>
+<table>
+<tr><th>基金代码</th><th>基金名称</th><th>类型</th><th>占比</th><th>收益率</th></tr>
+{% for fund in funds %}
+<tr>
+    <td>{{ fund.code }}</td>
+    <td>{{ fund.name }}</td>
+    <td>{{ fund.type }}</td>
+    <td>{{ fund.weight | percentage }}</td>
+    <td class="{{ fund.return_1y | color_class }}">{{ fund.return_1y | percentage }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h2>二、组合绩效</h2>
+<table>
+<tr><th>指标</th><th>组合</th><th>基准</th></tr>
+{% for item in portfolio_metrics %}
+<tr>
+    <td>{{ item.name }}</td>
+    <td class="{{ item.portfolio | color_class }}">{{ item.portfolio | format_number }}</td>
+    <td class="{{ item.benchmark | color_class }}">{{ item.benchmark | format_number }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h2>三、风险分析</h2>
+<table>
+<tr><th>风险指标</th><th>值</th></tr>
+{% for item in risk_metrics %}
+<tr><td>{{ item.name }}</td><td>{{ item.value | format_number }}</td></tr>
+{% endfor %}
+</table>
+{% endblock %}

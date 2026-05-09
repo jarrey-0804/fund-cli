@@ -38,11 +38,11 @@ class RiskAnalyzer(Analyzer):
         self.confidence_level = confidence_level
         self.periods_per_year = periods_per_year
 
-    def analyze(
+    def analyze(  # type: ignore[override]
         self,
         returns: pd.Series,
         benchmark: pd.Series | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         执行风险分析
@@ -223,7 +223,7 @@ class RiskAnalyzer(Analyzer):
         if returns.empty:
             return 0.0
 
-        return np.percentile(returns, (1 - confidence) * 100)
+        return float(np.percentile(returns, (1 - confidence) * 100))
 
     def cvar(
         self,

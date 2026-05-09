@@ -9,7 +9,7 @@ from fund_cli.core.reporter import Reporter
 class MarkdownReporter(Reporter):
     """Markdown报告生成器"""
 
-    def generate(self, fund_code: str, metrics: dict[str, Any], **kwargs) -> str:
+    def generate(self, fund_code: str, metrics: dict[str, Any], nav_data: Any = None, benchmark_data: Any = None, **kwargs) -> str:  # type: ignore[override]
         md = f"# {fund_code} 基金分析报告\n\n"
         md += f"报告日期: {date.today().strftime('%Y-%m-%d')}\n\n"
         md += "## 核心指标\n\n"
