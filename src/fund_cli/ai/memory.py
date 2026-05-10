@@ -33,9 +33,7 @@ from typing import Any
 try:
     import chromadb
 except ImportError as exc:
-    raise ImportError(
-        "chromadb 包未安装，请执行: pip install chromadb"
-    ) from exc
+    raise ImportError("chromadb 包未安装，请执行: pip install chromadb") from exc
 
 logger = logging.getLogger(__name__)
 

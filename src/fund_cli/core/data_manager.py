@@ -4,6 +4,7 @@
 统一管理数据源，提供数据访问接口。
 """
 
+import logging
 from datetime import date
 from typing import Any
 
@@ -14,6 +15,9 @@ from fund_cli.core.data_gateway import DataSourceGateway
 from fund_cli.data.adapters.akshare_adapter import AKShareAdapter
 from fund_cli.data.base import DataSourceAdapter, DataSourceError
 from fund_cli.data.cache import DataCache
+from fund_cli.data.normalizer import DataNormalizer
+
+logger = logging.getLogger(__name__)
 
 
 class DataManager:
@@ -65,48 +69,53 @@ class DataManager:
             try:
                 self._adapters["akshare"] = AKShareAdapter(cache=self._cache)
                 self._gateway.register_adapter("akshare", self._adapters["akshare"])
-                print("[DataManager] 已注册 AKShareAdapter")
+                logger.info("已注册 AKShareAdapter")
             except Exception as e:
-                print(f"[DataManager] 注册 AKShareAdapter 失败: {e}")
+                logger.error("注册 AKShareAdapter 失败: %s", e)
 
         # Tushare（需要 Token）
         if self.config.data.tushare_token:
             try:
                 from fund_cli.data.adapters.tushare_adapter import TushareAdapter
+
                 self._adapters["tushare"] = TushareAdapter(cache=self._cache)
                 self._gateway.register_adapter("tushare", self._adapters["tushare"])
-                print("[DataManager] 已注册 TushareAdapter")
+                logger.info("已注册 TushareAdapter")
             except ImportError:
-                print("[DataManager] Tushare 未安装，跳过注册")
+                logger.warning("Tushare 未安装，跳过注册")
             except Exception as e:
-                print(f"[DataManager] 注册 TushareAdapter 失败: {e}")
+                logger.error("注册 TushareAdapter 失败: %s", e)
         else:
-            print("[DataManager] Tushare Token 未配置，跳过注册")
+            logger.info("Tushare Token 未配置，跳过注册")
 
         # Wind（需要 wind_enabled=True）
         if self.config.data.wind_enabled:
             try:
                 from fund_cli.data.adapters.wind_adapter import WindAdapter
+
                 wind_adapter = WindAdapter(cache=self._cache)
                 if wind_adapter.is_available():
                     self._adapters["wind"] = wind_adapter
                     self._gateway.register_adapter("wind", wind_adapter)
-                    print("[DataManager] 已注册 WindAdapter")
+                    logger.info("已注册 WindAdapter")
                 else:
-                    print("[DataManager] Wind 不可用，跳过注册")
+                    logger.warning("Wind 不可用，跳过注册")
             except ImportError:
-                print("[DataManager] WindPy 未安装，跳过注册")
+                logger.warning("WindPy 未安装，跳过注册")
             except Exception as e:
-                print(f"[DataManager] 注册 WindAdapter 失败: {e}")
+                logger.error("注册 WindAdapter 失败: %s", e)
 
         # 设置主数据源
         if self._primary_source not in self._adapters:
             # 如果配置的主数据源不可用，选择第一个可用的
             if self._adapters:
+                old_primary = self._primary_source
                 self._primary_source = list(self._adapters.keys())[0]
-                print(f"[DataManager] 主数据源 {self._primary_source} 不可用，使用 {self._primary_source}")
+                logger.warning("主数据源 %s 不可用，切换到 %s", old_primary, self._primary_source)
 
-        print(f"[DataManager] 当前可用数据源: {list(self._adapters.keys())}, 主数据源: {self._primary_source}")
+        logger.info(
+            "当前可用数据源: %s, 主数据源: %s", list(self._adapters.keys()), self._primary_source
+        )
 
     def register_adapter(self, name: str, adapter: DataSourceAdapter) -> None:
         """
@@ -117,7 +126,8 @@ class DataManager:
             adapter: 适配器实例
         """
         self._adapters[name] = adapter
-        print(f"[DataManager] 已注册适配器: {name}")
+        self._gateway.register_adapter(name, adapter)
+        logger.info("已注册适配器: %s", name)
 
     @property
     def available_sources(self) -> list[str]:
@@ -164,6 +174,21 @@ class DataManager:
         """获取主数据源适配器（便捷属性）"""
         return self.get_adapter()
 
+    def _call_gateway(
+        self, method_name: str, *args: Any, normalize: bool = False, **kwargs: Any
+    ) -> Any:
+        """通过网关调用数据源方法，可选标准化."""
+        result = self._gateway.call(method_name, *args, **kwargs)
+        if normalize:
+            try:
+                if isinstance(result, pd.DataFrame) and not result.empty:
+                    result = DataNormalizer.normalize_nav_data(result)
+                elif isinstance(result, dict):
+                    result = DataNormalizer.normalize_fund_info(result)
+            except (ValueError, KeyError, TypeError):
+                logger.debug("标准化跳过: %s 返回数据格式不兼容", method_name)
+        return result
+
     # ========== 基础基金数据接口 ==========
 
     def get_fund_info(self, fund_code: str) -> dict[str, Any]:
@@ -176,7 +201,7 @@ class DataManager:
         Returns:
             基金信息字典
         """
-        return self._adapter.get_fund_info(fund_code)
+        return self._call_gateway("get_fund_info", fund_code, normalize=True)
 
     def get_fund_nav(
         self,
@@ -195,7 +220,7 @@ class DataManager:
         Returns:
             净值数据 DataFrame
         """
-        return self._adapter.get_fund_nav(fund_code, start_date, end_date)
+        return self._call_gateway("get_fund_nav", fund_code, start_date, end_date, normalize=True)
 
     def search_funds(
         self,
@@ -258,7 +283,9 @@ class DataManager:
         Returns:
             基准数据 DataFrame
         """
-        return self._adapter.get_benchmark_nav(benchmark_code, start_date, end_date)
+        return self._call_gateway(
+            "get_benchmark_nav", benchmark_code, start_date, end_date, normalize=True
+        )
 
     def get_fund_holdings(
         self,
@@ -266,11 +293,11 @@ class DataManager:
         report_date: date | None = None,
     ) -> pd.DataFrame:
         """获取基金持仓数据"""
-        return self._adapter.get_fund_holdings(fund_code, report_date)
+        return self._call_gateway("get_fund_holdings", fund_code, report_date, normalize=True)
 
     def get_fund_manager(self, fund_code: str) -> dict[str, Any]:
         """获取基金经理信息"""
-        return self._adapter.get_fund_manager(fund_code)
+        return self._call_gateway("get_fund_manager", fund_code, normalize=True)
 
     def get_fund_fee(self, fund_code: str) -> dict[str, Any]:
         """获取基金费率信息"""
@@ -512,9 +539,7 @@ class DataManager:
 
     # ---------- 资产配置 (1个) ----------
 
-    def get_fund_asset_allocation(
-        self, code: str, date: str | None = None
-    ) -> pd.DataFrame:
+    def get_fund_asset_allocation(self, code: str, date: str | None = None) -> pd.DataFrame:
         """基金资产配置"""
         return self._adapter.get_fund_asset_allocation(code, date)
 
@@ -780,9 +805,7 @@ class DataManager:
         """获取个股估值数据(乐咕乐股)"""
         return self._adapter.get_stock_valuation_lg(code)
 
-    def get_index_valuation(
-        self, code: str, indicator: str = "pe"
-    ) -> pd.DataFrame:
+    def get_index_valuation(self, code: str, indicator: str = "pe") -> pd.DataFrame:
         """获取指数估值历史数据(乐咕乐股)"""
         return self._adapter.get_index_valuation(code, indicator)
 

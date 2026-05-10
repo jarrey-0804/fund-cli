@@ -1031,6 +1031,7 @@ class AKShareAdapter(DataSourceAdapter):
         if start is None:
             # 默认获取1年数据
             from datetime import timedelta
+
             start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
 
         cache_key = f"etf_hist:{code}:{period}:{start}:{end}"
@@ -1102,6 +1103,7 @@ class AKShareAdapter(DataSourceAdapter):
             end = datetime.now().strftime("%Y%m%d")
         if start is None:
             from datetime import timedelta
+
             start = (datetime.now() - timedelta(days=365)).strftime("%Y%m%d")
 
         cache_key = f"lof_hist:{code}:{period}:{start}:{end}"
@@ -3124,9 +3126,7 @@ class AKShareAdapter(DataSourceAdapter):
         except Exception as e:
             raise DataSourceError(f"获取个股估值失败: {e}") from e
 
-    def get_index_valuation(
-        self, code: str, indicator: str = "pe"
-    ) -> pd.DataFrame:
+    def get_index_valuation(self, code: str, indicator: str = "pe") -> pd.DataFrame:
         """获取指数估值历史数据(乐咕乐股)"""
         cache_key = f"index_valuation:{code}:{indicator}"
         if self._cache and self._cache.exists(cache_key):
@@ -3666,9 +3666,7 @@ class AKShareAdapter(DataSourceAdapter):
 
     # ---------- 资产配置 (1个) ----------
 
-    def get_fund_asset_allocation(
-        self, code: str, date: str | None = None
-    ) -> pd.DataFrame:
+    def get_fund_asset_allocation(self, code: str, date: str | None = None) -> pd.DataFrame:
         """
         基金资产配置
 
@@ -3802,9 +3800,7 @@ class AKShareAdapter(DataSourceAdapter):
         """
         ak = self._get_akshare()
         try:
-            df = ak.index_zh_a_hist(
-                symbol=code, period=period, start_date=start, end_date=end
-            )
+            df = ak.index_zh_a_hist(symbol=code, period=period, start_date=start, end_date=end)
             if df.empty:
                 raise DataNotFoundError(f"指数 {code} 历史数据不存在")
             return df.reset_index(drop=True)

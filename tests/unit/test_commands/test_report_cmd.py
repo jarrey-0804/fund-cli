@@ -89,9 +89,17 @@ class TestGenerateCommand:
         mock_instance.generate.return_value = "<html>mock report</html>"
         return mock_instance
 
-    def test_generate_single_fund_html(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_single_fund_html(self, mock_fetch):
         """测试生成单只基金 HTML 报告"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
@@ -101,9 +109,17 @@ class TestGenerateCommand:
             mock_instance.generate.assert_called_once()
             mock_instance.save.assert_called_once()
 
-    def test_generate_single_fund_markdown(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_single_fund_markdown(self, mock_fetch):
         """测试生成单只基金 Markdown 报告"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
@@ -113,9 +129,17 @@ class TestGenerateCommand:
             mock_instance.generate.assert_called_once()
             mock_instance.save.assert_called_once()
 
-    def test_generate_single_fund_pdf(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_single_fund_pdf(self, mock_fetch):
         """测试生成单只基金 PDF 报告"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
@@ -125,9 +149,17 @@ class TestGenerateCommand:
             mock_instance.generate.assert_called_once()
             mock_instance.save.assert_called_once()
 
-    def test_generate_portfolio(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_portfolio(self, mock_fetch):
         """测试生成投资组合报告"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
@@ -147,20 +179,36 @@ class TestGenerateCommand:
             assert result.exit_code == 0
             mock_instance.generate.assert_called_once()
 
-    def test_generate_risk_control(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_risk_control(self, mock_fetch):
         """测试生成风控报告"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
-                ["generate", "--type", "risk_control", "--format", "html"],
+                ["generate", "--type", "risk_control", "--fund", "000001", "--format", "html"],
             )
             assert result.exit_code == 0
             mock_instance.generate.assert_called_once()
 
-    def test_generate_with_output(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_with_output(self, mock_fetch):
         """测试指定输出文件路径"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
@@ -174,9 +222,17 @@ class TestGenerateCommand:
                 "<html>mock report</html>", "/tmp/my_report.html"
             )
 
-    def test_generate_with_template(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_with_template(self, mock_fetch):
         """测试指定自定义模板路径"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
@@ -220,17 +276,33 @@ class TestGenerateCommand:
     def test_generate_default_format(self):
         """测试默认使用 html 格式"""
         mock_instance = self._make_mock_reporter()
-        with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance) as mock_get:
-            result = runner.invoke(
-                app,
-                ["generate", "--type", "single_fund", "--fund", "000001"],
-            )
-            assert result.exit_code == 0
-            mock_get.assert_called_once_with("html")
+        with patch("fund_cli.commands.report_cmd.fetch_and_analyze") as mock_fetch:
+            mock_fetch.return_value = ({
+                "total_return": 10.0,
+                "annualized_return": 8.0,
+                "volatility": 15.0,
+                "max_drawdown": -5.0,
+                "sharpe_ratio": 1.2,
+            }, MagicMock(), MagicMock())
+            with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance) as mock_get:
+                result = runner.invoke(
+                    app,
+                    ["generate", "--type", "single_fund", "--fund", "000001"],
+                )
+                assert result.exit_code == 0
+                mock_get.assert_called_once_with("html", "single_fund")
 
-    def test_generate_default_type(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_default_type(self, mock_fetch):
         """测试默认报告类型为 single_fund"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
@@ -238,9 +310,17 @@ class TestGenerateCommand:
             )
             assert result.exit_code == 0
 
-    def test_generate_output_message(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_output_message(self, mock_fetch):
         """测试生成报告后输出提示信息"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
@@ -249,9 +329,17 @@ class TestGenerateCommand:
             assert result.exit_code == 0
             assert "报告已生成" in result.output
 
-    def test_generate_short_options(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_short_options(self, mock_fetch):
         """测试短选项参数"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             result = runner.invoke(
                 app,
@@ -259,25 +347,43 @@ class TestGenerateCommand:
             )
             assert result.exit_code == 0
 
-    def test_generate_passes_fund_code_to_reporter(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_passes_fund_code_to_reporter(self, mock_fetch):
         """测试 generate 将基金代码传递给 reporter"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             runner.invoke(
                 app,
                 ["generate", "--type", "single_fund", "--fund", "110011"],
             )
-            mock_instance.generate.assert_called_once_with(fund_code="110011", metrics={})
+            call_kwargs = mock_instance.generate.call_args.kwargs
+            assert call_kwargs.get("fund_code") == "110011"
 
-    def test_generate_portfolio_passes_first_fund(self):
+    @patch("fund_cli.commands.report_cmd.fetch_and_analyze")
+    def test_generate_portfolio_passes_first_fund(self, mock_fetch):
         """测试 portfolio 类型将第一个基金代码传递给 reporter"""
         mock_instance = self._make_mock_reporter()
+        mock_fetch.return_value = ({
+            "total_return": 10.0,
+            "annualized_return": 8.0,
+            "volatility": 15.0,
+            "max_drawdown": -5.0,
+            "sharpe_ratio": 1.2,
+        }, MagicMock(), MagicMock())
         with patch("fund_cli.commands.report_cmd.get_reporter", return_value=mock_instance):
             runner.invoke(
                 app,
                 ["generate", "--type", "portfolio", "--funds", "000001,000002,000003"],
             )
-            mock_instance.generate.assert_called_once_with(fund_code="000001", metrics={})
+            call_kwargs = mock_instance.generate.call_args.kwargs
+            assert call_kwargs.get("fund_code") == "000001"
 
     def test_generate_market_flow_uses_market_code(self):
         """测试 market_flow 类型使用 MARKET 作为基金代码"""

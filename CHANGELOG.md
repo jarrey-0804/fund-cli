@@ -5,6 +5,45 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [3.2.0] - 2026-05-10
+
+### Added - 数据质量风险治理体系（核心特性）
+- 五层数据质量治理架构
+  - Layer 1 数据采集层质量门禁: DataManager路由改用Gateway，激活熔断器/重试/降级
+  - Layer 2 数据标准化管道: Normalizer集成Pydantic模型验证、重复检测、净值范围校验
+  - Layer 3 数据质量检查引擎: Expectation风格8项自动化检查（非空/数据量/列完整/净值非空/净值范围/收益率范围/日期唯一/时效性）
+  - Layer 4 计算验证层: 12项指标合理性边界验证、交叉验证（PerformanceAnalyzer vs RiskAnalyzer）
+  - Layer 5 输出合规层: 报告完整性验证、免责声明检查、质量徽章
+- 质量门禁 (QualityGate): 分析入口强制执行数据质量检查，不达标拦截
+- 计算结果验证器 (CalcValidator): Sharpe/回撤/波动率/Beta/VaR等12项指标合理性检查
+- 交叉验证器 (CrossValidator): 多引擎计算结果交叉比对
+- AI输出验证器 (AIOutputValidator): AI生成文本与源数据一致性校验、矛盾表述检测
+- 报告验证器 (ReportValidator): 必需字段检查、模板数据完整性、免责声明检查
+- 审计日志 (AuditLogger): 质量检查/分析操作/报告生成日志，支持合规审计和查询
+- 合规风控报告生成器 (RiskControlReporter): 风险概览/集中度分析/合规检查数据填充
+- 质量配置 (QualityConfig): 质量门禁阈值、异常检测参数、审计日志配置
+- Monitor扩展: 支持回撤/波动率/夏普比率监控规则
+- 71个新增单元测试（覆盖全部6个新模块）
+- 总测试数: 2001 passed
+
+### Changed
+- DataManager: 关键方法(get_fund_info/nav/holdings/manager/benchmark)路由改用Gateway+Normalizer
+- DataSourceGateway: 激活请求级内存缓存(5min TTL)，修复hash碰撞(MD5)，print→logging
+- DataCache: 版本控制(CACHE_VERSION)、1GB容量限制、增强统计信息
+- Normalizer: Pydantic模型验证集成、重复行检测、净值范围校验(0<nav<=10000)
+- validators.py: 新增validate_nav_value/validate_daily_return/validate_data_min_rows/validate_date_strict
+- decorators.py: retry增加指数退避+抖动，新增validate_input装饰器
+- report_cmd.py: 修复空数据问题，集成ReportValidator，实现真实数据获取和分析
+- analyze_cmd.py: 集成质量门禁+交叉验证+计算验证，显示质量评分
+
+### Fixed
+- DataManager第107行日志变量bug（主数据源切换日志显示错误）
+- report_cmd.py传入空metrics={}的严重问题
+- 风控报告模板(risk_control)无后端数据填充
+- DataQualityChecker孤岛模块（从未被自动调用）
+- Pydantic模型与数据流脱节（11个模型零调用）
+- validators.py/decorators.py死代码（7个工具零调用）
+
 ## [3.1.0] - 2026-05-09
 
 ### Added

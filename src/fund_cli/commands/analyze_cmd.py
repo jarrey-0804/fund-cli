@@ -4,6 +4,7 @@
 提供基金信息查询、业绩分析、报告生成等功能。
 """
 
+import logging
 from datetime import date, datetime, timedelta
 
 import typer
@@ -13,10 +14,14 @@ from rich.table import Table
 
 from fund_cli.analysis.performance import PerformanceAnalyzer
 from fund_cli.analysis.risk import RiskAnalyzer
+from fund_cli.core.calc_validator import CalcValidator
+from fund_cli.core.cross_validator import CrossValidator
 from fund_cli.core.data_manager import get_data_manager
+from fund_cli.core.quality_gate import QualityGate
 
 app = typer.Typer(help="基金分析命令")
 console = Console()
+logger = logging.getLogger(__name__)
 
 
 @app.command("info")
@@ -163,6 +168,25 @@ def analyze_metrics(
             console.print("[yellow]未找到净值数据[/yellow]")
             return
 
+        # 质量门禁检查
+        console.print("[dim]执行数据质量检查...[/dim]")
+        quality_gate = QualityGate(dm)
+        quality_report = quality_gate.check(fund_code, nav_df)
+
+        if quality_report.blocked:
+            console.print(f"[red]数据质量检查未通过 (评分: {quality_report.score:.0f}/100)[/red]")
+            for result in quality_report.results:
+                if not result.passed and result.severity == "error":
+                    console.print(f"  [red]✗ {result.name}: {result.message}[/red]")
+            raise typer.Exit(1)
+        elif quality_report.level == "warning":
+            console.print(f"[yellow]数据质量警告 (评分: {quality_report.score:.0f}/100)[/yellow]")
+            for result in quality_report.results:
+                if not result.passed:
+                    console.print(f"  [yellow]⚠ {result.name}: {result.message}[/yellow]")
+        else:
+            console.print(f"[green]数据质量检查通过 (评分: {quality_report.score:.0f}/100)[/green]")
+
         # 计算收益率
         nav_series = nav_df.set_index("nav_date")["unit_nav"]
         returns = nav_series.pct_change().dropna()
@@ -184,6 +208,42 @@ def analyze_metrics(
 
         perf_metrics = perf_analyzer.analyze(returns, benchmark=benchmark_returns)
         risk_metrics = risk_analyzer.analyze(returns, benchmark=benchmark_returns)
+
+        # 交叉验证
+        cross_validator = CrossValidator()
+        cross_results = cross_validator.validate(perf_metrics, risk_metrics)
+        cross_summary = cross_validator.get_summary(cross_results)
+
+        if cross_summary["failed"] > 0:
+            console.print(
+                f"[yellow]交叉验证警告: {cross_summary['failed']}/{cross_summary['total']} 项指标差异超标[/yellow]"
+            )
+            for failed in cross_summary["failed_metrics"]:
+                console.print(
+                    f"  [yellow]⚠ {failed['name']}: 差异 {failed['diff_percent']:.2%}[/yellow]"
+                )
+        else:
+            console.print(
+                f"[green]交叉验证通过: {cross_summary['passed']}/{cross_summary['total']} 项指标一致[/green]"
+            )
+
+        # 计算结果验证
+        console.print("[dim]执行计算结果验证...[/dim]")
+        calc_validator = CalcValidator()
+        all_metrics = {**perf_metrics, **risk_metrics}
+        calc_results = calc_validator.validate_metrics(all_metrics)
+        calc_summary = calc_validator.get_summary(calc_results)
+
+        if calc_summary["failed"] > 0:
+            console.print(
+                f"[yellow]计算验证警告: {calc_summary['failed']}/{calc_summary['total']} 项指标异常[/yellow]"
+            )
+            for warning in calc_summary["warnings"]:
+                console.print(f"  [yellow]⚠ {warning['name']}: {warning['message']}[/yellow]")
+        else:
+            console.print(
+                f"[green]计算验证通过: {calc_summary['passed']}/{calc_summary['total']} 项指标正常[/green]"
+            )
 
         # 显示结果
         metrics_table = Table(title=f"基金 {fund_code} 分析结果", show_header=True)
@@ -246,6 +306,7 @@ def generate_report(
     """生成分析报告 (FUND-ANALYZE-011)"""
     from fund_cli.analysis.performance import PerformanceAnalyzer
     from fund_cli.core.data_manager import DataManager
+    from fund_cli.core.quality_gate import QualityGate
 
     dm = DataManager()
     try:
@@ -253,19 +314,33 @@ def generate_report(
         if nav_df.empty:
             console.print("[yellow]无净值数据[/yellow]")
             return
+
+        # 执行数据质量检查
+        quality_gate = QualityGate(dm)
+        quality_report = quality_gate.check(fund_code, nav_df)
+
+        if quality_report.blocked:
+            console.print(f"[red]数据质量检查未通过 (评分: {quality_report.score:.0f}/100)[/red]")
+            for result in quality_report.results:
+                if not result.passed and result.severity == "error":
+                    console.print(f"  [red]✗ {result.name}: {result.message}[/red]")
+            raise typer.Exit(1)
+        elif quality_report.level == "warning":
+            console.print(f"[yellow]数据质量警告 (评分: {quality_report.score:.0f}/100)[/yellow]")
+
         returns = nav_df["daily_return"].dropna() / 100.0
         analyzer = PerformanceAnalyzer()
         metrics = analyzer.analyze(returns)
 
         if format == "html":
-            from fund_cli.core.reporters.html_reporter import HtmlReporter
             from fund_cli.core.reporter import Reporter
+            from fund_cli.core.reporters.html_reporter import HtmlReporter
 
             reporter: Reporter = HtmlReporter()
             ext = ".html"
         elif format == "markdown":
-            from fund_cli.core.reporters.markdown_reporter import MarkdownReporter
             from fund_cli.core.reporter import Reporter
+            from fund_cli.core.reporters.markdown_reporter import MarkdownReporter
 
             reporter = MarkdownReporter()  # type: ignore[assignment]
             ext = ".md"
@@ -273,7 +348,14 @@ def generate_report(
             console.print(f"[red]不支持的格式: {format}[/red]")
             raise typer.Exit(1) from None
 
-        content = reporter.generate(fund_code, metrics, nav_data=nav_df)
+        # Pass quality information to report generator
+        content = reporter.generate(
+            fund_code,
+            metrics,
+            nav_data=nav_df,
+            quality_score=quality_report.score,
+            quality_level=quality_report.level,
+        )
         out_path = output or f"{fund_code}_report{ext}"
         reporter.save(content, out_path)
         console.print(f"[green]报告已生成: {out_path}[/green]")

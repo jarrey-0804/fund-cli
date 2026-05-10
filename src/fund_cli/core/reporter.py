@@ -75,7 +75,7 @@ class Reporter(ABC):
         template_name = Path(template_path).name
         env = Environment(
             loader=FileSystemLoader(template_dir),
-            autoescape=select_autoescape(['html', 'xml']),
+            autoescape=select_autoescape(["html", "xml"]),
         )
         template = env.get_template(template_name)
         return template.render(**data)

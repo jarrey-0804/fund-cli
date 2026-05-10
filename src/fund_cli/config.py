@@ -28,7 +28,9 @@ class DataConfig(BaseSettings):
 
     # 数据源优先级配置
     primary_source: str = Field(default="akshare", description="主数据源")
-    source_priority: str = Field(default="akshare,tushare,wind", description="数据源优先级列表，逗号分隔")
+    source_priority: str = Field(
+        default="akshare,tushare,wind", description="数据源优先级列表，逗号分隔"
+    )
 
     # 缓存配置
     cache_ttl: int = Field(default=3600, description="缓存过期时间（秒）")
@@ -156,6 +158,31 @@ class AgentConfig(BaseSettings):
     chroma_persist_dir: str = Field(default="~/.fund_cli/chroma", description="ChromaDB 持久化目录")
 
 
+class QualityConfig(BaseSettings):
+    """数据质量配置."""
+
+    model_config = SettingsConfigDict(env_prefix="FUND_QUALITY_")
+
+    # 质量门禁阈值
+    min_quality_score: float = Field(default=60.0, ge=0, le=100)
+    min_data_rows: int = Field(default=30, ge=10)
+    max_nan_ratio: float = Field(default=0.2, ge=0, le=1)
+
+    # 异常检测参数
+    outlier_iqr_multiplier: float = Field(default=3.0, ge=1.5, le=5.0)
+    max_daily_return: float = Field(default=0.2, ge=0.05, le=0.5)
+
+    # 时效性配置
+    data_freshness_days: int = Field(default=7, ge=1)
+
+    # 计算验证
+    calc_validation_enabled: bool = Field(default=True)
+
+    # 审计日志
+    audit_logging_enabled: bool = Field(default=True)
+    audit_log_dir: str = Field(default="~/.fund_cli/audit")
+
+
 class AppConfig(BaseSettings):
     """应用主配置"""
 
@@ -179,6 +206,7 @@ class AppConfig(BaseSettings):
     output: OutputConfig = Field(default_factory=OutputConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     agent: AgentConfig = Field(default_factory=AgentConfig)
+    quality: QualityConfig = Field(default_factory=QualityConfig)
 
 
 # 全局配置实例

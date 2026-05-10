@@ -10,4 +10,15 @@ __all__ = [
     "TushareAdapter",
     "WindAdapter",
     "DataSourceAdapterMixin",  # v3.1 新增
+    "get_adapter",
 ]
+
+
+def get_adapter():
+    """
+    获取默认数据适配器.
+
+    Returns:
+        AKShareAdapter 实例（默认适配器）
+    """
+    return AKShareAdapter()

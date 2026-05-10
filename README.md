@@ -4,7 +4,7 @@
 
 **专业基金分析CLI工具 - 面向机构客户**
 
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/jarrey-0804/fund-cli)
+[![Version](https://img.shields.io/badge/version-3.2.0-blue.svg)](https://github.com/jarrey-0804/fund-cli)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -16,6 +16,23 @@
 ## 简介
 
 Fund CLI 是一款面向机构客户的专业基金分析命令行工具，提供基金筛选、业绩分析、组合对比、风险监控等功能。基于开源技术栈构建，支持多数据源接入和AI辅助分析。
+
+## v3.2 新特性
+
+### 五层数据质量治理架构
+- **Layer 1 数据采集层**: Gateway路由 + 熔断器/重试/降级机制
+- **Layer 2 数据标准化管道**: Pydantic模型验证 + 重复检测 + 净值范围校验
+- **Layer 3 质量检查引擎**: 8项Expectation风格自动化检查
+- **Layer 4 计算验证层**: 12项指标合理性边界验证 + 交叉验证
+- **Layer 5 输出合规层**: 报告完整性验证 + 免责声明检查
+
+### 新增质量模块
+- **QualityGate**: 分析入口强制执行数据质量检查
+- **CalcValidator**: Sharpe/回撤/波动率等12项指标合理性验证
+- **CrossValidator**: PerformanceAnalyzer与RiskAnalyzer交叉验证
+- **AIOutputValidator**: AI生成内容与源数据一致性校验
+- **ReportValidator**: 报告必需字段和合规性检查
+- **AuditLogger**: 质量检查/分析操作/报告生成审计日志
 
 ## v3.1 新特性
 
@@ -57,6 +74,7 @@ Fund CLI 是一款面向机构客户的专业基金分析命令行工具，提�
 - **多数据源架构** (v3.1) - Tushare/AKShare/Wind 统一接入，熔断降级机制
 - **报告引擎** (v3.1) - HTML/Markdown/PDF/Word/PPT 5种格式报告
 - **AI增强** (v3.1) - 规则引擎 + OpenAI 双后端智能分析
+- **数据质量治理** (v3.2) - 五层质量架构 + 审计日志 + 合规验证
 
 ---
 

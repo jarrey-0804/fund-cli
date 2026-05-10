@@ -7,6 +7,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 
 class FundMonitor:
@@ -151,20 +152,50 @@ class FundMonitor:
 
     # ========== 净值监控 (FUND-MONITOR-002) ==========
 
+    # 支持的监控规则类型
+    RULE_TYPES: dict[str, dict[str, Any]] = {
+        "nav_change": {"name": "日收益率", "unit": "%", "default": -2.0},
+        "max_drawdown": {"name": "最大回撤", "unit": "%", "default": -10.0},
+        "volatility": {"name": "波动率", "unit": "%", "default": 30.0},
+        "sharpe_ratio": {"name": "夏普比率", "unit": "", "default": 0.5},
+    }
+
     def add_rule(
-        self, fund_code: str, rule_type: str = "nav_change", threshold: float = -2.0
-    ) -> None:
-        """添加监控规则"""
+        self, fund_code: str, rule_type: str = "nav_change", threshold: float | None = None
+    ) -> bool:
+        """
+        添加监控规则
+
+        Args:
+            fund_code: 基金代码
+            rule_type: 规则类型 (nav_change/max_drawdown/volatility/sharpe_ratio)
+            threshold: 预警阈值，None 使用默认值
+
+        Returns:
+            是否添加成功
+        """
+        if rule_type not in self.RULE_TYPES:
+            return False
+
+        # 使用默认值
+        actual_threshold: float
+        if threshold is None:
+            default_val = self.RULE_TYPES[rule_type]["default"]
+            actual_threshold = float(default_val) if default_val is not None else 0.0
+        else:
+            actual_threshold = threshold
+
         self._rules.append(
             {
                 "fund_code": fund_code,
                 "rule_type": rule_type,
-                "threshold": threshold,
+                "threshold": actual_threshold,
                 "enabled": True,
                 "created_at": datetime.now().isoformat(),
             }
         )
         self._save()
+        return True
 
     def get_rules(self, fund_code: str | None = None) -> list[dict]:
         """获取监控规则"""
@@ -207,10 +238,139 @@ class FundMonitor:
                                 "alert_type": "nav_change",
                             }
                         )
-                except Exception:
+                except Exception as e:
+                    # 记录错误但不中断其他基金检查
+                    import logging
+
+                    logging.getLogger(__name__).debug(f"检查基金 {code} 净值失败: {e}")
                     continue
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+
+            logging.getLogger(__name__).warning(f"净值检查初始化失败: {e}")
+        return alerts
+
+    def check_rules(self, fund_code: str | None = None) -> list[dict]:
+        """
+        检查所有监控规则
+
+        Args:
+            fund_code: 指定基金代码，None 检查所有规则
+
+        Returns:
+            触发预警的列表
+        """
+        alerts: list[dict] = []
+        rules = self.get_rules(fund_code)
+
+        if not rules:
+            return alerts
+
+        try:
+            from fund_cli.analysis.performance import PerformanceAnalyzer
+            from fund_cli.analysis.risk import RiskAnalyzer
+            from fund_cli.core.data_manager import DataManager
+
+            dm = DataManager()
+            perf_analyzer = PerformanceAnalyzer()
+            risk_analyzer = RiskAnalyzer()
+
+            # 按基金分组规则
+            fund_rules: dict[str, list[dict]] = {}
+            for rule in rules:
+                code = rule["fund_code"]
+                if code not in fund_rules:
+                    fund_rules[code] = []
+                fund_rules[code].append(rule)
+
+            # 检查每个基金的规则
+            for code, rule_list in fund_rules.items():
+                try:
+                    nav_df = dm.get_fund_nav(code)
+                    if nav_df.empty or "daily_return" not in nav_df.columns:
+                        continue
+
+                    returns = nav_df["daily_return"].dropna() / 100
+                    if len(returns) < 30:
+                        continue
+
+                    # 计算指标
+                    perf_metrics = perf_analyzer.analyze(returns)
+                    risk_metrics = risk_analyzer.analyze(returns)
+
+                    # 检查每条规则
+                    for rule in rule_list:
+                        rule_type = rule["rule_type"]
+                        threshold = rule["threshold"]
+
+                        if rule_type == "nav_change":
+                            latest = returns.iloc[-1] * 100
+                            if latest <= threshold:
+                                alerts.append(
+                                    {
+                                        "fund_code": code,
+                                        "rule_type": rule_type,
+                                        "current_value": latest,
+                                        "threshold": threshold,
+                                        "alert_type": rule_type,
+                                    }
+                                )
+
+                        elif rule_type == "max_drawdown":
+                            mdd = risk_metrics.get("max_drawdown", 0) * 100
+                            if mdd <= threshold:
+                                alerts.append(
+                                    {
+                                        "fund_code": code,
+                                        "rule_type": rule_type,
+                                        "current_value": mdd,
+                                        "threshold": threshold,
+                                        "alert_type": rule_type,
+                                    }
+                                )
+
+                        elif rule_type == "volatility":
+                            vol = (
+                                risk_metrics.get(
+                                    "volatility_annual", perf_metrics.get("volatility", 0)
+                                )
+                                * 100
+                            )
+                            if vol >= threshold:
+                                alerts.append(
+                                    {
+                                        "fund_code": code,
+                                        "rule_type": rule_type,
+                                        "current_value": vol,
+                                        "threshold": threshold,
+                                        "alert_type": rule_type,
+                                    }
+                                )
+
+                        elif rule_type == "sharpe_ratio":
+                            sharpe = perf_metrics.get("sharpe", 0)
+                            if sharpe <= threshold:
+                                alerts.append(
+                                    {
+                                        "fund_code": code,
+                                        "rule_type": rule_type,
+                                        "current_value": sharpe,
+                                        "threshold": threshold,
+                                        "alert_type": rule_type,
+                                    }
+                                )
+
+                except Exception as e:
+                    import logging
+
+                    logging.getLogger(__name__).debug(f"检查基金 {code} 规则失败: {e}")
+                    continue
+
+        except Exception as e:
+            import logging
+
+            logging.getLogger(__name__).warning(f"规则检查初始化失败: {e}")
+
         return alerts
 
     def get_all_fund_codes(self) -> list[str]:

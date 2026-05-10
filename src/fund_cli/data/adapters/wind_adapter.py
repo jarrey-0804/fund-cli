@@ -34,6 +34,7 @@ class WindAdapter(DataSourceAdapterMixin, DataSourceAdapter):
         """检查 Wind 是否可用."""
         try:
             from WindPy import w
+
             return w.isconnected()
         except ImportError:
             return False
@@ -45,6 +46,7 @@ class WindAdapter(DataSourceAdapterMixin, DataSourceAdapter):
         if self._api is None:
             try:
                 from WindPy import w
+
                 w.start()
                 self._api = w
             except ImportError as exc:

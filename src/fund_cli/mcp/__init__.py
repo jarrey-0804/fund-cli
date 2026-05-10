@@ -24,10 +24,10 @@ def __getattr__(name: str):
     if name == "create_fund_mcp_server":
         try:
             from fund_cli.mcp.server import create_fund_mcp_server
+
             return create_fund_mcp_server
         except ImportError as exc:
             raise ImportError(
-                "MCP 模块需要安装 mcp 包。"
-                "请执行: pip install \"fund-cli[mcp]\""
+                'MCP 模块需要安装 mcp 包。请执行: pip install "fund-cli[mcp]"'
             ) from exc
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

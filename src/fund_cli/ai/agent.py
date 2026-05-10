@@ -91,9 +91,7 @@ class FundAgent:
                     from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
                     logger.info("使用 PostgreSQL 持久化存储")
-                    return AsyncPostgresSaver.from_conn_string(
-                        config.database.connection_string
-                    )
+                    return AsyncPostgresSaver.from_conn_string(config.database.connection_string)
                 except ImportError:
                     logger.warning("langgraph-checkpoint-postgres 未安装，回退到 MemorySaver")
                     return MemorySaver()
@@ -121,7 +119,8 @@ class FundAgent:
                 temperature=config.temperature,
                 max_tokens=config.max_tokens,
                 api_key=config.qwen_api_key or config.api_key,
-                base_url=config.qwen_base_url or "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                base_url=config.qwen_base_url
+                or "https://dashscope.aliyuncs.com/compatible-mode/v1",
             )
         else:
             # 默认使用 OpenAI
@@ -153,26 +152,12 @@ class FundAgent:
         if self.enable_human_review:
             # 启用人工审核时，增加 human_review 分支
             workflow.add_node("human_review", create_human_input_node())
-            workflow.add_conditional_edges(
-                "llm",
-                router_node,
-                {
-                    "tools": "tools",
-                    "end": "summary"
-                }
-            )
+            workflow.add_conditional_edges("llm", router_node, {"tools": "tools", "end": "summary"})
             workflow.add_edge("tools", "llm")
             workflow.add_edge("summary", "human_review")
             workflow.add_edge("human_review", END)
         else:
-            workflow.add_conditional_edges(
-                "llm",
-                router_node,
-                {
-                    "tools": "tools",
-                    "end": "summary"
-                }
-            )
+            workflow.add_conditional_edges("llm", router_node, {"tools": "tools", "end": "summary"})
             workflow.add_edge("tools", "llm")
             workflow.add_edge("summary", END)
 
@@ -182,10 +167,7 @@ class FundAgent:
         return workflow
 
     async def ainvoke(
-        self,
-        user_input: str,
-        user_id: str = "default",
-        thread_id: str | None = None
+        self, user_input: str, user_id: str = "default", thread_id: str | None = None
     ) -> str:
         """
         异步调用 Agent
@@ -201,12 +183,7 @@ class FundAgent:
         if thread_id is None:
             thread_id = str(uuid.uuid4())
 
-        config = {
-            "configurable": {
-                "user_id": user_id,
-                "thread_id": thread_id
-            }
-        }
+        config = {"configurable": {"user_id": user_id, "thread_id": thread_id}}
 
         # 准备初始状态
         initial_state: FundAgentState = {
@@ -219,7 +196,7 @@ class FundAgent:
             "needs_human_review": False,
             "human_feedback": None,
             "final_response": None,
-            "error": None
+            "error": None,
         }
 
         try:
@@ -234,7 +211,7 @@ class FundAgent:
             messages = result.get("messages", [])
             if messages:
                 last_message = messages[-1]
-                if hasattr(last_message, 'content'):
+                if hasattr(last_message, "content"):
                     return last_message.content
 
             return "抱歉，我无法处理您的请求。"
@@ -243,10 +220,7 @@ class FundAgent:
             return f"执行过程中出现错误: {str(e)}"
 
     def invoke(
-        self,
-        user_input: str,
-        user_id: str = "default",
-        thread_id: str | None = None
+        self, user_input: str, user_id: str = "default", thread_id: str | None = None
     ) -> str:
         """
         同步调用 Agent
@@ -267,9 +241,7 @@ class FundAgent:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        return loop.run_until_complete(
-            self.ainvoke(user_input, user_id, thread_id)
-        )
+        return loop.run_until_complete(self.ainvoke(user_input, user_id, thread_id))
 
     def get_history(self, user_id: str, thread_id: str) -> list:
         """
@@ -282,12 +254,7 @@ class FundAgent:
         Returns:
             对话历史列表
         """
-        config = {
-            "configurable": {
-                "user_id": user_id,
-                "thread_id": thread_id
-            }
-        }
+        config = {"configurable": {"user_id": user_id, "thread_id": thread_id}}
 
         try:
             history = list(self.app.get_state_history(config))
@@ -316,9 +283,7 @@ _fund_agent: FundAgent | None = None
 
 
 def get_fund_agent(
-    llm: BaseChatModel | None = None,
-    checkpointer=None,
-    force_new: bool = False
+    llm: BaseChatModel | None = None, checkpointer=None, force_new: bool = False
 ) -> FundAgent:
     """
     获取 Fund Agent 实例（单例）

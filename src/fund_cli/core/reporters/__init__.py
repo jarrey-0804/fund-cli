@@ -5,6 +5,7 @@ from fund_cli.core.reporters.html_reporter import HtmlReporter
 from fund_cli.core.reporters.markdown_reporter import MarkdownReporter
 from fund_cli.core.reporters.pdf_reporter import PdfReporter  # v3.1 新增
 from fund_cli.core.reporters.pptx_reporter import PptxReporter  # v3.1 新增
+from fund_cli.core.reporters.risk_control_reporter import RiskControlReporter
 
 __all__ = [
     "HtmlReporter",
@@ -12,4 +13,5 @@ __all__ = [
     "PdfReporter",  # v3.1 新增
     "DocxReporter",  # v3.1 新增
     "PptxReporter",  # v3.1 新增
+    "RiskControlReporter",
 ]

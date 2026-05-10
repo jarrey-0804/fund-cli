@@ -208,6 +208,7 @@ def doctor() -> None:
     console.print("\n[bold]AI配置:[/bold]")
     try:
         from fund_cli.config import get_config
+
         cfg = get_config()
         checks_total += 1
         if cfg.ai.api_key or cfg.ai.qwen_api_key:
@@ -223,11 +224,13 @@ def doctor() -> None:
     console.print("\n[bold]数据库:[/bold]")
     try:
         from fund_cli.config import get_config
+
         cfg = get_config()
         checks_total += 1
         if cfg.database.use_postgres:
             try:
                 import psycopg2  # noqa: F401
+
                 console.print("  [green]✓[/green] PostgreSQL驱动: 已安装")
                 checks_passed += 1
             except ImportError:

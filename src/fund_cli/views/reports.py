@@ -64,12 +64,12 @@ class ReportRenderer:
             <h2>业绩指标</h2>
             <table>
                 <tr><th>指标</th><th>值</th></tr>
-                <tr><td>总收益率</td><td>{metrics.get('total_return', 0):.2f}%</td></tr>
-                <tr><td>年化收益率</td><td>{metrics.get('cagr', 0):.2f}%</td></tr>
-                <tr><td>年化波动率</td><td>{metrics.get('volatility', 0):.2f}%</td></tr>
-                <tr><td>最大回撤</td><td>{metrics.get('max_drawdown', 0):.2f}%</td></tr>
-                <tr><td>夏普比率</td><td>{metrics.get('sharpe', 0):.2f}</td></tr>
-                <tr><td>索提诺比率</td><td>{metrics.get('sortino', 0):.2f}</td></tr>
+                <tr><td>总收益率</td><td>{metrics.get("total_return", 0):.2f}%</td></tr>
+                <tr><td>年化收益率</td><td>{metrics.get("cagr", 0):.2f}%</td></tr>
+                <tr><td>年化波动率</td><td>{metrics.get("volatility", 0):.2f}%</td></tr>
+                <tr><td>最大回撤</td><td>{metrics.get("max_drawdown", 0):.2f}%</td></tr>
+                <tr><td>夏普比率</td><td>{metrics.get("sharpe", 0):.2f}</td></tr>
+                <tr><td>索提诺比率</td><td>{metrics.get("sortino", 0):.2f}</td></tr>
             </table>
 
             <div class="footer">

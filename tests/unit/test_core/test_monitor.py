@@ -1,6 +1,8 @@
 """基金监控管理器测试"""
 
 import pytest
+from unittest.mock import MagicMock, patch
+import pandas as pd
 
 from fund_cli.core.monitor import FundMonitor
 
@@ -80,6 +82,19 @@ class TestRules:
         assert len(rules) == 1
         assert rules[0]["threshold"] == -3.0
 
+    def test_add_rule_with_default_threshold(self, monitor):
+        """测试使用默认阈值添加规则."""
+        monitor.add_rule("000001", "nav_change")
+        rules = monitor.get_rules("000001")
+        assert len(rules) == 1
+        # 默认阈值应该是 -2.0
+        assert rules[0]["threshold"] == -2.0
+
+    def test_add_rule_invalid_type(self, monitor):
+        """测试添加无效规则类型."""
+        result = monitor.add_rule("000001", "invalid_type")
+        assert result is False
+
     def test_get_all_rules(self, monitor):
         monitor.add_rule("000001")
         monitor.add_rule("000002")
@@ -91,6 +106,108 @@ class TestRules:
         monitor.add_rule("000002")
         rules = monitor.get_rules("000001")
         assert len(rules) == 1
+
+
+class TestCheckNavChanges:
+    """测试净值变动检查."""
+
+    @patch("fund_cli.core.data_manager.DataManager")
+    def test_check_nav_changes_below_threshold(self, mock_dm_cls, monitor):
+        """测试净值变动低于阈值触发预警."""
+        mock_dm = MagicMock()
+        mock_nav = pd.DataFrame({
+            "nav_date": pd.date_range("2024-01-01", periods=10),
+            "daily_return": [-3.0, -1.0, 0.5, 1.0, -0.5, 2.0, -1.5, 0.0, 1.5, -2.5]
+        })
+        mock_dm.get_fund_nav.return_value = mock_nav
+        mock_dm_cls.return_value = mock_dm
+
+        alerts = monitor.check_nav_changes(["000001"], threshold=-2.0)
+
+        # 应该有预警
+        assert len(alerts) >= 1
+
+    @patch("fund_cli.core.data_manager.DataManager")
+    def test_check_nav_changes_above_threshold(self, mock_dm_cls, monitor):
+        """测试净值变动高于阈值不触发预警."""
+        mock_dm = MagicMock()
+        mock_nav = pd.DataFrame({
+            "nav_date": pd.date_range("2024-01-01", periods=10),
+            "daily_return": [1.0, 0.5, 0.3, 0.2, 0.1, 0.4, 0.6, 0.2, 0.3, 0.5]
+        })
+        mock_dm.get_fund_nav.return_value = mock_nav
+        mock_dm_cls.return_value = mock_dm
+
+        alerts = monitor.check_nav_changes(["000001"], threshold=-2.0)
+
+        # 不应该有预警
+        assert len(alerts) == 0
+
+    @patch("fund_cli.core.data_manager.DataManager")
+    def test_check_nav_changes_empty_data(self, mock_dm_cls, monitor):
+        """测试空数据情况."""
+        mock_dm = MagicMock()
+        mock_dm.get_fund_nav.return_value = pd.DataFrame()
+        mock_dm_cls.return_value = mock_dm
+
+        alerts = monitor.check_nav_changes(["000001"])
+
+        # 应该返回空列表
+        assert alerts == []
+
+    @patch("fund_cli.core.data_manager.DataManager")
+    def test_check_nav_changes_error(self, mock_dm_cls, monitor):
+        """测试数据获取错误情况."""
+        mock_dm = MagicMock()
+        mock_dm.get_fund_nav.side_effect = Exception("数据获取失败")
+        mock_dm_cls.return_value = mock_dm
+
+        alerts = monitor.check_nav_changes(["000001"])
+
+        # 应该返回空列表，不抛出异常
+        assert alerts == []
+
+
+class TestCheckRules:
+    """测试规则检查."""
+
+    @patch("fund_cli.core.data_manager.DataManager")
+    @patch("fund_cli.analysis.performance.PerformanceAnalyzer")
+    @patch("fund_cli.analysis.risk.RiskAnalyzer")
+    def test_check_rules_empty(self, mock_risk_cls, mock_perf_cls, mock_dm_cls, monitor):
+        """测试无规则时检查."""
+        alerts = monitor.check_rules("000001")
+        assert alerts == []
+
+    @patch("fund_cli.core.data_manager.DataManager")
+    @patch("fund_cli.analysis.performance.PerformanceAnalyzer")
+    @patch("fund_cli.analysis.risk.RiskAnalyzer")
+    def test_check_rules_with_nav_change_rule(self, mock_risk_cls, mock_perf_cls, mock_dm_cls, monitor):
+        """测试净值变动规则检查."""
+        # 添加规则
+        monitor.add_rule("000001", "nav_change", -2.0)
+
+        # Mock 数据
+        mock_dm = MagicMock()
+        mock_nav = pd.DataFrame({
+            "nav_date": pd.date_range("2024-01-01", periods=60),
+            "daily_return": [0.1] * 59 + [-3.0]  # 最后一天大跌
+        })
+        mock_dm.get_fund_nav.return_value = mock_nav
+        mock_dm_cls.return_value = mock_dm
+
+        mock_perf = MagicMock()
+        mock_perf.analyze.return_value = {"sharpe": 1.5, "volatility": 0.15}
+        mock_perf_cls.return_value = mock_perf
+
+        mock_risk = MagicMock()
+        mock_risk.analyze.return_value = {"max_drawdown": -0.05, "volatility_annual": 0.15}
+        mock_risk_cls.return_value = mock_risk
+
+        alerts = monitor.check_rules("000001")
+
+        # 应该触发预警
+        assert len(alerts) >= 1
 
 
 class TestPersistence:
@@ -116,6 +233,15 @@ class TestUtility:
 
     def test_empty_pool_codes(self, monitor):
         assert monitor.get_all_fund_codes() == []
+
+    def test_get_pool_names(self, monitor):
+        """测试获取基金池名称列表."""
+        monitor.add_to_pool("000001", group="group1")
+        monitor.add_to_pool("000002", group="group2")
+
+        names = monitor.get_pool_names()
+        assert "group1" in names
+        assert "group2" in names
 
     def test_repr(self, monitor):
         monitor.add_to_pool("000001")

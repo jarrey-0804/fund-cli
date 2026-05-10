@@ -79,12 +79,12 @@ class AIAnalyzer:
 
             fund_text = f"""
 基金 {i + 1}: {code}
-- 名称: {info.get('name', '未知')}
-- 类型: {info.get('type', '未知')}
-- 年化收益: {metrics.get('cagr', 0)}%
-- 夏普比率: {metrics.get('sharpe_ratio', 0)}
-- 最大回撤: {metrics.get('max_drawdown', 0)}%
-- 波动率: {metrics.get('volatility', 0)}%
+- 名称: {info.get("name", "未知")}
+- 类型: {info.get("type", "未知")}
+- 年化收益: {metrics.get("cagr", 0)}%
+- 夏普比率: {metrics.get("sharpe_ratio", 0)}
+- 最大回撤: {metrics.get("max_drawdown", 0)}%
+- 波动率: {metrics.get("volatility", 0)}%
 """
             funds_text.append(fund_text)
 

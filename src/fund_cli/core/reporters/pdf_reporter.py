@@ -3,6 +3,7 @@ PDF报告生成器.
 
 使用 WeasyPrint 将 HTML 转换为 PDF。
 """
+
 from typing import Any
 
 from fund_cli.core.reporter import Reporter
@@ -11,7 +12,14 @@ from fund_cli.core.reporter import Reporter
 class PdfReporter(Reporter):
     """PDF报告生成器."""
 
-    def generate(self, fund_code: str, metrics: dict[str, Any], nav_data: Any = None, benchmark_data: Any = None, **kwargs) -> str:  # type: ignore[override]
+    def generate(
+        self,
+        fund_code: str,
+        metrics: dict[str, Any],
+        nav_data: Any = None,
+        benchmark_data: Any = None,
+        **kwargs,
+    ) -> str:  # type: ignore[override]
         """生成HTML内容（PDF基于HTML转换）."""
         from datetime import date
 
@@ -40,13 +48,13 @@ tr:nth-child(even) {{ background: #f5f5f5; }}
 </head>
 <body>
 <h1>{fund_code} 基金分析报告</h1>
-<p>报告日期: {date.today().strftime('%Y年%m月%d日')}</p>
+<p>报告日期: {date.today().strftime("%Y年%m月%d日")}</p>
 
 <div class="summary-box">
 <strong>投资摘要：</strong>
-总收益率 <span class="{'positive' if float(metrics.get('total_return', 0)) > 0 else 'negative'}">{metrics.get('total_return', 'N/A')}</span>，
-夏普比率 {metrics.get('sharpe_ratio', 'N/A')}，
-最大回撤 <span class="negative">{metrics.get('max_drawdown', 'N/A')}</span>
+总收益率 <span class="{"positive" if float(metrics.get("total_return", 0)) > 0 else "negative"}">{metrics.get("total_return", "N/A")}</span>，
+夏普比率 {metrics.get("sharpe_ratio", "N/A")}，
+最大回撤 <span class="negative">{metrics.get("max_drawdown", "N/A")}</span>
 </div>
 
 <h2>核心绩效指标</h2>

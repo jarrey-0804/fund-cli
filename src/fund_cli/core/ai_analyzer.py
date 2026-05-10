@@ -4,35 +4,45 @@ AI 分析增强模块.
 提供基金数据的智能分析和自然语言摘要生成。
 支持多种AI后端（OpenAI/本地模型/规则引擎）。
 """
+
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
 from typing import Any
 
+from fund_cli.core.ai_validator import AIOutputValidator
+
+logger = logging.getLogger(__name__)
+
+
 class AIBackend(str, Enum):
     """AI后端类型."""
+
     RULE_BASED = "rule_based"  # 规则引擎（默认，无需API）
-    OPENAI = "openai"          # OpenAI API
-    LOCAL = "local"            # 本地模型
+    OPENAI = "openai"  # OpenAI API
+    LOCAL = "local"  # 本地模型
 
 
 @dataclass
 class AnalysisResult:
     """分析结果."""
-    summary: str = ""                          # 总体摘要
-    risk_warning: str = ""                     # 风险提示
-    investment_advice: str = ""                # 投资建议
-    performance_comment: str = ""              # 业绩评价
+
+    summary: str = ""  # 总体摘要
+    risk_warning: str = ""  # 风险提示
+    investment_advice: str = ""  # 投资建议
+    performance_comment: str = ""  # 业绩评价
     highlights: list[str] = field(default_factory=list)  # 亮点
-    concerns: list[str] = field(default_factory=list)    # 风险点
-    confidence: float = 0.0                    # 置信度 0-1
-    data_source: str = ""                      # 数据来源
-    analysis_date: str = ""                    # 分析日期
+    concerns: list[str] = field(default_factory=list)  # 风险点
+    confidence: float = 0.0  # 置信度 0-1
+    data_source: str = ""  # 数据来源
+    analysis_date: str = ""  # 分析日期
 
 
 class AIBackendInterface(ABC):
     """AI后端接口."""
+
     @abstractmethod
     def analyze(self, context: str, instruction: str) -> str:
         """生成分析文本."""
@@ -74,7 +84,9 @@ class RuleBasedBackend(AIBackendInterface):
 
     def _generate_general_analysis(self, context: str) -> str:
         """生成通用分析."""
-        return f"综合分析：{self._generate_summary(context)} {self._generate_risk_analysis(context)}"
+        return (
+            f"综合分析：{self._generate_summary(context)} {self._generate_risk_analysis(context)}"
+        )
 
     def _extract_performance(self, context: str) -> str:
         """从上下文提取业绩描述."""
@@ -105,6 +117,7 @@ class OpenAIBackend(AIBackendInterface):
         if self._client is None:
             try:
                 from openai import OpenAI
+
                 self._client = OpenAI(api_key=self._api_key)
             except ImportError as exc:
                 raise RuntimeError("openai 包未安装，请运行: pip install openai") from exc
@@ -117,8 +130,11 @@ class OpenAIBackend(AIBackendInterface):
         response = self._client.chat.completions.create(
             model=self._model,
             messages=[
-                {"role": "system", "content": "你是一位专业的基金分析师，请基于提供的数据进行专业分析。"},
-                {"role": "user", "content": f"{instruction}\n\n数据：{context}"}
+                {
+                    "role": "system",
+                    "content": "你是一位专业的基金分析师，请基于提供的数据进行专业分析。",
+                },
+                {"role": "user", "content": f"{instruction}\n\n数据：{context}"},
             ],
             temperature=0.3,
             max_tokens=1000,
@@ -139,7 +155,11 @@ class AIAnalyzer:
         基于基金代码和部分关键指标生成缓存键
         """
         # 选取关键指标进行缓存
-        key_metrics = {k: metrics.get(k) for k in ['total_return', 'sharpe_ratio', 'max_drawdown'] if k in metrics}
+        key_metrics = {
+            k: metrics.get(k)
+            for k in ["total_return", "sharpe_ratio", "max_drawdown"]
+            if k in metrics
+        }
         return f"{fund_code}:{hash(str(sorted(key_metrics.items())))}"
 
     def _create_backend(self, backend: AIBackend, **kwargs) -> AIBackendInterface:
@@ -175,7 +195,9 @@ class AIAnalyzer:
             if cache_key in self._analysis_cache:
                 return self._analysis_cache[cache_key]
 
-        context = self._build_fund_context(fund_code, fund_name, metrics, holdings, asset_allocation)
+        context = self._build_fund_context(
+            fund_code, fund_name, metrics, holdings, asset_allocation
+        )
 
         summary = self._backend.analyze(context, "请生成该基金的总体摘要")
         risk = self._backend.analyze(context, "请分析该基金的风险")
@@ -196,6 +218,13 @@ class AIAnalyzer:
             data_source=fund_code,
             analysis_date=date.today().strftime("%Y-%m-%d"),
         )
+
+        # Validate AI output
+        validator = AIOutputValidator()
+        validation = validator.validate(result.summary, metrics)
+        if not validation.passed:
+            logger.warning("AI输出验证警告: %s", validation.issues)
+            result.confidence *= validation.confidence_score
 
         # 存入缓存
         if use_cache:

@@ -6,11 +6,17 @@
 
 import hashlib
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from diskcache import Cache
+
+logger = logging.getLogger(__name__)
+
+# 缓存数据版本号，用于数据模型变更时自动失效旧缓存
+CACHE_VERSION = "1.0"
 
 
 class DataCache:
@@ -21,12 +27,15 @@ class DataCache:
     - 过期时间设置
     - 持久化存储
     - 自动序列化/反序列化
+    - 版本控制
+    - 容量限制
     """
 
     def __init__(
         self,
         cache_dir: str = "~/.fund_cli/cache",
         default_ttl: int = 3600,
+        size_limit: int = 2**30,  # 1GB 默认容量限制
     ):
         """
         初始化缓存管理器
@@ -34,11 +43,34 @@ class DataCache:
         Args:
             cache_dir: 缓存目录
             default_ttl: 默认过期时间（秒）
+            size_limit: 缓存容量限制（字节），默认 1GB
         """
         self.cache_dir = Path(cache_dir).expanduser()
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.default_ttl = default_ttl
-        self._cache = Cache(str(self.cache_dir))
+        self.size_limit = size_limit
+        self._cache = Cache(str(self.cache_dir), size_limit=size_limit)
+
+        # 版本检查：如果版本不匹配，清空缓存
+        self._check_version()
+
+    def _check_version(self) -> None:
+        """检查缓存版本，不匹配则清空缓存."""
+        version_key = "__cache_version__"
+        cached_version = self._cache.get(version_key)
+
+        if cached_version != CACHE_VERSION:
+            if cached_version is not None:
+                logger.info(f"缓存版本变更: {cached_version} -> {CACHE_VERSION}，清空旧缓存")
+                self._cache.clear()
+            else:
+                logger.debug(f"初始化缓存版本: {CACHE_VERSION}")
+
+            self._cache.set(version_key, CACHE_VERSION)
+
+    def get_cache_version(self) -> str:
+        """获取当前缓存版本."""
+        return CACHE_VERSION
 
     def _generate_key(self, prefix: str, *args, **kwargs) -> str:
         """
@@ -121,10 +153,20 @@ class DataCache:
         Returns:
             统计信息字典
         """
+        volume = self._cache.volume()
+        size_limit_mb = self.size_limit / (1024 * 1024)
+        volume_mb = volume / (1024 * 1024)
+
         return {
             "size": len(self._cache),
-            "volume": self._cache.volume(),
+            "volume": volume,
+            "volume_mb": round(volume_mb, 2),
+            "size_limit_mb": round(size_limit_mb, 2),
+            "usage_percent": round(volume / self.size_limit * 100, 2) if self.size_limit > 0 else 0,
             "directory": str(self.cache_dir),
+            "version": CACHE_VERSION,
+            "hit_count": getattr(self._cache, "hit_count", 0),
+            "miss_count": getattr(self._cache, "miss_count", 0),
         }
 
     # ========== 便捷方法 ==========
@@ -186,7 +228,11 @@ class DataCache:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        pass
+        """退出上下文时关闭缓存连接."""
+        try:
+            self._cache.close()
+        except Exception:
+            pass
 
     def __repr__(self) -> str:
         return f"DataCache(directory={self.cache_dir}, size={len(self._cache)})"

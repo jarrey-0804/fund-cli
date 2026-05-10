@@ -10,6 +10,8 @@ from typing import Any
 
 import pandas as pd
 
+from fund_cli.data.models import FundInfo, NavData
+
 
 class DataNormalizer:
     """
@@ -82,7 +84,26 @@ class DataNormalizer:
         if "fund_code" in result and result["fund_code"]:
             result["fund_code"] = cls.normalize_fund_code(result["fund_code"])
 
-        return result
+        return cls.validate_fund_info(result)
+
+    @classmethod
+    def validate_fund_info(cls, data: dict) -> dict:
+        """使用Pydantic模型验证基金信息."""
+        try:
+            validated = FundInfo.model_validate(data)
+            return validated.model_dump(exclude_none=True)
+        except Exception:
+            # 验证失败时返回原始数据，不阻断流程
+            return data
+
+    @classmethod
+    def validate_nav_record(cls, record: dict) -> dict:
+        """使用Pydantic模型验证单条净值记录."""
+        try:
+            validated = NavData.model_validate(record)
+            return validated.model_dump(exclude_none=True)
+        except Exception:
+            return record
 
     @classmethod
     def normalize_nav_data(cls, df: pd.DataFrame) -> pd.DataFrame:
@@ -112,7 +133,9 @@ class DataNormalizer:
 
         # 标准化日期格式
         if "nav_date" in result.columns:
-            result["nav_date"] = pd.to_datetime(result["nav_date"], errors="coerce").dt.strftime("%Y-%m-%d")
+            result["nav_date"] = pd.to_datetime(result["nav_date"], errors="coerce").dt.strftime(
+                "%Y-%m-%d"
+            )
 
         # 标准化基金代码
         if "fund_code" in result.columns:
@@ -126,6 +149,28 @@ class DataNormalizer:
 
         # 按日期排序
         result = result.sort_values("nav_date").reset_index(drop=True)
+
+        # Duplicate detection: remove rows with duplicate (fund_code, nav_date)
+        if "fund_code" in result.columns and "nav_date" in result.columns:
+            before_count = len(result)
+            result = result.drop_duplicates(subset=["fund_code", "nav_date"], keep="last")
+            dup_count = before_count - len(result)
+            if dup_count > 0:
+                import logging
+
+                logging.getLogger(__name__).info(f"移除 {dup_count} 条重复净值记录")
+
+        # Value range validation for unit_nav
+        if "unit_nav" in result.columns:
+            invalid_mask = (result["unit_nav"] <= 0) | (result["unit_nav"] > 10000)
+            invalid_count = invalid_mask.sum()
+            if invalid_count > 0:
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    f"发现 {invalid_count} 条异常净值值 (<=0 或 >10000)，已设为NaN"
+                )
+                result.loc[invalid_mask, "unit_nav"] = pd.NA
 
         return result
 
@@ -186,10 +231,10 @@ class DataNormalizer:
         if isinstance(date_value, str):
             # 尝试多种格式
             formats = [
-                "%Y%m%d",      # 20240101
-                "%Y-%m-%d",    # 2024-01-01
-                "%Y/%m/%d",    # 2024/01/01
-                "%Y.%m.%d",    # 2024.01.01
+                "%Y%m%d",  # 20240101
+                "%Y-%m-%d",  # 2024-01-01
+                "%Y/%m/%d",  # 2024/01/01
+                "%Y.%m.%d",  # 2024.01.01
             ]
 
             for fmt in formats:

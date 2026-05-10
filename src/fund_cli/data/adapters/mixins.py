@@ -26,9 +26,7 @@ class DataSourceAdapterMixin:
         """同花顺-基金基本信息."""
         raise DataSourceError(f"{self.name} 不支持 同花顺基金信息 接口")
 
-    def get_index_fund_info(
-        self, category: str = "全部", indicator: str = "全部"
-    ) -> pd.DataFrame:
+    def get_index_fund_info(self, category: str = "全部", indicator: str = "全部") -> pd.DataFrame:
         """东方财富-指数型基金基本信息."""
         raise DataSourceError(f"{self.name} 不支持 指数基金信息 接口")
 
@@ -44,9 +42,7 @@ class DataSourceAdapterMixin:
         """东方财富-开放式基金每日净值(全部)."""
         raise DataSourceError(f"{self.name} 不支持 每日净值 接口")
 
-    def get_fund_category_spot(
-        self, category: str = "", date: str | None = None
-    ) -> pd.DataFrame:
+    def get_fund_category_spot(self, category: str = "", date: str | None = None) -> pd.DataFrame:
         """同花顺-基金实时行情(按类型)."""
         raise DataSourceError(f"{self.name} 不支持 分类行情 接口")
 
@@ -107,15 +103,11 @@ class DataSourceAdapterMixin:
         """获取基金持仓数据."""
         raise DataSourceError(f"{self.name} 不支持 基金持仓 接口")
 
-    def get_fund_bond_holdings(
-        self, fund_code: str, year: int | None = None
-    ) -> pd.DataFrame:
+    def get_fund_bond_holdings(self, fund_code: str, year: int | None = None) -> pd.DataFrame:
         """天天基金-基金债券持仓."""
         raise DataSourceError(f"{self.name} 不支持 基金债券持仓 接口")
 
-    def get_fund_industry_allocation(
-        self, fund_code: str, year: int | None = None
-    ) -> pd.DataFrame:
+    def get_fund_industry_allocation(self, fund_code: str, year: int | None = None) -> pd.DataFrame:
         """天天基金-行业配置."""
         raise DataSourceError(f"{self.name} 不支持 行业配置 接口")
 
@@ -241,9 +233,7 @@ class DataSourceAdapterMixin:
         """雪球-基金盈利概率."""
         raise DataSourceError(f"{self.name} 不支持 盈利概率 接口")
 
-    def get_fund_asset_allocation(
-        self, fund_code: str, date: str | None = None
-    ) -> pd.DataFrame:
+    def get_fund_asset_allocation(self, fund_code: str, date: str | None = None) -> pd.DataFrame:
         """雪球-基金资产配置."""
         raise DataSourceError(f"{self.name} 不支持 资产配置 接口")
 
@@ -477,9 +467,7 @@ class DataSourceAdapterMixin:
         """个股估值-乐咕乐股."""
         raise DataSourceError(f"{self.name} 不支持 个股估值 接口")
 
-    def get_index_valuation(
-        self, code: str, indicator: str = "pe"
-    ) -> pd.DataFrame:
+    def get_index_valuation(self, code: str, indicator: str = "pe") -> pd.DataFrame:
         """指数估值-乐咕乐股."""
         raise DataSourceError(f"{self.name} 不支持 指数估值 接口")
 

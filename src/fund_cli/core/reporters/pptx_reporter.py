@@ -3,6 +3,7 @@ PPT报告生成器.
 
 使用 python-pptx 生成 PowerPoint 格式的基金分析报告。
 """
+
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -13,7 +14,14 @@ from fund_cli.core.reporter import Reporter
 class PptxReporter(Reporter):
     """PPT报告生成器."""
 
-    def generate(self, fund_code: str, metrics: dict[str, Any], nav_data: Any = None, benchmark_data: Any = None, **kwargs) -> str:  # type: ignore[override]
+    def generate(
+        self,
+        fund_code: str,
+        metrics: dict[str, Any],
+        nav_data: Any = None,
+        benchmark_data: Any = None,
+        **kwargs,
+    ) -> str:  # type: ignore[override]
         """生成PPT内容（返回临时文件路径）."""
         try:
             from pptx import Presentation
@@ -43,6 +51,7 @@ class PptxReporter(Reporter):
 
         # 日期
         from datetime import date
+
         p2 = tf.add_paragraph()
         p2.text = date.today().strftime("%Y年%m月%d日")
         p2.font.size = Pt(20)
@@ -62,7 +71,9 @@ class PptxReporter(Reporter):
 
         # 指标表格
         rows, cols = 6, 4
-        table_shape = slide2.shapes.add_table(rows, cols, Inches(0.5), Inches(1.5), Inches(12), Inches(4))
+        table_shape = slide2.shapes.add_table(
+            rows, cols, Inches(0.5), Inches(1.5), Inches(12), Inches(4)
+        )
         table = table_shape.table
 
         headers = ["指标", "值", "指标", "值"]
@@ -74,8 +85,18 @@ class PptxReporter(Reporter):
                 paragraph.font.bold = True
 
         metrics_pairs = [
-            ("总收益率", metrics.get("total_return", "N/A"), "年化收益率", metrics.get("annualized_return", "N/A")),
-            ("波动率", metrics.get("volatility", "N/A"), "夏普比率", metrics.get("sharpe_ratio", "N/A")),
+            (
+                "总收益率",
+                metrics.get("total_return", "N/A"),
+                "年化收益率",
+                metrics.get("annualized_return", "N/A"),
+            ),
+            (
+                "波动率",
+                metrics.get("volatility", "N/A"),
+                "夏普比率",
+                metrics.get("sharpe_ratio", "N/A"),
+            ),
             ("最大回撤", metrics.get("max_drawdown", "N/A"), "Alpha", metrics.get("alpha", "N/A")),
         ]
         for r, (n1, v1, n2, v2) in enumerate(metrics_pairs, 1):
@@ -101,10 +122,12 @@ class PptxReporter(Reporter):
         stf = summary_box.text_frame
         stf.word_wrap = True
         sp = stf.paragraphs[0]
-        total_return = metrics.get('total_return', 0)
+        total_return = metrics.get("total_return", 0)
         sp.text = f"总收益率 {total_return:.2%}"
         sp.font.size = Pt(18)
-        sp.font.color.rgb = RGBColor(0x27, 0xAE, 0x60) if total_return > 0 else RGBColor(0xE7, 0x4C, 0x3C)
+        sp.font.color.rgb = (
+            RGBColor(0x27, 0xAE, 0x60) if total_return > 0 else RGBColor(0xE7, 0x4C, 0x3C)
+        )
 
         sp2 = stf.add_paragraph()
         sp2.text = f"夏普比率 {metrics.get('sharpe_ratio', 'N/A')}，最大回撤 {metrics.get('max_drawdown', 'N/A')}"
@@ -119,6 +142,7 @@ class PptxReporter(Reporter):
     def save(self, content: str, output_path: str) -> None:
         """保存PPT文件."""
         import shutil
+
         shutil.copy2(content, output_path)
 
     def get_formats(self) -> list[str]:

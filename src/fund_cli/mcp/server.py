@@ -25,9 +25,7 @@ from __future__ import annotations
 try:
     from mcp.server.fastmcp import FastMCP
 except ImportError as exc:
-    raise ImportError(
-        "mcp 包未安装，请执行: pip install mcp"
-    ) from exc
+    raise ImportError("mcp 包未安装，请执行: pip install mcp") from exc
 
 # ============================================
 # 延迟初始化 fund-cli 内部模块
@@ -150,9 +148,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
 
                 # 业绩指标
                 nav_data = adapter.get_fund_nav(fund_code, period)
-                if nav_data is not None and not (
-                    hasattr(nav_data, "empty") and nav_data.empty
-                ):
+                if nav_data is not None and not (hasattr(nav_data, "empty") and nav_data.empty):
                     metrics = analyzer.calculate_metrics(nav_data)
                     parts.append(
                         f"\n业绩指标 ({period}):\n"
@@ -195,9 +191,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
 
             elif info_type == "nav":
                 nav_data = adapter.get_fund_nav(fund_code, period)
-                if nav_data is None or (
-                    hasattr(nav_data, "empty") and nav_data.empty
-                ):
+                if nav_data is None or (hasattr(nav_data, "empty") and nav_data.empty):
                     return f"未找到基金 {fund_code} 在 {period} 期间的净值数据"
 
                 latest = nav_data.iloc[-1]
@@ -216,9 +210,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
 
             elif info_type == "performance":
                 nav_data = adapter.get_fund_nav(fund_code, period)
-                if nav_data is None or (
-                    hasattr(nav_data, "empty") and nav_data.empty
-                ):
+                if nav_data is None or (hasattr(nav_data, "empty") and nav_data.empty):
                     return f"未找到基金 {fund_code} 在 {period} 期间的净值数据"
 
                 metrics = analyzer.calculate_metrics(nav_data)
@@ -242,7 +234,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
                     stocks_list = list(stocks)[:10]
                     stocks_text = "\n".join(
                         [
-                            f"  {i+1}. {s.get('name', s.get('股票名称', '未知'))}"
+                            f"  {i + 1}. {s.get('name', s.get('股票名称', '未知'))}"
                             f"({s.get('code', s.get('股票代码', ''))}): "
                             f"{s.get('ratio', s.get('占净值比例', 0)):.2f}%"
                             for i, s in enumerate(stocks_list)
@@ -336,9 +328,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
                 limit=limit * 3,  # 多取一些用于后续过滤
             )
 
-            if funds_df is None or (
-                hasattr(funds_df, "empty") and funds_df.empty
-            ):
+            if funds_df is None or (hasattr(funds_df, "empty") and funds_df.empty):
                 return "未找到符合条件的基金"
 
             # 业绩指标过滤（如果提供了相关条件）
@@ -359,16 +349,16 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
                 for code in scan_codes[:50]:
                     try:
                         nav_data = dm.get_fund_nav(code, "1y")
-                        if nav_data is None or (
-                            hasattr(nav_data, "empty") and nav_data.empty
-                        ):
+                        if nav_data is None or (hasattr(nav_data, "empty") and nav_data.empty):
                             continue
 
                         metrics = analyzer.calculate_metrics(nav_data)
 
                         if min_return_1y is not None and metrics.get("cagr", 0) < min_return_1y:
                             continue
-                        if max_drawdown is not None and abs(metrics.get("max_drawdown", 0)) > abs(max_drawdown):
+                        if max_drawdown is not None and abs(metrics.get("max_drawdown", 0)) > abs(
+                            max_drawdown
+                        ):
                             continue
                         if min_sharpe is not None and metrics.get("sharpe_ratio", 0) < min_sharpe:
                             continue
@@ -496,9 +486,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
                 try:
                     nav = dm.get_fund_nav(code, "1y")
                     info = dm.get_fund_info(code)
-                    if nav is not None and not (
-                        hasattr(nav, "empty") and nav.empty
-                    ):
+                    if nav is not None and not (hasattr(nav, "empty") and nav.empty):
                         metrics = analyzer.calculate_metrics(nav)
                         fund_data.append(
                             {
@@ -530,9 +518,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
             # 分散度评分（基于权重均匀度）
             n = len(fund_data)
             ideal_weight = 1.0 / n
-            weight_variance = sum(
-                (f["weight"] - ideal_weight) ** 2 for f in fund_data
-            ) / n
+            weight_variance = sum((f["weight"] - ideal_weight) ** 2 for f in fund_data) / n
             diversification_score = max(1, min(10, int(10 - weight_variance * 100)))
 
             # 配置建议
@@ -545,7 +531,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
 
             holdings_text = "\n".join(
                 [
-                    f"- {f['code']} ({f['name']}): {f['weight']*100:.1f}% "
+                    f"- {f['code']} ({f['name']}): {f['weight'] * 100:.1f}% "
                     f"(收益{f['cagr']:.1f}%, 波动{f['volatility']:.1f}%)"
                     for f in fund_data
                 ]
@@ -559,7 +545,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
                 f"- 预期波动率: {portfolio_volatility:.2f}%\n"
                 f"- 组合夏普比率: {portfolio_sharpe:.2f}\n"
                 f"- 最大回撤: {max_drawdown:.2f}%\n"
-                f"- 无风险利率: {risk_free_rate*100:.1f}%\n\n"
+                f"- 无风险利率: {risk_free_rate * 100:.1f}%\n\n"
                 f"评估:\n"
                 f"- 分散度评分: {diversification_score}/10\n"
                 f"- 配置建议: {suggestion}\n\n"
@@ -634,15 +620,11 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
                     hasattr(df_official, "empty") and df_official.empty
                 ):
                     result_parts.append(
-                        f"\n官方制造业PMI (最近5期):\n"
-                        f"{df_official.tail(5).to_string(index=False)}"
+                        f"\n官方制造业PMI (最近5期):\n{df_official.tail(5).to_string(index=False)}"
                     )
-                if df_caixin is not None and not (
-                    hasattr(df_caixin, "empty") and df_caixin.empty
-                ):
+                if df_caixin is not None and not (hasattr(df_caixin, "empty") and df_caixin.empty):
                     result_parts.append(
-                        f"\n财新制造业PMI (最近5期):\n"
-                        f"{df_caixin.tail(5).to_string(index=False)}"
+                        f"\n财新制造业PMI (最近5期):\n{df_caixin.tail(5).to_string(index=False)}"
                     )
                 return "\n".join(result_parts)
 
@@ -670,12 +652,9 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
                     ("进口年率", df_imports),
                     ("贸易帐", df_balance),
                 ]:
-                    if df_item is not None and not (
-                        hasattr(df_item, "empty") and df_item.empty
-                    ):
+                    if df_item is not None and not (hasattr(df_item, "empty") and df_item.empty):
                         result_parts.append(
-                            f"\n{label} (最近5期):\n"
-                            f"{df_item.tail(5).to_string(index=False)}"
+                            f"\n{label} (最近5期):\n{df_item.tail(5).to_string(index=False)}"
                         )
                 return "\n".join(result_parts)
 
@@ -713,10 +692,7 @@ def create_fund_mcp_server(name: str = "fund-cli") -> FastMCP:
             }
             label = label_map.get(data_type, data_type)
 
-            return (
-                f"宏观经济数据 - {label} (最近5期):\n"
-                f"{df.tail(5).to_string(index=False)}"
-            )
+            return f"宏观经济数据 - {label} (最近5期):\n{df.tail(5).to_string(index=False)}"
 
         except Exception as e:
             return f"获取宏观经济数据失败: {str(e)}"

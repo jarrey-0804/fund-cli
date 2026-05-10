@@ -4,6 +4,9 @@
 提供多数据源管理、降级切换、熔断与重试机制。
 """
 
+import hashlib
+import json
+import logging
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from enum import Enum
@@ -14,11 +17,14 @@ from fund_cli.data.base import DataNotFoundError, DataSourceAdapter, DataSourceE
 
 T = TypeVar("T")
 
+logger = logging.getLogger(__name__)
+
 
 class CircuitState(Enum):
     """熔断器状态."""
-    CLOSED = "closed"      # 正常状态
-    OPEN = "open"          # 熔断状态
+
+    CLOSED = "closed"  # 正常状态
+    OPEN = "open"  # 熔断状态
     HALF_OPEN = "half_open"  # 半开状态
 
 
@@ -44,9 +50,9 @@ class DataSourceGateway:
         self._success_counts: dict[str, int] = {}
 
         # 熔断配置
-        self._failure_threshold = 5       # 连续失败阈值
-        self._recovery_timeout = 60       # 熔断恢复时间（秒）
-        self._half_open_max_calls = 3     # 半开状态最大调用次数
+        self._failure_threshold = 5  # 连续失败阈值
+        self._recovery_timeout = 60  # 熔断恢复时间（秒）
+        self._half_open_max_calls = 3  # 半开状态最大调用次数
 
         # 请求缓存配置
         self._call_cache: dict[str, tuple[datetime, Any]] = {}
@@ -113,15 +119,17 @@ class DataSourceGateway:
 
                 if self._failure_counts[name] >= self._failure_threshold:
                     self._circuit_states[name] = CircuitState.OPEN
-                    print(f"[DataSourceGateway] {name} 熔断器打开")
+                    logger.warning("%s 熔断器打开", name)
 
         elif state == CircuitState.OPEN:
             # 检查是否到达恢复时间
             last_failure = self._last_failure_time.get(name)
-            if last_failure and datetime.now() - last_failure > timedelta(seconds=self._recovery_timeout):
+            if last_failure and datetime.now() - last_failure > timedelta(
+                seconds=self._recovery_timeout
+            ):
                 self._circuit_states[name] = CircuitState.HALF_OPEN
                 self._success_counts[name] = 0
-                print(f"[DataSourceGateway] {name} 熔断器半开")
+                logger.info("%s 熔断器半开", name)
 
         elif state == CircuitState.HALF_OPEN:
             if success:
@@ -129,12 +137,12 @@ class DataSourceGateway:
                 if self._success_counts[name] >= self._half_open_max_calls:
                     self._circuit_states[name] = CircuitState.CLOSED
                     self._failure_counts[name] = 0
-                    print(f"[DataSourceGateway] {name} 熔断器关闭")
+                    logger.info("%s 熔断器关闭", name)
             else:
                 self._circuit_states[name] = CircuitState.OPEN
                 self._failure_counts[name] += 1
                 self._last_failure_time[name] = datetime.now()
-                print(f"[DataSourceGateway] {name} 熔断器重新打开")
+                logger.warning("%s 熔断器重新打开", name)
 
     def _call_with_retry(
         self,
@@ -142,7 +150,7 @@ class DataSourceGateway:
         method: Callable[..., T],
         max_retries: int = 3,
         *args: Any,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> T:
         """
         带重试的调用.
@@ -172,17 +180,15 @@ class DataSourceGateway:
             except Exception as e:
                 last_error = e
                 self._update_circuit_state(adapter_name, False)
-                print(f"[DataSourceGateway] {adapter_name} 调用失败 (尝试 {attempt + 1}/{max_retries}): {e}")
+                logger.warning(
+                    "%s 调用失败 (尝试 %d/%d): %s", adapter_name, attempt + 1, max_retries, e
+                )
 
-        raise DataSourceError(f"{adapter_name} 调用失败，已重试 {max_retries} 次: {last_error}") from last_error
+        raise DataSourceError(
+            f"{adapter_name} 调用失败，已重试 {max_retries} 次: {last_error}"
+        ) from last_error
 
-    def call(
-        self,
-        method_name: str,
-        *args: Any,
-        fallback: bool = True,
-        **kwargs: Any
-    ) -> Any:
+    def call(self, method_name: str, *args: Any, fallback: bool = True, **kwargs: Any) -> Any:
         """
         调用数据源方法.
 
@@ -198,6 +204,13 @@ class DataSourceGateway:
         Raises:
             DataSourceError: 所有数据源都失败
         """
+        # Check cache first
+        cache_key = self._get_cache_key(method_name, args, kwargs)
+        cached = self._get_from_cache(cache_key)
+        if cached is not None:
+            logger.debug("Cache hit for %s", method_name)
+            return cached
+
         available = self.get_available_adapters()
 
         if not available:
@@ -213,7 +226,9 @@ class DataSourceGateway:
                 continue
 
             try:
-                return self._call_with_retry(adapter_name, method, 3, *args, **kwargs)
+                result = self._call_with_retry(adapter_name, method, 3, *args, **kwargs)
+                self._set_cache(cache_key, result)
+                return result
             except DataNotFoundError:
                 # 数据不存在，尝试下一个数据源
                 continue
@@ -274,8 +289,8 @@ class DataSourceGateway:
 
     def _get_cache_key(self, method_name: str, args: tuple, kwargs: dict) -> str:
         """生成缓存键."""
-        kwargs_str = str(sorted(kwargs.items())) if kwargs else ""
-        return f"{method_name}:{hash(str(args))}:{hash(kwargs_str)}"
+        raw = f"{method_name}:{json.dumps(args, default=str)}:{json.dumps(sorted(kwargs.items()), default=str)}"
+        return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()[:16]
 
     def _get_from_cache(self, key: str) -> Any | None:
         """从缓存获取."""

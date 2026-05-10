@@ -88,9 +88,7 @@ class DataSourceAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_index_fund_info(
-        self, category: str = "全部", indicator: str = "全部"
-    ) -> pd.DataFrame:
+    def get_index_fund_info(self, category: str = "全部", indicator: str = "全部") -> pd.DataFrame:
         """
         东方财富-指数型基金基本信息
 
@@ -170,9 +168,7 @@ class DataSourceAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_fund_category_spot(
-        self, category: str = "", date: str | None = None
-    ) -> pd.DataFrame:
+    def get_fund_category_spot(self, category: str = "", date: str | None = None) -> pd.DataFrame:
         """
         同花顺-基金实时行情(按类型)
 
@@ -316,9 +312,7 @@ class DataSourceAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_fund_bond_holdings(
-        self, fund_code: str, year: int | None = None
-    ) -> pd.DataFrame:
+    def get_fund_bond_holdings(self, fund_code: str, year: int | None = None) -> pd.DataFrame:
         """
         天天基金-基金债券持仓
 
@@ -332,9 +326,7 @@ class DataSourceAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_fund_industry_allocation(
-        self, fund_code: str, year: int | None = None
-    ) -> pd.DataFrame:
+    def get_fund_industry_allocation(self, fund_code: str, year: int | None = None) -> pd.DataFrame:
         """
         天天基金-行业配置
 
@@ -705,9 +697,7 @@ class DataSourceAdapter(ABC):
 
     # ----- 基金资产配置 (1个) -----
     @abstractmethod
-    def get_fund_asset_allocation(
-        self, fund_code: str, date: str | None = None
-    ) -> pd.DataFrame:
+    def get_fund_asset_allocation(self, fund_code: str, date: str | None = None) -> pd.DataFrame:
         """
         雪球-基金资产配置
 
@@ -1064,9 +1054,7 @@ class DataSourceAdapter(ABC):
         pass
 
     @abstractmethod
-    def get_index_valuation(
-        self, code: str, indicator: str = "pe"
-    ) -> pd.DataFrame:
+    def get_index_valuation(self, code: str, indicator: str = "pe") -> pd.DataFrame:
         """指数估值-乐咕乐股"""
         pass
 
@@ -1134,14 +1122,17 @@ class DataSourceAdapter(ABC):
 
 class DataSourceError(Exception):
     """数据源错误"""
+
     pass
 
 
 class DataNotFoundError(Exception):
     """数据未找到错误"""
+
     pass
 
 
 class NetworkError(Exception):
     """网络错误"""
+
     pass

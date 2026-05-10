@@ -74,6 +74,7 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
         elapsed = (now - self._last_request_time).total_seconds()
         if elapsed < self._min_interval:
             import time
+
             time.sleep(self._min_interval - elapsed)
         self._last_request_time = datetime.now()
         self._request_count += 1
@@ -82,10 +83,12 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
         """转换日期格式为 YYYY-MM-DD."""
         for col in date_columns:
             if col in df.columns:
-                if df[col].dtype == 'object':
-                    df[col] = pd.to_datetime(df[col], format='%Y%m%d', errors='coerce').dt.strftime('%Y-%m-%d')
+                if df[col].dtype == "object":
+                    df[col] = pd.to_datetime(df[col], format="%Y%m%d", errors="coerce").dt.strftime(
+                        "%Y-%m-%d"
+                    )
                 elif pd.api.types.is_datetime64_any_dtype(df[col]):
-                    df[col] = df[col].dt.strftime('%Y-%m-%d')
+                    df[col] = df[col].dt.strftime("%Y-%m-%d")
         return df
 
     def is_available(self) -> bool:
@@ -219,9 +222,7 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
         except Exception as e:
             raise DataSourceError(f"获取同花顺基金信息失败: {e}") from e
 
-    def get_index_fund_info(
-        self, category: str = "全部", indicator: str = "全部"
-    ) -> pd.DataFrame:
+    def get_index_fund_info(self, category: str = "全部", indicator: str = "全部") -> pd.DataFrame:
         """
         东方财富-指数型基金基本信息.
 
@@ -375,7 +376,9 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
             if "daily_return" not in df.columns:
                 df["daily_return"] = df["unit_nav"].pct_change() * 100
 
-            result_df = df[["fund_code", "nav_date", "unit_nav", "accumulated_nav", "daily_return"]].copy()
+            result_df = df[
+                ["fund_code", "nav_date", "unit_nav", "accumulated_nav", "daily_return"]
+            ].copy()
             return result_df.sort_values("nav_date").reset_index(drop=True)
 
         except DataNotFoundError:
@@ -414,9 +417,11 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
             # 提取基金代码
             df["fund_code"] = df["fund_code"].str.replace(".OF", "", regex=False)
 
-            return df[["fund_code", "nav_date", "unit_nav", "accumulated_nav"]].sort_values(
-                ["fund_code", "nav_date"]
-            ).reset_index(drop=True)
+            return (
+                df[["fund_code", "nav_date", "unit_nav", "accumulated_nav"]]
+                .sort_values(["fund_code", "nav_date"])
+                .reset_index(drop=True)
+            )
 
         except DataNotFoundError:
             raise
@@ -455,9 +460,7 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
         except Exception as e:
             raise DataSourceError(f"获取ETF实时行情失败: {e}") from e
 
-    def get_fund_category_spot(
-        self, category: str = "", date: str | None = None
-    ) -> pd.DataFrame:
+    def get_fund_category_spot(self, category: str = "", date: str | None = None) -> pd.DataFrame:
         """
         同花顺-基金实时行情(按类型).
 
@@ -580,9 +583,11 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
             df["fund_code"] = fund_code
             df["volume"] = 0
 
-            return df[["fund_code", "nav_date", "close", "volume", "accumulated_nav"]].sort_values(
-                "nav_date"
-            ).reset_index(drop=True)
+            return (
+                df[["fund_code", "nav_date", "close", "volume", "accumulated_nav"]]
+                .sort_values("nav_date")
+                .reset_index(drop=True)
+            )
 
         except DataNotFoundError:
             raise
@@ -649,9 +654,7 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
         except Exception as e:
             raise DataSourceError(f"获取基金经理信息失败: {e}") from e
 
-    def get_fund_holdings(
-        self, fund_code: str, date: str | None = None
-    ) -> pd.DataFrame:
+    def get_fund_holdings(self, fund_code: str, date: str | None = None) -> pd.DataFrame:
         """
         获取基金持仓数据.
 
@@ -774,7 +777,9 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
             if company:
                 df = df[df["management"].str.contains(company, na=False)]
             if keyword:
-                mask = df["ts_code"].str.contains(keyword, na=False) | df["name"].str.contains(keyword, na=False)
+                mask = df["ts_code"].str.contains(keyword, na=False) | df["name"].str.contains(
+                    keyword, na=False
+                )
                 df = df[mask]
 
             df = df.head(limit)
@@ -836,7 +841,9 @@ class TushareAdapter(DataSourceAdapterMixin, DataSourceAdapter):
             df["daily_return"] = df["unit_nav"].pct_change() * 100
             df["accumulated_nav"] = df["unit_nav"]
 
-            result_df = df[["fund_code", "nav_date", "unit_nav", "accumulated_nav", "daily_return"]].copy()
+            result_df = df[
+                ["fund_code", "nav_date", "unit_nav", "accumulated_nav", "daily_return"]
+            ].copy()
             return result_df.sort_values("nav_date").reset_index(drop=True)
 
         except DataNotFoundError:

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import uuid
 from pathlib import Path
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -77,9 +78,8 @@ def ai_interactive(
 
     console.print(
         Panel(
-            "[bold]Fund-CLI AI 交互模式[/bold]\n"
-            "输入问题与 AI 助手对话，输入 exit 或 quit 退出",
-            border_style="blue"
+            "[bold]Fund-CLI AI 交互模式[/bold]\n输入问题与 AI 助手对话，输入 exit 或 quit 退出",
+            border_style="blue",
         )
     )
 
@@ -115,9 +115,8 @@ def _simple_interactive(user_id: str) -> None:
 
     console.print(
         Panel(
-            "[bold]Fund-CLI AI 交互模式[/bold]\n"
-            "输入问题与 AI 助手对话，输入 exit 退出",
-            border_style="blue"
+            "[bold]Fund-CLI AI 交互模式[/bold]\n输入问题与 AI 助手对话，输入 exit 退出",
+            border_style="blue",
         )
     )
 
@@ -545,7 +544,7 @@ def ai_portfolio(
         adapter = get_adapter()
         perf_analyzer = PerformanceAnalyzer()
 
-        portfolio_data = {
+        portfolio_data: dict[str, Any] = {
             "funds": [],
             "weights": weight_list or [1.0 / len(codes)] * len(codes),
         }

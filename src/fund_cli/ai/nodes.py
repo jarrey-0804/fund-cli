@@ -89,10 +89,7 @@ def create_llm_node(llm):
         # 调用 LLM
         response = llm_with_tools.invoke(messages, config)
 
-        return {
-            "messages": [response],
-            "current_step": "llm_response"
-        }
+        return {"messages": [response], "current_step": "llm_response"}
 
     return llm_node
 
@@ -128,7 +125,11 @@ def router_node(state: FundAgentState) -> Literal["tools", "end"]:
     last_message = messages[-1]
 
     # 检查是否有工具调用
-    if isinstance(last_message, AIMessage) and hasattr(last_message, 'tool_calls') and last_message.tool_calls:
+    if (
+        isinstance(last_message, AIMessage)
+        and hasattr(last_message, "tool_calls")
+        and last_message.tool_calls
+    ):
         return "tools"
 
     return "end"
@@ -146,10 +147,7 @@ def create_error_handler_node():
 
         if error:
             error_message = f"执行过程中出现错误: {error}"
-            return {
-                "messages": [AIMessage(content=error_message)],
-                "final_response": error_message
-            }
+            return {"messages": [AIMessage(content=error_message)], "final_response": error_message}
 
         return {}
 
@@ -169,10 +167,7 @@ def create_human_input_node():
         # 目前返回一个提示消息
         prompt = "请提供更多信息以继续分析..."
 
-        return {
-            "messages": [AIMessage(content=prompt)],
-            "current_step": "waiting_for_input"
-        }
+        return {"messages": [AIMessage(content=prompt)], "current_step": "waiting_for_input"}
 
     return human_input_node
 
@@ -190,10 +185,8 @@ def create_summary_node():
 
         # 提取 AI 的最后一条消息作为最终响应
         for msg in reversed(messages):
-            if isinstance(msg, AIMessage) and not getattr(msg, 'tool_calls', None):
-                return {
-                    "final_response": msg.content
-                }
+            if isinstance(msg, AIMessage) and not getattr(msg, "tool_calls", None):
+                return {"final_response": msg.content}
 
         return {"final_response": "分析完成。"}
 

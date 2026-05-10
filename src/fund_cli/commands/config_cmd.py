@@ -275,8 +275,16 @@ def list_config_keys() -> None:
         ("database.database", "FUND_DB_DATABASE", "数据库名"),
         ("database.user", "FUND_DB_USER", "数据库用户名"),
         ("database.password", "FUND_DB_PASSWORD", "数据库密码"),
-        ("agent.enable_human_review", "FUND_AGENT_ENABLE_HUMAN_REVIEW", "启用人工审核 (true/false)"),
-        ("agent.use_chroma_memory", "FUND_AGENT_USE_CHROMA_MEMORY", "启用ChromaDB记忆 (true/false)"),
+        (
+            "agent.enable_human_review",
+            "FUND_AGENT_ENABLE_HUMAN_REVIEW",
+            "启用人工审核 (true/false)",
+        ),
+        (
+            "agent.use_chroma_memory",
+            "FUND_AGENT_USE_CHROMA_MEMORY",
+            "启用ChromaDB记忆 (true/false)",
+        ),
     ]
 
     for key, env_var, desc in entries:

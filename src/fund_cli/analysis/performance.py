@@ -175,6 +175,30 @@ class PerformanceAnalyzer(Analyzer):
 
         return metrics
 
+    def calculate_metrics(
+        self,
+        nav_data: pd.DataFrame | pd.Series,
+        nav_column: str = "unit_nav",
+    ) -> dict[str, Any]:
+        """
+        从净值数据计算业绩指标（便捷方法）.
+
+        Args:
+            nav_data: 净值数据 DataFrame 或收益率 Series
+            nav_column: 净值列名（仅当 nav_data 为 DataFrame 时使用）
+
+        Returns:
+            分析指标字典
+        """
+        # 如果是 Series，直接作为收益率处理
+        if isinstance(nav_data, pd.Series):
+            returns = nav_data
+        else:
+            # 从 DataFrame 计算收益率
+            returns = self.calculate_returns(nav_data, nav_column)
+
+        return self.analyze(returns)
+
     def _safe_calc(self, func, *args, **kwargs) -> Any:
         """安全计算，捕获异常"""
         try:
