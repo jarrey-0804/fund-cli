@@ -28,14 +28,14 @@ class TestCLIMain:
         result = runner.invoke(app, ["--version"])
 
         assert result.exit_code == 0
-        assert "3.2.0" in result.output
+        assert "3.4.0" in result.output
 
     def test_cli_version_short_flag(self):
         """测试 -v 短标志."""
         result = runner.invoke(app, ["-v"])
 
         assert result.exit_code == 0
-        assert "3.2.0" in result.output
+        assert "3.4.0" in result.output
 
     def test_version_command(self):
         """测试 version 命令."""
@@ -43,7 +43,7 @@ class TestCLIMain:
 
         assert result.exit_code == 0
         assert "Fund CLI" in result.output
-        assert "3.2.0" in result.output
+        assert "3.4.0" in result.output
 
     def test_version_callback(self):
         """测试 version_callback 函数."""

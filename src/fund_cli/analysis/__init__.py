@@ -1,13 +1,95 @@
-"""分析模块 - 业绩分析、风险分析、归因分析、组合分析、经理分析、持仓分析"""
+"""分析模块 - 业绩分析、风险分析、归因分析、组合分析、经理分析、持仓分析
+
+V3.3 新增:
+- StressTester: 压力测试
+- ScenarioAnalyzer: 情景分析
+- RiskBudgetAnalyzer: 风险预算分析
+- MoneyFlowAnalyzer: 资金流向分析
+- SectorRotationAnalyzer: 行业轮动分析
+- MarketSentimentAnalyzer: 市场情绪分析
+"""
 
 from fund_cli.analysis.attribution import AttributionAnalyzer
 from fund_cli.analysis.holding import HoldingAnalyzer
 from fund_cli.analysis.manager import ManagerAnalyzer
+from fund_cli.analysis.market_sentiment import (
+    MarketSentimentAnalyzer,
+    MarketSentimentReport,
+    FearGreedIndex,
+    SentimentLevel,
+    analyze_market_sentiment,
+)
+from fund_cli.analysis.money_flow import (
+    MoneyFlowAnalyzer,
+    FundFlowReport,
+    SectorFlowReport,
+    NorthboundFlowReport,
+    analyze_money_flow,
+)
 from fund_cli.analysis.performance import PerformanceAnalyzer
 from fund_cli.analysis.portfolio import PortfolioAnalyzer
 from fund_cli.analysis.risk import RiskAnalyzer
+from fund_cli.analysis.risk_budget import (
+    RiskBudgetAnalyzer,
+    RiskBudgetReport,
+    RiskContribution,
+    analyze_risk_budget,
+    optimize_risk_parity,
+)
+from fund_cli.analysis.scenario_analysis import (
+    ScenarioAnalyzer,
+    ScenarioAnalysisReport,
+    MarketScenario,
+    InvestmentStyle,
+    analyze_scenarios,
+)
+from fund_cli.analysis.sector_rotation import (
+    SectorRotationAnalyzer,
+    SectorRotationReport,
+    SectorPerformance,
+    analyze_sector_rotation,
+)
+from fund_cli.analysis.stress_test import (
+    StressTester,
+    StressTestReport,
+    StressTestResult,
+    StressScenario,
+    run_stress_test,
+)
 
 __all__ = [
+    # V3.3 新增 - 市场分析能力
+    "MoneyFlowAnalyzer",
+    "FundFlowReport",
+    "SectorFlowReport",
+    "NorthboundFlowReport",
+    "analyze_money_flow",
+    "SectorRotationAnalyzer",
+    "SectorRotationReport",
+    "SectorPerformance",
+    "analyze_sector_rotation",
+    "MarketSentimentAnalyzer",
+    "MarketSentimentReport",
+    "FearGreedIndex",
+    "SentimentLevel",
+    "analyze_market_sentiment",
+    # V3.3 新增 - 风险分析深度增强
+    "StressTester",
+    "StressTestReport",
+    "StressTestResult",
+    "StressScenario",
+    "run_stress_test",
+    "ScenarioAnalyzer",
+    "ScenarioAnalysisReport",
+    "MarketScenario",
+    "InvestmentStyle",
+    "analyze_scenarios",
+    "RiskBudgetAnalyzer",
+    "RiskBudgetReport",
+    "RiskContribution",
+    "analyze_risk_budget",
+    "optimize_risk_parity",
+    # 原有模块
     "PerformanceAnalyzer",
     "RiskAnalyzer",
     "AttributionAnalyzer",

@@ -3587,6 +3587,177 @@ def get_stock_valuation_info(code: str) -> str:
 
 
 # ============================================
+# Phase 1: AI 决策支持工具
+# ============================================
+
+
+@tool
+def smart_fund_selection(query: str, top_n: int = 10) -> str:
+    """智能选基：基于自然语言描述智能推荐基金。
+
+    Args:
+        query: 用户的自然语言需求描述，如"稳健的股票型基金，年化收益10%以上，最大回撤不超过20%"
+        top_n: 返回的推荐数量，默认10
+
+    Returns:
+        推荐基金列表及推荐理由
+    """
+    try:
+        from fund_cli.ai.fund_selector import FundSelector
+
+        selector = FundSelector()
+        recommendations = selector.select(query, top_n)
+
+        if not recommendations:
+            return "未找到符合条件的基金，请尝试调整筛选条件。"
+
+        lines = [f"智能选基推荐结果（共{len(recommendations)}只）：\n"]
+
+        for rec in recommendations:
+            lines.append(f"【{rec.rank}】{rec.fund_name} ({rec.fund_code})")
+            lines.append(f"  类型: {rec.fund_type}")
+            lines.append(f"  评分: {rec.score:.2f}")
+            lines.append(f"  推荐理由: {rec.recommendation_reason}")
+            lines.append(f"  风险提示: {rec.risk_warning}")
+            if rec.key_metrics.get("return_1y") is not None:
+                lines.append(f"  近一年收益: {rec.key_metrics['return_1y']:.2f}%")
+            if rec.key_metrics.get("max_drawdown") is not None:
+                lines.append(f"  最大回撤: {abs(rec.key_metrics['max_drawdown']):.2f}%")
+            lines.append("")
+
+        return "\n".join(lines)
+    except Exception as e:
+        return f"智能选基失败: {str(e)}"
+
+
+@tool
+def diagnose_portfolio_health(fund_codes: str, weights: str | None = None) -> str:
+    """投资组合诊断：评估组合健康状况，发现潜在风险。
+
+    Args:
+        fund_codes: 基金代码列表，逗号分隔，如 "000001,000002,000003"
+        weights: 权重列表，逗号分隔，如 "0.4,0.3,0.3"。不传则等权
+
+    Returns:
+        组合诊断报告
+    """
+    try:
+        from fund_cli.ai.portfolio_doctor import PortfolioDoctor
+
+        codes = [c.strip() for c in fund_codes.split(",")]
+
+        if weights:
+            weight_list = [float(w.strip()) for w in weights.split(",")]
+        else:
+            weight_list = None
+
+        doctor = PortfolioDoctor()
+        diagnosis = doctor.diagnose(codes, weight_list)
+
+        lines = ["# 投资组合诊断报告\n"]
+
+        lines.append("## 整体评估")
+        lines.append(f"- 健康评分: {diagnosis.overall_score}/100")
+        lines.append(f"- 健康等级: {diagnosis.overall_level.value}")
+        lines.append("")
+
+        lines.append("## 详细诊断")
+        for d in diagnosis.diagnoses:
+            lines.append(f"### {d.category.value}")
+            lines.append(f"- 状态: {d.level.value}")
+            lines.append(f"- 评分: {d.score}/100")
+            lines.append(f"- 说明: {d.description}")
+            if d.suggestions:
+                lines.append("- 建议:")
+                for s in d.suggestions:
+                    lines.append(f"  - {s}")
+            lines.append("")
+
+        if diagnosis.risk_warnings:
+            lines.append("## ⚠️ 风险提示")
+            for w in diagnosis.risk_warnings:
+                lines.append(f"- {w}")
+            lines.append("")
+
+        if diagnosis.optimization_suggestions:
+            lines.append("## 💡 优化建议")
+            for s in diagnosis.optimization_suggestions:
+                lines.append(f"- {s}")
+
+        return "\n".join(lines)
+    except Exception as e:
+        return f"组合诊断失败: {str(e)}"
+
+
+@tool
+def analyze_market_sentiment(market_type: str = "sentiment") -> str:
+    """市场分析：分析市场情绪、行业轮动或热点追踪。
+
+    Args:
+        market_type: 分析类型，可选 sentiment(市场情绪)、rotation(行业轮动)、hotspot(热点追踪)
+
+    Returns:
+        市场分析报告
+    """
+    try:
+        from fund_cli.ai.market_analyst import MarketAnalyst
+
+        analyst = MarketAnalyst()
+
+        if market_type == "sentiment" or market_type == "情绪":
+            report = analyst.analyze_sentiment()
+            return analyst.format_sentiment_report(report)
+        elif market_type == "rotation" or market_type == "轮动":
+            report = analyst.analyze_sector_rotation()
+            return analyst.format_sector_report(report)
+        elif market_type == "hotspot" or market_type == "热点":
+            report = analyst.track_hotspots()
+            return analyst.format_hotspot_report(report)
+        else:
+            # 默认返回情绪分析
+            report = analyst.analyze_sentiment()
+            return analyst.format_sentiment_report(report)
+    except Exception as e:
+        return f"市场分析失败: {str(e)}"
+
+
+@tool
+def get_fund_recommendation_by_style(style: str, top_n: int = 5) -> str:
+    """按投资风格推荐基金。
+
+    Args:
+        style: 投资风格，可选 value(价值)、growth(成长)、balanced(平衡)
+        top_n: 返回数量，默认5
+
+    Returns:
+        推荐基金列表
+    """
+    try:
+        from fund_cli.ai.fund_selector import InvestmentStyle, select_funds
+
+        style_map = {
+            "value": "价值型基金",
+            "growth": "成长型基金",
+            "balanced": "平衡型基金",
+        }
+
+        query = style_map.get(style.lower(), f"{style}风格基金")
+
+        recommendations = select_funds(query, top_n)
+
+        if not recommendations:
+            return f"未找到{style}风格的基金推荐"
+
+        lines = [f"{style}风格基金推荐：\n"]
+        for rec in recommendations:
+            lines.append(f"- {rec.fund_name} ({rec.fund_code}): 评分{rec.score:.2f}")
+
+        return "\n".join(lines)
+    except Exception as e:
+        return f"推荐失败: {str(e)}"
+
+
+# ============================================
 # 工具列表导出
 # ============================================
 
@@ -3698,4 +3869,9 @@ FUND_TOOLS = [
     get_index_daily_em_data,
     get_index_daily_tx_data,
     get_stock_valuation_info,
+    # Phase 1: AI 决策支持工具
+    smart_fund_selection,
+    diagnose_portfolio_health,
+    analyze_market_sentiment,
+    get_fund_recommendation_by_style,
 ]

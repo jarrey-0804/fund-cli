@@ -5,6 +5,143 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [3.4.0] - 2026-05-11
+
+### Added - 智能推荐系统（Phase 4）
+
+#### 用户画像模块 (user_profile.py)
+- **RiskQuestionnaire**: 风险评估问卷，5道题目评估用户风险承受能力
+- **StyleAnalyzer**: 投资风格分析器，基于交易行为和持仓历史分析投资风格
+- **ProfileManager**: 用户画像管理器，支持创建、存储、查询用户画像
+- **UserProfile**: 用户画像数据类，包含风险评估、投资目标、投资期限、偏好设置
+- **RiskAssessment**: 风险评估结果，包含风险等级、得分、最大回撤容忍度
+- **InvestmentPreferences**: 投资偏好设置，包含基金类型、行业、规模等偏好
+- CLI命令: `fund ai profile show|create|assess`
+
+#### 个性化推荐引擎 (recommender.py)
+- **ContentBasedRecommender**: 基于内容的推荐器，基于基金特征匹配用户偏好
+- **CollaborativeRecommender**: 协同过滤推荐器，基于相似用户行为推荐
+- **HybridRecommender**: 混合推荐器，融合内容和协同过滤结果
+- **FundRecommender**: 基金推荐主类，整合多种推荐策略
+- **FundScore**: 基金评分数据类，包含综合得分和细分得分
+- **RecommendationItem**: 推荐结果项，包含推荐理由和风险提示
+- **RecommendationReport**: 推荐报告，包含完整推荐结果和摘要
+- CLI命令: `fund ai recommend --fund 000001 --strategy hybrid`
+
+#### 投资建议生成器 (advisor.py)
+- **HoldingAnalyzer**: 持仓分析器，分析持仓结构、集中度、风险匹配度
+- **RebalanceAdvisor**: 调仓建议器，生成调仓建议和目标配置
+- **DCAAdvisor**: 定投建议器，生成定投方案和止盈止损策略
+- **RiskAlerter**: 风险预警器，检测持仓风险并生成预警
+- **InvestmentAdvisor**: 投资建议主类，整合持仓分析、调仓建议、定投方案、风险预警
+- **AdviceItem**: 建议项数据类，包含建议类型、优先级、内容
+- **RebalanceSuggestion**: 调仓建议数据类
+- **DCASuggestion**: 定投建议数据类
+- **InvestmentAdviceReport**: 投资建议报告
+- CLI命令: `fund ai advise --funds 000001,000002 --type all`
+
+### Changed
+- AI模块 `__init__.py`: 导出新增的智能推荐系统类
+- `ai_cmd.py`: 新增 profile/recommend/advise 三个CLI命令
+
+### Tests
+- 新增 45 个单元测试（Phase 4）
+- 总测试数: 2144 passed
+
+## [3.3.0] - 2026-05-11
+
+### Added - AI 决策支持能力增强（Phase 1）
+
+#### 智能选基助手 (fund_selector.py)
+- **NeedParser**: 自然语言需求解析器，支持解析基金类型、收益目标、风险约束、规模偏好等
+- **FundScorer**: 多因子评分引擎，支持收益/风险/夏普/规模/稳定性五因子评分
+- **RecommendationGenerator**: 推荐理由生成器，自动生成个性化推荐理由和风险提示
+- **FundSelector**: 智能选基主类，整合需求解析、筛选、评分、推荐全流程
+- CLI命令: `fund ai select "稳健的股票型基金，年化收益10%以上"`
+
+#### 投资组合诊断 (portfolio_doctor.py)
+- **DiversificationAnalyzer**: 分散度分析器，计算HHI指数和有效持仓数量
+- **ConcentrationAnalyzer**: 集中度分析器，分析Top1/Top3/Top5持仓集中度
+- **CorrelationAnalyzer**: 相关性分析器，计算组合内资产相关性
+- **RiskExposureAnalyzer**: 风险敞口分析器，分析各资产风险贡献
+- **PortfolioDoctor**: 组合诊断主类，生成完整诊断报告
+- CLI命令: `fund ai diagnose 000001,000002,000003 --weights 0.4,0.3,0.3`
+
+#### 市场解读助手 (market_analyst.py)
+- **SentimentAnalyzer**: 市场情绪分析器，计算恐慌贪婪指数
+- **SectorRotationAnalyzer**: 行业轮动分析器，识别强势/弱势行业
+- **HotspotTracker**: 热点追踪器，追踪市场热点主题
+- **MarketAnalyst**: 市场解读主类，整合三大分析功能
+- CLI命令: `fund ai market --type sentiment|rotation|hotspot`
+
+#### AI Agent 工具扩展
+- `smart_fund_selection`: 智能选基工具
+- `diagnose_portfolio_health`: 组合诊断工具
+- `analyze_market_sentiment`: 市场分析工具
+- `get_fund_recommendation_by_style`: 风格推荐工具
+
+### Added - 风险分析深度增强（Phase 2）
+
+#### 压力测试模块 (stress_test.py)
+- **HistoricalScenarioEngine**: 历史情景引擎，支持2008金融危机、2015股灾、2020疫情等情景
+- **CustomScenarioEngine**: 自定义情景引擎，支持用户定义的压力情景
+- **SensitivityAnalyzer**: 敏感性分析器，分析基金对各因子的敏感性
+- **StressTester**: 压力测试主类，整合历史情景、自定义情景、敏感性分析
+- CLI命令: `fund analyze stress-test 000001 --scenario "2008金融危机"`
+
+#### 情景分析模块 (scenario_analysis.py)
+- **BullBearAnalyzer**: 牛熊市分析器，分析基金在不同市场环境下的表现
+- **RateSensitivityAnalyzer**: 利率敏感度分析器，分析债券基金对利率变动的敏感度
+- **StyleRotationAnalyzer**: 风格轮动分析器，分析不同风格环境下的表现
+- **ProbabilityWeightedAnalyzer**: 概率加权分析器，计算概率加权后的综合指标
+- **ScenarioAnalyzer**: 情景分析主类，整合牛熊市、利率敏感度、风格轮动分析
+- CLI命令: `fund analyze scenario-v2 000001 --type "股票型" --beta 1.2`
+
+#### 风险预算模块 (risk_budget.py)
+- **RiskContributionCalculator**: 风险贡献计算器，计算各资产的风险贡献
+- **RiskConcentrationAnalyzer**: 风险集中度分析器，分析风险集中度
+- **TailRiskAnalyzer**: 尾部风险分析器，分析VaR/CVaR贡献
+- **RiskBudgetOptimizer**: 风险预算优化器，支持风险平价、最小方差等优化目标
+- **RiskBudgetAnalyzer**: 风险预算分析主类，整合风险贡献、集中度、尾部风险分析
+- CLI命令: `fund analyze risk-budget 000001,000002,000003 --optimize`
+
+### Changed
+- AI模块 `__init__.py`: 导出新增的智能决策支持类
+- `ai_cmd.py`: 新增 select/diagnose/market 三个CLI命令
+- `analyze_cmd.py`: 新增 stress-test/scenario-v2/risk-budget 三个CLI命令
+- 工具总数: 86 → 90
+
+### Added - 市场分析能力（Phase 3）
+
+#### 资金流向分析 (money_flow.py)
+- **FundFlowAnalyzer**: 基金申赎分析器，分析基金净申购/赎回趋势
+- **SectorFlowAnalyzer**: 板块资金流向分析器，追踪主力/散户资金动向
+- **NorthboundFlowAnalyzer**: 北向资金分析器，分析外资流入流出趋势
+- **MoneyFlowAnalyzer**: 资金流向分析主类，整合三大分析功能
+- CLI命令: `fund analyze money-flow --type fund|sector|northbound`
+
+#### 行业轮动分析 (sector_rotation.py)
+- **SectorPerformanceCalculator**: 行业表现计算器，多周期动量排名
+- **RotationSignalDetector**: 轮动信号检测器，识别行业轮动对
+- **SectorRotationAnalyzer**: 行业轮动分析主类，生成行业排名和轮动信号
+- CLI命令: `fund analyze sector-rotation --period "近1月"`
+
+#### 市场情绪指标 (market_sentiment.py)
+- **FearGreedCalculator**: 恐慌贪婪指数计算器，6维度综合情绪指数
+- **FundPositionEstimator**: 基金仓位估算器，估算基金整体仓位水平
+- **MarketBreadthCalculator**: 市场宽度计算器，分析涨跌比和市场广度
+- **SentimentAlertGenerator**: 情绪预警生成器，极端情绪自动预警
+- **MarketSentimentAnalyzer**: 市场情绪分析主类，整合情绪、仓位、宽度分析
+- CLI命令: `fund analyze sentiment`
+
+### Changed
+- `analysis/__init__.py`: 导出新增的市场分析类
+- `analyze_cmd.py`: 新增 money-flow/sector-rotation/sentiment 三个CLI命令
+
+### Tests
+- 新增 55 个单元测试（Phase 3）
+- 总测试数: 2132 passed
+
 ## [3.2.0] - 2026-05-10
 
 ### Added - 数据质量风险治理体系（核心特性）

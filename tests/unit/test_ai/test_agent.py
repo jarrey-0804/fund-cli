@@ -1139,7 +1139,7 @@ class TestPhaseOneTools:
         """测试工具总数是否正确（含所有阶段工具）"""
         from fund_cli.ai.tools import FUND_TOOLS
 
-        assert len(FUND_TOOLS) == 86, f"期望86个工具，实际有{len(FUND_TOOLS)}个"
+        assert len(FUND_TOOLS) == 90, f"期望90个工具，实际有{len(FUND_TOOLS)}个"
 
     def test_new_tools_in_list(self):
         """测试新增工具都在FUND_TOOLS列表中"""
@@ -1445,7 +1445,7 @@ class TestPhaseTwoTools:
         """测试工具总数是否正确（含所有阶段工具）"""
         from fund_cli.ai.tools import FUND_TOOLS
 
-        assert len(FUND_TOOLS) == 86, f"期望86个工具，实际有{len(FUND_TOOLS)}个"
+        assert len(FUND_TOOLS) == 90, f"期望90个工具，实际有{len(FUND_TOOLS)}个"
 
     def test_phase_two_tools_in_list(self):
         """测试阶段二新增工具都在FUND_TOOLS列表中"""

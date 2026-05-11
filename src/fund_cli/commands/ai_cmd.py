@@ -4,6 +4,8 @@ AI 分析命令（V3.0 - LangGraph Agent 实现）
 提供 AI 辅助分析功能，支持：
 - 智能对话（Agent 驱动，支持工具调用和记忆）
 - 基金摘要生成、对比分析、投资建议等（V2.0 兼容）
+- 智能选基、组合诊断、市场解读（V3.3 新增）
+- 用户画像、个性化推荐、投资建议（V3.4 新增）
 """
 
 from __future__ import annotations
@@ -19,6 +21,525 @@ from rich.table import Table
 
 app = typer.Typer(help="AI分析命令（V3.0 - Agent驱动）")
 console = Console()
+
+
+# ============================================
+# V3.3 新增命令 - AI 决策支持
+# ============================================
+
+
+@app.command("select")
+def ai_select(
+    query: str = typer.Argument(..., help="自然语言需求描述"),
+    top_n: int = typer.Option(10, "--top", "-n", help="返回推荐数量"),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    智能选基：基于自然语言描述智能推荐基金
+
+    示例:
+        fund ai select "稳健的股票型基金，年化收益10%以上，最大回撤不超过20%"
+        fund ai select "债券型基金，规模50亿以上" --top 5
+        fund ai select "成长风格基金" --output result.txt
+    """
+    from fund_cli.ai.fund_selector import FundSelector
+
+    try:
+        selector = FundSelector()
+        recommendations = selector.select(query, top_n)
+
+        if not recommendations:
+            console.print("[yellow]未找到符合条件的基金，请尝试调整筛选条件[/yellow]")
+            raise typer.Exit(0) from None
+
+        # 格式化输出
+        lines = [f"# 智能选基推荐结果\n"]
+        lines.append(f"查询条件: {query}")
+        lines.append(f"共找到 {len(recommendations)} 只符合条件的基金：\n")
+
+        for rec in recommendations:
+            lines.append(f"## {rec.rank}. {rec.fund_name} ({rec.fund_code})")
+            lines.append(f"- 基金类型: {rec.fund_type}")
+            lines.append(f"- 综合评分: {rec.score:.2f}")
+            lines.append(f"- 推荐理由: {rec.recommendation_reason}")
+            lines.append(f"- 风险提示: {rec.risk_warning}")
+            if rec.key_metrics.get("return_1y") is not None:
+                lines.append(f"- 近一年收益: {rec.key_metrics['return_1y']:.2f}%")
+            if rec.key_metrics.get("max_drawdown") is not None:
+                lines.append(f"- 最大回撤: {abs(rec.key_metrics['max_drawdown']):.2f}%")
+            lines.append("")
+
+        result = "\n".join(lines)
+        console.print(Panel(result, title="智能选基结果", border_style="green"))
+
+        if output:
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]智能选基失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command("diagnose")
+def ai_diagnose(
+    fund_codes: str = typer.Argument(..., help="基金代码列表（逗号分隔）"),
+    weights: str = typer.Option(
+        None, "--weights", "-w", help="权重配置（逗号分隔，如0.4,0.3,0.3）"
+    ),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    投资组合诊断：评估组合健康状况，发现潜在风险
+
+    示例:
+        fund ai diagnose 000001,000002,000003
+        fund ai diagnose 000001,000002 --weights 0.6,0.4
+        fund ai diagnose 000001,000002,000003 --weights 0.4,0.3,0.3 --output report.txt
+    """
+    from fund_cli.ai.portfolio_doctor import PortfolioDoctor
+
+    try:
+        codes = [c.strip() for c in fund_codes.split(",")]
+
+        # 解析权重
+        weight_list = None
+        if weights:
+            weight_list = [float(w.strip()) for w in weights.split(",")]
+            if len(weight_list) != len(codes):
+                console.print("[red]权重数量必须与基金数量一致[/red]")
+                raise typer.Exit(1) from None
+
+        # 执行诊断
+        doctor = PortfolioDoctor()
+        diagnosis = doctor.diagnose(codes, weight_list)
+
+        # 格式化输出
+        result = doctor.format_diagnosis(diagnosis)
+        console.print(Panel(result, title="组合诊断报告", border_style="blue"))
+
+        if output:
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]组合诊断失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command("market")
+def ai_market(
+    market_type: str = typer.Option(
+        "sentiment", "--type", "-t", help="分析类型: sentiment(情绪)/rotation(轮动)/hotspot(热点)"
+    ),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    市场解读：分析市场情绪、行业轮动或热点追踪
+
+    示例:
+        fund ai market                    # 市场情绪分析
+        fund ai market --type rotation    # 行业轮动分析
+        fund ai market --type hotspot     # 热点追踪
+        fund ai market --output market.txt
+    """
+    from fund_cli.ai.market_analyst import MarketAnalyst
+
+    try:
+        analyst = MarketAnalyst()
+
+        if market_type in ["sentiment", "情绪"]:
+            report = analyst.analyze_sentiment()
+            result = analyst.format_sentiment_report(report)
+            title = "市场情绪分析"
+        elif market_type in ["rotation", "轮动"]:
+            report = analyst.analyze_sector_rotation()
+            result = analyst.format_sector_report(report)
+            title = "行业轮动分析"
+        elif market_type in ["hotspot", "热点"]:
+            report = analyst.track_hotspots()
+            result = analyst.format_hotspot_report(report)
+            title = "热点追踪报告"
+        else:
+            # 默认情绪分析
+            report = analyst.analyze_sentiment()
+            result = analyst.format_sentiment_report(report)
+            title = "市场情绪分析"
+
+        console.print(Panel(result, title=title, border_style="cyan"))
+
+        if output:
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]市场分析失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+# ============================================
+# V3.4 新增命令 - 智能推荐系统
+# ============================================
+
+
+@app.command("profile")
+def ai_profile(
+    action: str = typer.Argument("show", help="操作: show/create/assess"),
+    name: str = typer.Option(None, "--name", "-n", help="用户名称"),
+    risk_level: str = typer.Option(
+        None, "--risk", "-r", help="风险等级: conservative/moderate/balanced/growth/aggressive"
+    ),
+    investment_horizon: str = typer.Option(
+        None, "--horizon", "-h", help="投资期限: short/medium/long"
+    ),
+    goals: str = typer.Option(None, "--goals", "-g", help="投资目标（逗号分隔）"),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    用户画像管理：创建和管理用户投资画像
+
+    示例:
+        fund ai profile show                              # 显示当前画像
+        fund ai profile create --name 张三 --risk moderate --horizon long
+        fund ai profile assess                            # 风险评估问卷
+        fund ai profile create --name 张三 --risk aggressive --goals 退休养老,子女教育
+    """
+    from fund_cli.ai.user_profile import ProfileManager, RiskQuestionnaire
+
+    try:
+        manager = ProfileManager()
+
+        if action == "show":
+            profile = manager.get_current_profile()
+            if profile is None:
+                console.print("[yellow]尚未创建用户画像，请使用 'fund ai profile create' 创建[/yellow]")
+                raise typer.Exit(0) from None
+
+            # 显示画像信息
+            table = Table(title=f"用户画像 - {profile.name}")
+            table.add_column("项目", style="cyan")
+            table.add_column("值", style="green")
+
+            table.add_row("用户名", profile.name)
+            table.add_row("风险等级", profile.risk_assessment.tolerance.value)
+            table.add_row("风险得分", f"{profile.risk_assessment.score:.0f}/100")
+            table.add_row("投资期限", profile.investment_horizon.value)
+            table.add_row("投资风格", profile.investment_style.value)
+            table.add_row("投资目标", profile.investment_goal.value)
+            created_at = profile.created_at if isinstance(profile.created_at, str) else profile.created_at.strftime("%Y-%m-%d %H:%M")
+            table.add_row("创建时间", created_at)
+
+            console.print(table)
+
+        elif action == "create":
+            if not name:
+                console.print("[red]请使用 --name 指定用户名称[/red]")
+                raise typer.Exit(1) from None
+
+            # 解析风险等级映射为问卷答案
+            risk_answer_map = {
+                "conservative": {"q1": 0, "q2": 0, "q3": 0, "q4": 0, "q5": 0},
+                "moderate": {"q1": 1, "q2": 1, "q3": 1, "q4": 1, "q5": 1},
+                "balanced": {"q1": 2, "q2": 2, "q3": 2, "q4": 2, "q5": 2},
+                "growth": {"q1": 3, "q2": 3, "q3": 3, "q4": 3, "q5": 3},
+                "aggressive": {"q1": 4, "q2": 4, "q3": 4, "q4": 4, "q5": 4},
+            }
+            risk_answers = risk_answer_map.get(risk_level or "moderate", risk_answer_map["moderate"])
+
+            # 解析投资期限
+            from fund_cli.ai.user_profile import InvestmentHorizon, InvestmentGoal
+            horizon_map = {
+                "short": InvestmentHorizon.SHORT_TERM,
+                "medium": InvestmentHorizon.MEDIUM_TERM,
+                "long": InvestmentHorizon.LONG_TERM,
+            }
+            horizon = horizon_map.get(investment_horizon or "medium", InvestmentHorizon.MEDIUM_TERM)
+
+            # 解析投资目标
+            goal_map = {
+                "wealth_preservation": InvestmentGoal.WEALTH_PRESERVATION,
+                "steady_income": InvestmentGoal.STEADY_INCOME,
+                "balanced_growth": InvestmentGoal.BALANCED_GROWTH,
+                "aggressive_growth": InvestmentGoal.AGGRESSIVE_GROWTH,
+            }
+            goal = InvestmentGoal.BALANCED_GROWTH
+            if goals:
+                first_goal = goals.split(",")[0].strip()
+                goal = goal_map.get(first_goal.lower().replace(" ", "_"), InvestmentGoal.BALANCED_GROWTH)
+
+            # 创建画像
+            import uuid
+            profile = manager.create_profile(
+                user_id=str(uuid.uuid4())[:8],
+                name=name,
+                risk_answers=risk_answers,
+                investment_goal=goal,
+                investment_horizon=horizon,
+            )
+
+            console.print(f"[green]✓ 用户画像创建成功[/green]")
+            console.print(f"  用户名: {profile.name}")
+            console.print(f"  风险等级: {profile.risk_assessment.tolerance.value}")
+            console.print(f"  投资期限: {profile.investment_horizon.value}")
+
+            if output:
+                import json
+                profile_dict = {
+                    "name": profile.name,
+                    "risk_level": profile.risk_assessment.tolerance.value,
+                    "risk_score": profile.risk_assessment.score,
+                    "investment_horizon": profile.investment_horizon.value,
+                    "investment_style": profile.investment_style.value,
+                    "goals": [g.value for g in profile.goals],
+                }
+                Path(output).write_text(
+                    json.dumps(profile_dict, ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+                console.print(f"[green]结果已保存至: {output}[/green]")
+
+        elif action == "assess":
+            # 风险评估问卷
+            questionnaire = RiskQuestionnaire()
+            questions = questionnaire.get_questions()
+
+            console.print(Panel("[bold]风险评估问卷[/bold]\n请回答以下问题以评估您的风险承受能力", border_style="blue"))
+
+            answers = []
+            for i, q in enumerate(questions, 1):
+                console.print(f"\n[bold]{i}. {q['question']}[/bold]")
+                for j, opt in enumerate(q["options"], 1):
+                    console.print(f"  {j}. {opt['text']}")
+
+                while True:
+                    try:
+                        choice = int(console.input("[cyan]请选择 (1-4): [/cyan]"))
+                        if 1 <= choice <= 4:
+                            answers.append(q["options"][choice - 1]["score"])
+                            break
+                        else:
+                            console.print("[red]请输入1-4之间的数字[/red]")
+                    except ValueError:
+                        console.print("[red]请输入有效数字[/red]")
+
+            # 计算风险等级
+            total_score = sum(answers)
+            assessment = questionnaire.calculate_risk_level(total_score)
+
+            console.print(f"\n[green]风险评估完成！[/green]")
+            console.print(f"  总得分: {total_score}")
+            console.print(f"  风险等级: {assessment['level']}")
+            console.print(f"  风险描述: {assessment['description']}")
+
+        else:
+            console.print(f"[red]未知操作: {action}[/red]")
+            console.print("支持的操作: show, create, assess")
+            raise typer.Exit(1) from None
+
+    except Exception as e:
+        console.print(f"[red]用户画像操作失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command("recommend")
+def ai_recommend(
+    fund_code: str = typer.Option(None, "--fund", "-f", help="参考基金代码"),
+    top_n: int = typer.Option(5, "--top", "-n", help="推荐数量"),
+    strategy: str = typer.Option(
+        "hybrid", "--strategy", "-s", help="推荐策略: content/collaborative/hybrid"
+    ),
+    risk_match: bool = typer.Option(True, "--risk-match/--no-risk-match", help="是否匹配风险偏好"),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    个性化基金推荐：基于用户画像和基金特征推荐基金
+
+    示例:
+        fund ai recommend                           # 基于用户画像推荐
+        fund ai recommend --fund 000001             # 推荐与000001相似的基金
+        fund ai recommend --strategy content --top 10
+        fund ai recommend --no-risk-match           # 不考虑风险匹配
+    """
+    from fund_cli.ai.recommender import FundRecommender
+    from fund_cli.ai.user_profile import ProfileManager
+
+    try:
+        recommender = FundRecommender()
+        profile_manager = ProfileManager()
+
+        # 获取用户画像
+        profile = profile_manager.get_current_profile()
+        if profile is None and risk_match:
+            console.print("[yellow]未找到用户画像，使用默认推荐策略[/yellow]")
+            risk_match = False
+
+        if fund_code:
+            # 基于基金推荐相似基金
+            recommendations = recommender.recommend_similar(fund_code, top_n)
+
+            lines = [f"# 相似基金推荐\n"]
+            lines.append(f"参考基金: {fund_code}")
+            lines.append(f"推荐策略: {strategy}")
+            lines.append(f"共推荐 {len(recommendations)} 只相似基金：\n")
+
+            for i, rec in enumerate(recommendations, 1):
+                lines.append(f"## {i}. {rec.fund_name} ({rec.fund_code})")
+                lines.append(f"- 基金类型: {rec.fund_type}")
+                lines.append(f"- 相似度: {rec.score:.2%}")
+                lines.append(f"- 推荐理由: {rec.recommendation_reason}")
+                lines.append("")
+
+        else:
+            # 基于用户画像推荐
+            if profile is None:
+                console.print("[red]请先创建用户画像: fund ai profile create[/red]")
+                raise typer.Exit(1) from None
+
+            # 策略映射
+            strategy_map = {
+                "content": "RISK_MATCHED",
+                "collaborative": "SIMILAR",
+                "hybrid": "RISK_MATCHED",
+            }
+            rec_type = strategy_map.get(strategy.lower(), "RISK_MATCHED")
+            report = recommender.recommend(profile, top_n, rec_type)
+
+            lines = [f"# 个性化基金推荐\n"]
+            lines.append(f"用户: {profile.name}")
+            lines.append(f"风险等级: {profile.risk_assessment.tolerance.value}")
+            lines.append(f"推荐策略: {strategy}")
+            lines.append(f"共推荐 {len(report.recommendations)} 只基金：\n")
+
+            for i, rec in enumerate(report.recommendations, 1):
+                lines.append(f"## {i}. {rec.fund_name} ({rec.fund_code})")
+                lines.append(f"- 基金类型: {rec.fund_type}")
+                lines.append(f"- 匹配得分: {rec.score:.2f}")
+                lines.append(f"- 推荐理由: {rec.recommendation_reason}")
+                lines.append("")
+
+        result = "\n".join(lines)
+        console.print(Panel(result, title="基金推荐结果", border_style="green"))
+
+        if output:
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]基金推荐失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command("advise")
+def ai_advise(
+    fund_codes: str = typer.Option(None, "--funds", "-f", help="持仓基金代码（逗号分隔）"),
+    weights: str = typer.Option(None, "--weights", "-w", help="持仓权重（逗号分隔）"),
+    advice_type: str = typer.Option(
+        "all", "--type", "-t", help="建议类型: holding/rebalance/dca/risk/all"
+    ),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    智能投资建议：生成持仓分析、调仓建议、定投方案、风险预警
+
+    示例:
+        fund ai advise                                    # 综合投资建议
+        fund ai advise --funds 000001,000002              # 指定持仓基金
+        fund ai advise --funds 000001,000002 --weights 0.6,0.4
+        fund ai advise --type rebalance                   # 仅调仓建议
+        fund ai advise --type dca                         # 定投方案
+    """
+    from fund_cli.ai.advisor import InvestmentAdvisor
+    from fund_cli.ai.user_profile import ProfileManager
+
+    try:
+        advisor = InvestmentAdvisor()
+        profile_manager = ProfileManager()
+
+        # 获取用户画像
+        profile = profile_manager.get_current_profile()
+
+        # 解析持仓
+        codes = []
+        weight_list = []
+        if fund_codes:
+            codes = [c.strip() for c in fund_codes.split(",")]
+            if weights:
+                weight_list = [float(w.strip()) for w in weights.split(",")]
+                if len(weight_list) != len(codes):
+                    console.print("[red]权重数量必须与基金数量一致[/red]")
+                    raise typer.Exit(1) from None
+
+        # 构建持仓数据
+        holdings = []
+        if codes:
+            for i, code in enumerate(codes):
+                weight = weight_list[i] if i < len(weight_list) else 1.0 / len(codes)
+                holdings.append({
+                    "fund_code": code,
+                    "fund_name": f"基金{code}",
+                    "value": weight * 1000,  # 模拟持仓价值
+                })
+
+        # 生成投资建议
+        report = advisor.advise(profile, holdings if holdings else None)
+
+        # 格式化输出
+        lines = ["# 智能投资建议\n"]
+        lines.append(f"用户ID: {report.user_id}")
+        lines.append(f"报告日期: {report.report_date}\n")
+
+        # 综合建议
+        lines.append("## 综合建议")
+        lines.append(f"- {report.overall_advice}")
+        lines.append("")
+
+        # 持仓建议
+        if report.advices:
+            lines.append("## 持仓建议")
+            for advice in report.advices:
+                lines.append(f"### {advice.fund_code}")
+                lines.append(f"- 建议类型: {advice.advice_type.value}")
+                lines.append(f"- 优先级: {advice.priority.value}")
+                lines.append(f"- 标题: {advice.title}")
+                lines.append(f"- 内容: {advice.content}")
+                lines.append("")
+
+        # 调仓建议
+        if report.rebalance_suggestions:
+            lines.append("## 调仓建议")
+            for suggestion in report.rebalance_suggestions:
+                lines.append(f"- 操作: {suggestion.suggested_action}")
+                lines.append(f"- 理由: {suggestion.reason}")
+            lines.append("")
+
+        # 定投建议
+        if report.dca_suggestions:
+            lines.append("## 定投方案")
+            for dca in report.dca_suggestions:
+                lines.append(f"### {dca.fund_code}")
+                lines.append(f"- 基金名称: {dca.fund_name}")
+                lines.append(f"- 频率: {dca.frequency}")
+                lines.append(f"- 建议金额: {dca.suggested_amount:.0f}元")
+                lines.append(f"- 预期年化: {dca.expected_return:.1f}%")
+            lines.append("")
+
+        # 风险预警
+        if report.risk_warnings:
+            lines.append("## 风险预警")
+            for warning in report.risk_warnings:
+                lines.append(f"- ⚠️ {warning}")
+            lines.append("")
+
+        result = "\n".join(lines)
+        console.print(Panel(result, title="智能投资建议", border_style="blue"))
+
+        if output:
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]生成投资建议失败: {e}[/red]")
+        raise typer.Exit(1) from None
 
 
 # ============================================

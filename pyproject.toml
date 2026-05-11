@@ -1,6 +1,6 @@
 [project]
 name = "fund-cli"
-version = "3.2.0"
+version = "3.4.0"
 description = "专业基金分析CLI工具 - 面向机构客户"
 readme = "README.md"
 license = {text = "MIT"}

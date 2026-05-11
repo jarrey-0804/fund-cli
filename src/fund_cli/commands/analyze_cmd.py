@@ -498,5 +498,262 @@ def performance_persistence(fund_code: str = typer.Argument(..., help="基金代
         raise typer.Exit(1) from None
 
 
+# ============================================
+# Phase 2: 风险分析深度增强命令
+# ============================================
+
+
+@app.command("stress-test")
+def stress_test_fund(
+    fund_code: str = typer.Argument(..., help="基金代码"),
+    scenario: str = typer.Option("all", "--scenario", "-s", help="压力情景: all/2008金融危机/2015股灾/2020疫情"),
+    beta: float = typer.Option(1.0, "--beta", "-b", help="基金Beta值"),
+    custom_shock: float = typer.Option(None, "--shock", help="自定义冲击幅度(%)"),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    压力测试：评估基金在极端市场情况下的表现
+
+    示例:
+        fund analyze stress-test 000001
+        fund analyze stress-test 000001 --scenario "2008金融危机"
+        fund analyze stress-test 000001 --shock -30
+    """
+    from fund_cli.analysis.stress_test import StressTester, StressScenario
+
+    try:
+        tester = StressTester()
+
+        if scenario == "all":
+            report = tester.generate_report(fund_code, fund_code, beta, custom_shock)
+            result = tester.format_report(report)
+        else:
+            try:
+                scenario_enum = StressScenario(scenario)
+            except ValueError:
+                scenario_enum = StressScenario.CRISIS_2008
+
+            result_obj = tester.run_single(scenario_enum, beta, custom_shock)
+            result = f"# 压力测试结果\n\n情景: {result_obj.scenario_name}\n预估损失: {abs(result_obj.portfolio_loss):.2f}%\n风险提示: {result_obj.risk_warning}"
+
+        console.print(Panel(result, title="压力测试报告", border_style="red"))
+
+        if output:
+            from pathlib import Path
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]压力测试失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command("scenario-v2")
+def scenario_analyze_fund(
+    fund_code: str = typer.Argument(..., help="基金代码"),
+    fund_type: str = typer.Option("股票型", "--type", "-t", help="基金类型"),
+    beta: float = typer.Option(1.0, "--beta", "-b", help="基金Beta值"),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    情景分析V2：评估基金在不同市场环境下的预期收益和风险
+
+    示例:
+        fund analyze scenario-v2 000001
+        fund analyze scenario-v2 000001 --type "债券型" --beta 0.5
+    """
+    from fund_cli.analysis.scenario_analysis import ScenarioAnalyzer
+
+    try:
+        analyzer = ScenarioAnalyzer()
+        report = analyzer.analyze(
+            fund_code=fund_code,
+            fund_name=fund_code,
+            fund_type=fund_type,
+            beta=beta,
+        )
+
+        result = analyzer.format_report(report)
+        console.print(Panel(result, title="情景分析报告", border_style="blue"))
+
+        if output:
+            from pathlib import Path
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]情景分析失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command("risk-budget")
+def risk_budget_analyze(
+    fund_codes: str = typer.Argument(..., help="基金代码列表（逗号分隔）"),
+    weights: str = typer.Option(None, "--weights", "-w", help="权重配置（逗号分隔）"),
+    optimize: bool = typer.Option(False, "--optimize", "-o", help="是否进行风险平价优化"),
+    output: str = typer.Option(None, "--output", help="输出文件路径"),
+) -> None:
+    """
+    风险预算分析：分析组合风险贡献和风险集中度
+
+    示例:
+        fund analyze risk-budget 000001,000002,000003
+        fund analyze risk-budget 000001,000002 --weights 0.6,0.4
+        fund analyze risk-budget 000001,000002,000003 --optimize
+    """
+    from fund_cli.analysis.risk_budget import RiskBudgetAnalyzer, OptimizationObjective
+
+    try:
+        codes = [c.strip() for c in fund_codes.split(",")]
+
+        weight_list = None
+        if weights:
+            weight_list = [float(w.strip()) for w in weights.split(",")]
+            if len(weight_list) != len(codes):
+                console.print("[red]权重数量必须与基金数量一致[/red]")
+                raise typer.Exit(1) from None
+
+        analyzer = RiskBudgetAnalyzer()
+
+        if optimize:
+            # 风险平价优化
+            opt_weights = analyzer.optimize_weights(
+                codes,
+                objective=OptimizationObjective.RISK_PARITY,
+            )
+            lines = ["# 风险平价优化结果\n"]
+            lines.append("优化后的权重配置：")
+            for code, weight in opt_weights.items():
+                lines.append(f"- {code}: {weight:.2%}")
+            result = "\n".join(lines)
+        else:
+            # 风险预算分析
+            report = analyzer.analyze(codes, weight_list)
+            result = analyzer.format_report(report)
+
+        console.print(Panel(result, title="风险预算分析", border_style="yellow"))
+
+        if output:
+            from pathlib import Path
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]风险预算分析失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+# ============================================
+# Phase 3: 市场分析能力命令
+# ============================================
+
+
+@app.command("money-flow")
+def money_flow_analyze(
+    flow_type: str = typer.Option("fund", "--type", "-t", help="分析类型: fund(基金申赎)/sector(板块资金)/northbound(北向资金)"),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    资金流向分析：追踪市场资金动向
+
+    示例:
+        fund analyze money-flow --type fund
+        fund analyze money-flow --type sector
+        fund analyze money-flow --type northbound
+    """
+    from fund_cli.analysis.money_flow import MoneyFlowAnalyzer
+
+    try:
+        analyzer = MoneyFlowAnalyzer()
+
+        if flow_type == "fund":
+            report = analyzer.analyze_fund_flow()
+            result = analyzer.format_fund_flow_report(report)
+            title = "基金申赎分析"
+        elif flow_type == "sector":
+            report = analyzer.analyze_sector_flow()
+            result = analyzer.format_sector_flow_report(report)
+            title = "板块资金流向"
+        elif flow_type == "northbound":
+            report = analyzer.analyze_northbound()
+            result = analyzer.format_northbound_report(report)
+            title = "北向资金分析"
+        else:
+            report = analyzer.analyze_fund_flow()
+            result = analyzer.format_fund_flow_report(report)
+            title = "基金申赎分析"
+
+        console.print(Panel(result, title=title, border_style="green"))
+
+        if output:
+            from pathlib import Path
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]资金流向分析失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command("sector-rotation")
+def sector_rotation_analyze(
+    period: str = typer.Option("近1月", "--period", "-p", help="分析周期"),
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    行业轮动分析：识别强势/弱势行业
+
+    示例:
+        fund analyze sector-rotation
+        fund analyze sector-rotation --period "近3月"
+    """
+    from fund_cli.analysis.sector_rotation import SectorRotationAnalyzer
+
+    try:
+        analyzer = SectorRotationAnalyzer()
+        report = analyzer.analyze(period=period)
+        result = analyzer.format_report(report)
+
+        console.print(Panel(result, title="行业轮动分析", border_style="cyan"))
+
+        if output:
+            from pathlib import Path
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]行业轮动分析失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command("sentiment")
+def market_sentiment_analyze(
+    output: str = typer.Option(None, "--output", "-o", help="输出文件路径"),
+) -> None:
+    """
+    市场情绪分析：恐慌贪婪指数、基金仓位、市场宽度
+
+    示例:
+        fund analyze sentiment
+    """
+    from fund_cli.analysis.market_sentiment import MarketSentimentAnalyzer
+
+    try:
+        analyzer = MarketSentimentAnalyzer()
+        report = analyzer.analyze()
+        result = analyzer.format_report(report)
+
+        console.print(Panel(result, title="市场情绪分析", border_style="magenta"))
+
+        if output:
+            from pathlib import Path
+            Path(output).write_text(result, encoding="utf-8")
+            console.print(f"[green]结果已保存至: {output}[/green]")
+
+    except Exception as e:
+        console.print(f"[red]市场情绪分析失败: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
 if __name__ == "__main__":
     app()
