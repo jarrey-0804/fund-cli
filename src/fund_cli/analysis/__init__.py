@@ -7,6 +7,18 @@ V3.3 新增:
 - MoneyFlowAnalyzer: 资金流向分析
 - SectorRotationAnalyzer: 行业轮动分析
 - MarketSentimentAnalyzer: 市场情绪分析
+
+V3.5 新增:
+- PortfolioNavCalculator: 组合净值计算
+- FundScoringEngine: 综合评分引擎
+- AllocationDeviationAnalyzer: 配置偏离度分析
+- AssetLookthroughAnalyzer: 资产穿透分析
+- IndustryRiskAnalyzer: 行业风险提示
+- StockStyleTagger: 风格标签识别
+- IndexFundValuator: 指数基金估值
+- FundEvaluator: 双轨评价器
+- GroupCorrelationAnalyzer: 分组相关分析
+- RebalanceAdvisor: 调仓建议
 """
 
 from fund_cli.analysis.attribution import AttributionAnalyzer
@@ -56,6 +68,16 @@ from fund_cli.analysis.stress_test import (
     StressScenario,
     run_stress_test,
 )
+from fund_cli.analysis.portfolio_nav import PortfolioNavCalculator
+from fund_cli.analysis.fund_scoring import FundScoringEngine, compute_fund_score
+from fund_cli.analysis.allocation_deviation import AllocationDeviationAnalyzer, compute_allocation_deviation
+from fund_cli.analysis.asset_lookthrough import AssetLookthroughAnalyzer
+from fund_cli.analysis.industry_risk import IndustryRiskAnalyzer
+from fund_cli.analysis.style_tagging import StockStyleTagger
+from fund_cli.analysis.index_valuation import IndexFundValuator
+from fund_cli.analysis.fund_evaluation import FundEvaluator
+from fund_cli.analysis.group_correlation import GroupCorrelationAnalyzer
+from fund_cli.analysis.rebalance_advisor import RebalanceAdvisor
 
 __all__ = [
     # V3.3 新增 - 市场分析能力
@@ -96,4 +118,17 @@ __all__ = [
     "PortfolioAnalyzer",
     "ManagerAnalyzer",
     "HoldingAnalyzer",
+    # V3.5 新增 - 账户诊断系统
+    "PortfolioNavCalculator",
+    "FundScoringEngine",
+    "compute_fund_score",
+    "AllocationDeviationAnalyzer",
+    "compute_allocation_deviation",
+    "AssetLookthroughAnalyzer",
+    "IndustryRiskAnalyzer",
+    "StockStyleTagger",
+    "IndexFundValuator",
+    "FundEvaluator",
+    "GroupCorrelationAnalyzer",
+    "RebalanceAdvisor",
 ]

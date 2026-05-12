@@ -13,6 +13,7 @@ from enum import Enum
 from typing import Any, TypeVar
 
 from fund_cli.config import get_config
+from fund_cli.core.rate_limiter import get_rate_limiter
 from fund_cli.data.base import DataNotFoundError, DataSourceAdapter, DataSourceError
 
 T = TypeVar("T")
@@ -153,7 +154,7 @@ class DataSourceGateway:
         **kwargs: Any,
     ) -> T:
         """
-        带重试的调用.
+        带重试和限速的调用.
 
         Args:
             adapter_name: 适配器名称
@@ -167,6 +168,10 @@ class DataSourceGateway:
         Raises:
             DataSourceError: 所有重试都失败
         """
+        # 获取限速器并等待许可
+        rate_limiter = get_rate_limiter()
+        rate_limiter.acquire(adapter_name, blocking=True)
+
         last_error = None
 
         for attempt in range(max_retries):
@@ -316,6 +321,10 @@ class DataSourceGateway:
         Returns:
             状态信息字典
         """
+        # 获取限速器状态
+        rate_limiter = get_rate_limiter()
+        rate_limit_status = rate_limiter.get_status()
+
         return {
             "adapters": {
                 name: {
@@ -329,6 +338,7 @@ class DataSourceGateway:
             "priority": self._priority,
             "available_adapters": self.get_available_adapters(),
             "cache_size": len(self._call_cache),
+            "rate_limiter": rate_limit_status,
         }
 
 

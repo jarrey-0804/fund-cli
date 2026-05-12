@@ -8,6 +8,7 @@ import logging
 
 import pandas as pd
 
+from fund_cli.core.alert_notifier import AlertLevel, get_alert_notifier
 from fund_cli.core.data_quality import DataQualityChecker, QualityReport
 
 logger = logging.getLogger(__name__)
@@ -31,10 +32,17 @@ class QualityGate:
             self._min_score = 60.0
         self._checker = DataQualityChecker(data_manager)
         self._audit_logger = None
+        self._alert_notifier = None
         try:
             from fund_cli.core.audit_logger import get_audit_logger
 
             self._audit_logger = get_audit_logger()
+        except Exception:
+            pass
+        try:
+            from fund_cli.core.alert_notifier import get_alert_notifier
+
+            self._alert_notifier = get_alert_notifier()
         except Exception:
             pass
 
@@ -87,6 +95,21 @@ class QualityGate:
                 quality_level=report.level,
                 blocked=report.blocked,
                 details=details,
+            )
+
+        # 发送告警通知
+        if self._alert_notifier is not None and (report.blocked or report.level == "warning"):
+            issues = [
+                f"{r.name}: {r.message}"
+                for r in report.results
+                if not r.passed
+            ]
+            level = AlertLevel.CRITICAL if report.blocked else AlertLevel.WARNING
+            self._alert_notifier.alert_data_quality(
+                fund_code=fund_code,
+                quality_score=report.score,
+                issues=issues,
+                level=level,
             )
 
         return report

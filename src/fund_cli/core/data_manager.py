@@ -291,13 +291,44 @@ class DataManager:
         self,
         fund_code: str,
         report_date: date | None = None,
+        top_n: int | None = None,
     ) -> pd.DataFrame:
-        """获取基金持仓数据"""
-        return self._call_gateway("get_fund_holdings", fund_code, report_date, normalize=True)
+        """
+        获取基金持仓数据
+        
+        Args:
+            fund_code: 基金代码
+            report_date: 报告期
+            top_n: 返回前N大持仓（可选）
+        
+        Returns:
+            持仓数据 DataFrame
+        """
+        result = self._call_gateway("get_fund_holdings", fund_code, report_date, normalize=True)
+        if top_n is not None and isinstance(result, pd.DataFrame) and not result.empty:
+            return result.head(top_n)
+        return result
 
     def get_fund_manager(self, fund_code: str) -> dict[str, Any]:
         """获取基金经理信息"""
         return self._call_gateway("get_fund_manager", fund_code, normalize=True)
+
+    def get_fund_industry_allocation(
+        self,
+        fund_code: str,
+        year: int | None = None,
+    ) -> pd.DataFrame:
+        """
+        获取基金行业配置
+        
+        Args:
+            fund_code: 基金代码
+            year: 年份（默认最新）
+        
+        Returns:
+            行业配置 DataFrame
+        """
+        return self._call_gateway("get_fund_industry_allocation", fund_code, year, normalize=True)
 
     def get_fund_fee(self, fund_code: str) -> dict[str, Any]:
         """获取基金费率信息"""

@@ -136,8 +136,8 @@ class AKShareAdapter(DataSourceAdapter):
         ak = self._get_akshare()
 
         try:
-            # 获取开放式基金净值数据
-            df = ak.fund_open_fund_info_em(fund=fund_code, indicator="单位净值走势")
+            # 获取开放式基金净值数据（AKShare v1.x+ API）
+            df = ak.fund_open_fund_info_em(symbol=fund_code, indicator="单位净值走势")
 
             if df.empty:
                 raise DataNotFoundError(f"基金 {fund_code} 净值数据不存在")
@@ -420,14 +420,39 @@ class AKShareAdapter(DataSourceAdapter):
         return results
 
     @staticmethod
-    def _parse_date(date_str: str | None) -> date | None:
-        """解析日期字符串"""
-        if not date_str:
+    def _parse_date(date_val: str | int | float | None) -> date | None:
+        """
+        解析日期，支持多种格式：
+        - 字符串: YYYY-MM-DD, YYYY/MM/DD, YYYYMMDD
+        - 整数/浮点: YYYYMMDD（如 20190102）或 Excel序列号（<100000）
+        """
+        if not date_val:
             return None
-        try:
-            return datetime.strptime(date_str, "%Y-%m-%d").date()
-        except (ValueError, TypeError):
+        # 处理 NaN
+        if isinstance(date_val, float) and pd.isna(date_val):
             return None
+        # 处理数值类型
+        if isinstance(date_val, (int, float)):
+            v = int(date_val)
+            if v < 100000:
+                # Excel序列号（1900日期系统）
+                from datetime import timedelta
+
+                base = datetime(1899, 12, 30)
+                return (base + timedelta(days=v)).date()
+            # YYYYMMDD 整数格式
+            try:
+                return datetime.strptime(str(v), "%Y%m%d").date()
+            except ValueError:
+                return None
+        # 处理字符串
+        s = str(date_val).strip()
+        for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y%m%d", "%Y年%m月%d日"):
+            try:
+                return datetime.strptime(s, fmt).date()
+            except ValueError:
+                continue
+        return None
 
     @staticmethod
     def _parse_scale(scale_str: str | None) -> float | None:

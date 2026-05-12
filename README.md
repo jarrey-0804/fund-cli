@@ -4,7 +4,7 @@
 
 **专业基金分析CLI工具 - 面向机构客户**
 
-[![Version](https://img.shields.io/badge/version-3.2.0-blue.svg)](https://github.com/jarrey-0804/fund-cli)
+[![Version](https://img.shields.io/badge/version-3.5.0-blue.svg)](https://github.com/jarrey-0804/fund-cli)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)

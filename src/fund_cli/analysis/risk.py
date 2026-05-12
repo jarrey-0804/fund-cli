@@ -203,6 +203,52 @@ class RiskAnalyzer(Analyzer):
 
         return max(drawdown_periods) if drawdown_periods else 0
 
+    def max_drawdown_period(self, returns: pd.Series) -> dict[str, Any]:
+        """
+        计算最大回撤及其发生的时间段
+
+        Returns:
+            {
+                'max_drawdown': float,       # 最大回撤值（负数）
+                'peak_date': str,            # 回撤起始日（峰值日）
+                'trough_date': str,          # 回撤结束日（谷值日）
+                'duration_days': int,         # 持续天数
+                'recovery_date': str | None,  # 恢复日期（如有）
+            }
+        """
+        if returns.empty:
+            return {
+                "max_drawdown": 0.0,
+                "peak_date": "",
+                "trough_date": "",
+                "duration_days": 0,
+                "recovery_date": None,
+            }
+
+        cumulative = (1 + returns).cumprod()
+        running_max = cumulative.cummax()
+        drawdown = (cumulative - running_max) / running_max
+
+        max_dd = drawdown.min()
+        trough_date = drawdown.idxmin()
+        peak_date = cumulative[:trough_date].idxmax()
+
+        # 计算恢复日期
+        recovery_date = None
+        post_trough = cumulative[trough_date:]
+        for dt, val in post_trough.items():
+            if val >= cumulative[peak_date]:
+                recovery_date = dt
+                break
+
+        return {
+            "max_drawdown": round(float(max_dd), 6),
+            "peak_date": peak_date.strftime("%Y-%m-%d") if hasattr(peak_date, "strftime") else str(peak_date),
+            "trough_date": trough_date.strftime("%Y-%m-%d") if hasattr(trough_date, "strftime") else str(trough_date),
+            "duration_days": (trough_date - peak_date).days,
+            "recovery_date": recovery_date.strftime("%Y-%m-%d") if recovery_date is not None and hasattr(recovery_date, "strftime") else None,
+        }
+
     # ========== 尾部风险计算 ==========
 
     def var(

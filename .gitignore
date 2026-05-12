@@ -91,7 +91,7 @@ Thumbs.db
 .dockerignore
 
 # CI/CD
-.github/
+# .github/  # 已移除：需要保留 CI/CD 配置文件
 
 # Build
 build/
@@ -106,6 +106,10 @@ data/cache/
 *.xlsx
 *.csv
 !tests/fixtures/*.csv
+*.html
+*_report.md
+data-quality-governance-*.md
+regression-test-report.md
 
 # Secrets
 *.pem

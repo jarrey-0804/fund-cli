@@ -5,6 +5,49 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [3.5.0] - 2026-05-12
+
+### Added - 数据质量治理体系完善
+
+#### 数据采集层增强
+- **RateLimiter**: 全局限速器，令牌桶算法，支持多数据源独立限速（AKShare 5req/s, Tushare 1req/s）
+- **HealthChecker**: 数据源健康检查器，定时主动探测，连续失败告警
+- **IdempotentExecutor**: 幂等执行器，请求去重+结果缓存+装饰器支持
+
+#### 缓存层增强
+- **缓存穿透防护**: 空值缓存标记，防止不存在的数据反复查询数据源
+- **缓存击穿防护**: 请求锁机制（get_with_lock），防止并发穿透
+- **缓存雪崩防护**: TTL随机偏移（±10%），避免大量缓存同时过期
+
+#### 分析层增强
+- **DeterminismChecker**: 分析结果确定性验证器，快照测试+哈希比对
+- **TraceContext**: 计算链路追踪，Trace ID贯穿全链路+Span嵌套
+
+#### 输出层增强
+- **DataMasker**: 数据脱敏器，支持基金代码/身份证/手机号/邮箱/金额脱敏
+- **ReportValidator增强**: 模板变量类型验证+渲染输出质量验证+报告schema验证
+
+#### 监控告警层增强
+- **AlertNotifier**: 主动告警通知，支持CLI/Webhook/Email多渠道
+- **QualityTrendAnalyzer**: 数据质量趋势分析，基于审计日志的异常检测
+- **SLAMonitor**: SLA监控器，新鲜度/质量评分/响应时间SLA违规告警
+- **MetricsExporter**: 质量指标可观测性导出器，支持Prometheus格式
+
+#### 交易记录解析
+- **TransactionParser**: Excel交易记录解析器，支持9种业务类型
+
+#### 持仓计算
+- **HoldingCalculator**: 持仓计算器，份额/成本/市值/盈亏计算
+
+#### CI/CD
+- 新增 `tests/quality/` 数据质量测试套件（35个测试用例）
+- CI流水线增加数据质量测试步骤
+
+### Changed
+- DataCache版本升级至1.1（新增缓存防护机制）
+- QualityGate集成AlertNotifier，质量检查失败自动告警
+- DataSourceGateway集成RateLimiter，所有请求自动限速
+
 ## [3.4.0] - 2026-05-11
 
 ### Added - 智能推荐系统（Phase 4）

@@ -56,6 +56,7 @@ from fund_cli.commands import (  # noqa: E402
     compare_cmd,
     config_cmd,
     data_cmd,
+    diagnose_cmd,  # noqa: E402  # v3.5 新增
     filter_cmd,
     holding_cmd,
     interactive_cmd,
@@ -78,6 +79,7 @@ app.add_typer(holding_cmd.app, name="holding")
 app.add_typer(manager_cmd.app, name="manager")
 app.add_typer(interactive_cmd.app, name="interactive")
 app.add_typer(report_cmd.app, name="report")  # v3.1 新增
+app.add_typer(diagnose_cmd.app, name="diagnose")  # v3.5 新增
 
 
 # 直接调用的命令

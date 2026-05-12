@@ -2,11 +2,15 @@
 数据缓存管理
 
 使用 DiskCache 实现数据缓存，支持过期时间和持久化。
+包含缓存穿透、击穿、雪崩防护机制。
 """
 
 import hashlib
 import json
 import logging
+import random
+import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +20,13 @@ from diskcache import Cache
 logger = logging.getLogger(__name__)
 
 # 缓存数据版本号，用于数据模型变更时自动失效旧缓存
-CACHE_VERSION = "1.0"
+CACHE_VERSION = "1.1"
+
+# 空值缓存标记
+NULL_VALUE = "__CACHE_NULL__"
+
+# TTL 随机偏移范围（防止雪崩）
+TTL_JITTER_PERCENT = 0.1
 
 
 class DataCache:
@@ -29,6 +39,7 @@ class DataCache:
     - 自动序列化/反序列化
     - 版本控制
     - 容量限制
+    - 缓存穿透/击穿/雪崩防护
     """
 
     def __init__(
@@ -36,6 +47,8 @@ class DataCache:
         cache_dir: str = "~/.fund_cli/cache",
         default_ttl: int = 3600,
         size_limit: int = 2**30,  # 1GB 默认容量限制
+        null_ttl: int = 300,  # 空值缓存时间（防止穿透）
+        enable_ttl_jitter: bool = True,  # 启用TTL随机偏移（防止雪崩）
     ):
         """
         初始化缓存管理器
@@ -44,12 +57,20 @@ class DataCache:
             cache_dir: 缓存目录
             default_ttl: 默认过期时间（秒）
             size_limit: 缓存容量限制（字节），默认 1GB
+            null_ttl: 空值缓存时间（秒），防止缓存穿透
+            enable_ttl_jitter: 是否启用TTL随机偏移，防止缓存雪崩
         """
         self.cache_dir = Path(cache_dir).expanduser()
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.default_ttl = default_ttl
         self.size_limit = size_limit
+        self.null_ttl = null_ttl
+        self.enable_ttl_jitter = enable_ttl_jitter
         self._cache = Cache(str(self.cache_dir), size_limit=size_limit)
+
+        # 请求锁，防止缓存击穿
+        self._locks: dict[str, threading.Lock] = {}
+        self._lock = threading.Lock()
 
         # 版本检查：如果版本不匹配，清空缓存
         self._check_version()
@@ -89,6 +110,22 @@ class DataCache:
         key_hash = hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()[:8]
         return f"{prefix}:{key_hash}"
 
+    def _get_lock(self, key: str) -> threading.Lock:
+        """获取请求锁."""
+        with self._lock:
+            if key not in self._locks:
+                self._locks[key] = threading.Lock()
+            return self._locks[key]
+
+    def _apply_ttl_jitter(self, ttl: int) -> int:
+        """应用TTL随机偏移，防止缓存雪崩."""
+        if not self.enable_ttl_jitter or ttl <= 0:
+            return ttl
+
+        jitter = int(ttl * TTL_JITTER_PERCENT)
+        # 随机增加或减少 TTL
+        return ttl + random.randint(-jitter, jitter)
+
     def get(self, key: str) -> Any | None:
         """
         获取缓存值
@@ -98,8 +135,74 @@ class DataCache:
 
         Returns:
             缓存值，不存在返回 None
+            如果是空值缓存标记，返回 None
         """
-        return self._cache.get(key)
+        value = self._cache.get(key)
+
+        # 检查是否是空值缓存标记（使用is而不是==，避免DataFrame比较问题）
+        if value is NULL_VALUE:
+            return None
+
+        return value
+
+    def get_with_lock(
+        self,
+        key: str,
+        loader: callable,
+        ttl: int | None = None,
+        null_ttl: int | None = None,
+        timeout: float = 30.0,
+    ) -> Any:
+        """
+        带锁的缓存获取（防止缓存击穿）.
+
+        Args:
+            key: 缓存键
+            loader: 数据加载函数
+            ttl: 正常数据的缓存时间
+            null_ttl: 空值的缓存时间
+            timeout: 锁超时时间
+
+        Returns:
+            缓存值或加载的数据
+        """
+        # 先尝试获取缓存
+        value = self.get(key)
+        if value is not None:
+            return value
+
+        # 获取请求锁
+        lock = self._get_lock(key)
+
+        if not lock.acquire(timeout=timeout):
+            # 获取锁失败，直接返回 None
+            logger.warning("获取缓存锁超时: %s", key)
+            return None
+
+        try:
+            # 双重检查
+            value = self.get(key)
+            if value is not None:
+                return value
+
+            # 加载数据
+            try:
+                value = loader()
+            except Exception as e:
+                logger.error("数据加载失败: %s", e)
+                value = None
+
+            # 缓存数据（包括空值）
+            if value is not None:
+                self.set(key, value, ttl)
+            else:
+                # 缓存空值，防止穿透
+                self.set_null(key, null_ttl)
+
+            return value
+
+        finally:
+            lock.release()
 
     def set(
         self,
@@ -116,7 +219,26 @@ class DataCache:
             ttl: 过期时间（秒），默认使用 default_ttl
         """
         expire = ttl if ttl is not None else self.default_ttl
+        # 应用TTL随机偏移，防止缓存雪崩
+        expire = self._apply_ttl_jitter(expire)
         self._cache.set(key, value, expire=expire)
+
+    def set_null(
+        self,
+        key: str,
+        ttl: int | None = None,
+    ) -> None:
+        """
+        设置空值缓存（防止缓存穿透）.
+
+        Args:
+            key: 缓存键
+            ttl: 过期时间（秒），默认使用 null_ttl
+        """
+        expire = ttl if ttl is not None else self.null_ttl
+        expire = self._apply_ttl_jitter(expire)
+        self._cache.set(key, NULL_VALUE, expire=expire)
+        logger.debug("设置空值缓存: %s", key)
 
     def delete(self, key: str) -> bool:
         """

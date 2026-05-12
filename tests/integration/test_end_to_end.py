@@ -113,7 +113,7 @@ class TestEndToEndCLI:
         result = runner.invoke(app, ["--version"])
 
         assert result.exit_code == 0
-        assert "3.4.0" in result.output
+        assert "3.5.0" in result.output
 
     @patch("fund_cli.core.data_manager.DataManager.search_funds")
     def test_filter_command_flow(self, mock_search):
