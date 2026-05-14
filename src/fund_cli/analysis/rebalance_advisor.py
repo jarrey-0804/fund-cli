@@ -68,7 +68,7 @@ class RebalanceAdvisor:
         reduction = self._generate_reduction_suggestions(current_codes, current_weights, deviation)
 
         # 5. 生成加仓建议（低配的资产类别）
-        addition = self._generate_addition_suggestions(deviation, target_allocation)
+        addition = self._generate_addition_suggestions(deviation, target_allocation, current_codes)
 
         # 6. 预期改善
         improvement = self._estimate_improvement(deviation)
@@ -125,7 +125,7 @@ class RebalanceAdvisor:
                         info = self._dm.get_fund_info(code)
                         ftype = info.get("type", "") if info else ""
                         if self._belongs_to_asset(ftype, asset_class):
-                            candidates.append({"基金代码": code, "基金名称": info.get("name", code), "当前权重": weight})
+                            candidates.append({"基金代码": code, "基金名称": info.get("fund_name") or info.get("name", code), "当前权重": weight})
                     except Exception:
                         pass
 
@@ -146,20 +146,64 @@ class RebalanceAdvisor:
         self,
         deviation: dict[str, float],
         target_allocation: dict[str, float],
+        current_codes: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """生成加仓建议"""
         suggestions = []
         for asset_class, dev in deviation.items():
             if dev < -0.05:  # 低配超过5%
                 target_weight = target_allocation.get(asset_class, 0)
-                suggestions.append({
-                    "资产类别": asset_class,
-                    "低配幅度": f"{abs(dev):.2%}",
-                    "目标权重": f"{target_weight:.2%}",
-                    "建议操作": f"适当增加{asset_class}类资产的配置",
-                })
+
+                # 检查当前持仓中是否已有该类基金
+                existing_funds = []
+                if current_codes:
+                    for code in current_codes:
+                        try:
+                            info = self._dm.get_fund_info(code)
+                            ftype = info.get("type", "") if info else ""
+                            if self._belongs_to_asset(ftype, asset_class):
+                                existing_funds.append(info.get("fund_name") or info.get("name", code))
+                        except Exception:
+                            pass
+
+                if existing_funds:
+                    # 已有同类基金，建议加仓现有基金
+                    fund_names = "、".join(existing_funds[:3])  # 最多显示3只
+                    suggestions.append({
+                        "资产类别": asset_class,
+                        "低配幅度": f"{abs(dev):.2%}",
+                        "目标权重": f"{target_weight:.2%}",
+                        "建议加仓基金": fund_names,
+                        "建议操作": f"增加{fund_names}的持仓比例",
+                    })
+                else:
+                    # 没有同类基金，建议新增配置并给出参考
+                    reference_funds = self._get_reference_funds(asset_class)
+                    suggestions.append({
+                        "资产类别": asset_class,
+                        "低配幅度": f"{abs(dev):.2%}",
+                        "目标权重": f"{target_weight:.2%}",
+                        "建议操作": f"增加{asset_class}类资产配置",
+                        "参考基金": reference_funds,
+                    })
 
         return suggestions
+
+    def _get_reference_funds(self, asset_class: str) -> list[str]:
+        """获取某资产类别的参考基金"""
+        references = {
+            "固收": [
+                "000171（富国信用债）",
+                "110007（易方达稳健收益）",
+                "000032（易方达信用债）",
+            ],
+            "现金": [
+                "000198（天弘余额宝货币）",
+                "003474（南方现金通）",
+                "000576（中银活期宝）",
+            ],
+        }
+        return references.get(asset_class, ["请咨询理财顾问选择合适产品"])
 
     def _estimate_improvement(self, deviation: dict[str, float]) -> str:
         """估算调仓后预期改善"""

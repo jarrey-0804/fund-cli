@@ -16,16 +16,25 @@ from fund_cli.data.base import (
 )
 from fund_cli.data.cache import DataCache
 
+# Wind 代码到 akshare 代码的映射表
+# 注：Wind 基金指数代码在 akshare 中无直接对应数据源，使用相近指数替代
+WIND_TO_AKSHARE_BENCHMARK = {
+    # 基金指数 -> 使用相近的股票指数替代
+    "885001.WI": "sh000905",  # 偏股混合基金指数 -> 中证500（更接近主动基金表现）
+    "885065.WI": "sz399006",  # QDII股票型基金指数 -> 创业板指（更接近成长股表现）
+    "885066.WI": "sh000016",  # 债券型基金指数 -> 上证50
+    # 股票指数
+    "000300.SH": "sh000300",  # 沪深300
+    "000905.SH": "sh000905",  # 中证500
+    "399006.SZ": "sz399006",  # 创业板指
+    "000016.SH": "sh000016",  # 上证50
+    "000852.SH": "sh000852",  # 中证1000
+    "399001.SZ": "sz399001",  # 深证成指
+    "000001.SH": "sh000001",  # 上证指数
+}
+
 
 class AKShareAdapter(DataSourceAdapter):
-    """
-    AKShare 数据源适配器
-
-    使用 AKShare 开源库获取基金数据，特点：
-    - 免费使用，无需Token
-    - 数据覆盖全面
-    - 支持实时数据
-    """
 
     def __init__(self, cache: DataCache | None = None):
         """
@@ -91,8 +100,8 @@ class AKShareAdapter(DataSourceAdapter):
                 "type": info_dict.get("基金类型", "未知"),
                 "establish_date": self._parse_date(info_dict.get("成立日期")),
                 "manager": info_dict.get("基金经理", ""),
-                "company": info_dict.get("基金管理人", ""),
-                "scale": self._parse_scale(info_dict.get("基金规模")),
+                "company": info_dict.get("基金公司", info_dict.get("基金管理人", "")),
+                "scale": self._parse_scale(info_dict.get("最新规模", info_dict.get("基金规模"))),
             }
 
             # 缓存结果
@@ -123,9 +132,22 @@ class AKShareAdapter(DataSourceAdapter):
         Returns:
             净值数据 DataFrame
         """
-        # 格式化日期
-        start_str = start_date.strftime("%Y%m%d") if start_date else "19900101"
-        end_str = end_date.strftime("%Y%m%d") if end_date else datetime.now().strftime("%Y%m%d")
+        # 格式化日期（兼容 date 类型和字符串）
+        if start_date:
+            if isinstance(start_date, str):
+                start_str = start_date.replace("-", "")
+            else:
+                start_str = start_date.strftime("%Y%m%d")
+        else:
+            start_str = "19900101"
+
+        if end_date:
+            if isinstance(end_date, str):
+                end_str = end_date.replace("-", "")
+            else:
+                end_str = end_date.strftime("%Y%m%d")
+        else:
+            end_str = datetime.now().strftime("%Y%m%d")
 
         # 检查缓存
         if self._cache:
@@ -172,6 +194,9 @@ class AKShareAdapter(DataSourceAdapter):
                 ["fund_code", "nav_date", "unit_nav", "accumulated_nav", "daily_return"]
             ].copy()
             result_df = result_df.sort_values("nav_date").reset_index(drop=True)
+
+            # 确保索引为 datetime 类型
+            result_df.index = pd.DatetimeIndex(result_df["nav_date"])
 
             # 缓存结果
             if self._cache:
@@ -283,8 +308,14 @@ class AKShareAdapter(DataSourceAdapter):
         ak = self._get_akshare()
 
         try:
+            # 转换 Wind 代码到 akshare 代码
+            ak_code = WIND_TO_AKSHARE_BENCHMARK.get(benchmark_code, benchmark_code)
+            # 如果没有前缀，添加 sh 前缀
+            if not ak_code.startswith(("sh", "sz")):
+                ak_code = f"sh{ak_code}"
+
             # 获取指数数据
-            df = ak.stock_zh_index_daily(symbol=f"sh{benchmark_code}")
+            df = ak.stock_zh_index_daily(symbol=ak_code)
 
             if df.empty:
                 raise DataNotFoundError(f"指数 {benchmark_code} 不存在")
@@ -300,11 +331,13 @@ class AKShareAdapter(DataSourceAdapter):
             # 处理日期
             df["nav_date"] = pd.to_datetime(df["nav_date"])
 
-            # 筛选日期范围
-            if start_date:
-                df = df[df["nav_date"] >= pd.Timestamp(start_date)]
-            if end_date:
-                df = df[df["nav_date"] <= pd.Timestamp(end_date)]
+            # 筛选日期范围（兼容 date 类型和字符串类型）
+            if start_date is not None:
+                start_ts = pd.Timestamp(start_date)
+                df = df[df["nav_date"] >= start_ts]
+            if end_date is not None:
+                end_ts = pd.Timestamp(end_date)
+                df = df[df["nav_date"] <= end_ts]
 
             # 计算收益率
             df["daily_return"] = df["unit_nav"].pct_change() * 100
@@ -314,7 +347,11 @@ class AKShareAdapter(DataSourceAdapter):
             result_df = df[
                 ["fund_code", "nav_date", "unit_nav", "accumulated_nav", "daily_return"]
             ].copy()
-            return result_df.sort_values("nav_date").reset_index(drop=True)
+            result_df = result_df.sort_values("nav_date").reset_index(drop=True)
+
+            # 确保索引为 datetime 类型
+            result_df.index = pd.DatetimeIndex(result_df["nav_date"])
+            return result_df
 
         except DataNotFoundError:
             raise

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
 from typing import Any
 
 import pandas as pd
@@ -74,9 +75,18 @@ class PortfolioNavCalculator:
             try:
                 df = self._dm.get_fund_nav(code, start_date=start_date, end_date=end_date)
                 if df is not None and not df.empty:
-                    # 优先使用累计净值，回退到单位净值
-                    nav_col = "累计净值" if "累计净值" in df.columns else "单位净值"
-                    nav_dict[code] = df[nav_col]
+                    # 优先使用累计净值，回退到单位净值（兼容中英文列名）
+                    if "accumulated_nav" in df.columns:
+                        nav_dict[code] = df["accumulated_nav"]
+                    elif "累计净值" in df.columns:
+                        nav_dict[code] = df["累计净值"]
+                    elif "unit_nav" in df.columns:
+                        nav_dict[code] = df["unit_nav"]
+                    elif "单位净值" in df.columns:
+                        nav_dict[code] = df["单位净值"]
+                    else:
+                        logger.warning(f"基金 {code} 净值数据无可用列: {df.columns.tolist()}")
+                        continue
                 else:
                     logger.warning(f"基金 {code} 无净值数据")
             except Exception as e:
@@ -91,6 +101,12 @@ class PortfolioNavCalculator:
         weight_series = pd.Series(weights, index=fund_codes)
         # 仅使用有数据的基金权重
         available_weights = weight_series[nav_df.columns]
+        # 权重重新标准化前添加警告
+        if len(available_weights) != len(weight_series):
+            logger.warning(
+                f"{len(weight_series) - len(available_weights)} 只基金因无净值数据被排除，"
+                f"权重已按可用基金重新标准化"
+            )
         available_weights = available_weights / available_weights.sum()
 
         return (nav_normalized * available_weights).sum(axis=1)
@@ -118,13 +134,20 @@ class PortfolioNavCalculator:
 
         for name, index_code in benchmarks.items():
             try:
-                index_nav = self._dm.get_index_nav(
+                index_nav = self._dm.get_benchmark_nav(
                     index_code,
-                    start_date=portfolio_nav.index[0].strftime("%Y-%m-%d"),
-                    end_date=portfolio_nav.index[-1].strftime("%Y-%m-%d"),
+                    start_date=date.fromisoformat(portfolio_nav.index[0].strftime("%Y-%m-%d")),
+                    end_date=date.fromisoformat(portfolio_nav.index[-1].strftime("%Y-%m-%d")),
                 )
                 if index_nav is not None and not index_nav.empty:
-                    index_return = index_nav.iloc[-1] / index_nav.iloc[0] - 1
+                    # index_nav 是 DataFrame，需要指定列名
+                    if "accumulated_nav" in index_nav.columns:
+                        nav_col = "accumulated_nav"
+                    elif "unit_nav" in index_nav.columns:
+                        nav_col = "unit_nav"
+                    else:
+                        nav_col = index_nav.columns[-1]  # 回退到最后一列
+                    index_return = index_nav[nav_col].iloc[-1] / index_nav[nav_col].iloc[0] - 1
                 else:
                     index_return = 0.0
                     logger.warning(f"指数 {name}({index_code}) 无数据")

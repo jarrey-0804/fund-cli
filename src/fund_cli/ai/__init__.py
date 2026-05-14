@@ -17,78 +17,169 @@ V3.4 新增:
 - InvestmentAdvisor: 智能投资建议
 """
 
-from fund_cli.ai.agent import FundAgent, get_fund_agent, reset_fund_agent
-from fund_cli.ai.analyzer import AIAnalyzer
-from fund_cli.ai.fund_selector import (
-    FundSelector,
-    FundRecommendation,
-    InvestmentNeed,
-    NeedParser,
-    select_funds,
-)
-from fund_cli.ai.market_analyst import (
-    MarketAnalyst,
-    MarketSentimentReport,
-    SectorRotationReport,
-    HotspotReport,
-    analyze_market_sentiment,
-    analyze_sector_rotation,
-    track_market_hotspots,
-)
+# 核心模块（不依赖 langchain）
 from fund_cli.ai.portfolio_doctor import (
     PortfolioDoctor,
     PortfolioDiagnosis,
     DiagnosisItem,
     diagnose_portfolio,
 )
-from fund_cli.ai.prompts import PromptTemplates
-from fund_cli.ai.providers import (
-    LiteLLMProvider,
-    LLMProvider,
-    OpenAIProvider,
-    QwenProvider,
-    get_provider,
-)
-from fund_cli.ai.state import FundAgentState
-from fund_cli.ai.advisor import (
-    AdviceType,
-    Priority,
-    AdviceItem,
-    RebalanceSuggestion,
-    DCASuggestion,
-    InvestmentAdviceReport,
-    HoldingAnalyzer,
-    RebalanceAdvisor,
-    DCAAdvisor,
-    RiskAlerter,
-    InvestmentAdvisor,
-    generate_investment_advice,
-)
-from fund_cli.ai.recommender import (
-    RecommendationType,
-    FundScore,
-    RecommendationItem,
-    RecommendationReport,
-    ContentBasedRecommender,
-    CollaborativeRecommender,
-    HybridRecommender,
-    FundRecommender,
-    recommend_funds,
-)
-from fund_cli.ai.user_profile import (
-    RiskTolerance,
-    InvestmentGoal,
-    InvestmentHorizon,
-    InvestmentStyle,
-    RiskAssessment,
-    InvestmentPreferences,
-    UserProfile,
-    RiskQuestionnaire,
-    StyleAnalyzer,
-    ProfileManager,
-    create_user_profile,
-)
-from fund_cli.ai.tools import FUND_TOOLS
+
+# 可选导入 - 依赖 langchain 的模块
+try:
+    from fund_cli.ai.agent import FundAgent, get_fund_agent, reset_fund_agent
+except ImportError:
+    FundAgent = None  # type: ignore
+    get_fund_agent = None  # type: ignore
+    reset_fund_agent = None  # type: ignore
+
+try:
+    from fund_cli.ai.analyzer import AIAnalyzer
+except ImportError:
+    AIAnalyzer = None  # type: ignore
+
+try:
+    from fund_cli.ai.fund_selector import (
+        FundSelector,
+        FundRecommendation,
+        InvestmentNeed,
+        NeedParser,
+        select_funds,
+    )
+except ImportError:
+    FundSelector = None  # type: ignore
+    FundRecommendation = None  # type: ignore
+    InvestmentNeed = None  # type: ignore
+    NeedParser = None  # type: ignore
+    select_funds = None  # type: ignore
+
+try:
+    from fund_cli.ai.market_analyst import (
+        MarketAnalyst,
+        MarketSentimentReport,
+        SectorRotationReport,
+        HotspotReport,
+        analyze_market_sentiment,
+        analyze_sector_rotation,
+        track_market_hotspots,
+    )
+except ImportError:
+    MarketAnalyst = None  # type: ignore
+    MarketSentimentReport = None  # type: ignore
+    SectorRotationReport = None  # type: ignore
+    HotspotReport = None  # type: ignore
+    analyze_market_sentiment = None  # type: ignore
+    analyze_sector_rotation = None  # type: ignore
+    track_market_hotspots = None  # type: ignore
+
+try:
+    from fund_cli.ai.prompts import PromptTemplates
+except ImportError:
+    PromptTemplates = None  # type: ignore
+
+try:
+    from fund_cli.ai.providers import (
+        LiteLLMProvider,
+        LLMProvider,
+        OpenAIProvider,
+        QwenProvider,
+        get_provider,
+    )
+except ImportError:
+    LiteLLMProvider = None  # type: ignore
+    LLMProvider = None  # type: ignore
+    OpenAIProvider = None  # type: ignore
+    QwenProvider = None  # type: ignore
+    get_provider = None  # type: ignore
+
+try:
+    from fund_cli.ai.state import FundAgentState
+except ImportError:
+    FundAgentState = None  # type: ignore
+
+try:
+    from fund_cli.ai.advisor import (
+        AdviceType,
+        Priority,
+        AdviceItem,
+        RebalanceSuggestion,
+        DCASuggestion,
+        InvestmentAdviceReport,
+        HoldingAnalyzer,
+        RebalanceAdvisor,
+        DCAAdvisor,
+        RiskAlerter,
+        InvestmentAdvisor,
+        generate_investment_advice,
+    )
+except ImportError:
+    AdviceType = None  # type: ignore
+    Priority = None  # type: ignore
+    AdviceItem = None  # type: ignore
+    RebalanceSuggestion = None  # type: ignore
+    DCASuggestion = None  # type: ignore
+    InvestmentAdviceReport = None  # type: ignore
+    HoldingAnalyzer = None  # type: ignore
+    RebalanceAdvisor = None  # type: ignore
+    DCAAdvisor = None  # type: ignore
+    RiskAlerter = None  # type: ignore
+    InvestmentAdvisor = None  # type: ignore
+    generate_investment_advice = None  # type: ignore
+
+try:
+    from fund_cli.ai.recommender import (
+        RecommendationType,
+        FundScore,
+        RecommendationItem,
+        RecommendationReport,
+        ContentBasedRecommender,
+        CollaborativeRecommender,
+        HybridRecommender,
+        FundRecommender,
+        recommend_funds,
+    )
+except ImportError:
+    RecommendationType = None  # type: ignore
+    FundScore = None  # type: ignore
+    RecommendationItem = None  # type: ignore
+    RecommendationReport = None  # type: ignore
+    ContentBasedRecommender = None  # type: ignore
+    CollaborativeRecommender = None  # type: ignore
+    HybridRecommender = None  # type: ignore
+    FundRecommender = None  # type: ignore
+    recommend_funds = None  # type: ignore
+
+try:
+    from fund_cli.ai.user_profile import (
+        RiskTolerance,
+        InvestmentGoal,
+        InvestmentHorizon,
+        InvestmentStyle,
+        RiskAssessment,
+        InvestmentPreferences,
+        UserProfile,
+        RiskQuestionnaire,
+        StyleAnalyzer,
+        ProfileManager,
+        create_user_profile,
+    )
+except ImportError:
+    RiskTolerance = None  # type: ignore
+    InvestmentGoal = None  # type: ignore
+    InvestmentHorizon = None  # type: ignore
+    InvestmentStyle = None  # type: ignore
+    RiskAssessment = None  # type: ignore
+    InvestmentPreferences = None  # type: ignore
+    UserProfile = None  # type: ignore
+    RiskQuestionnaire = None  # type: ignore
+    StyleAnalyzer = None  # type: ignore
+    ProfileManager = None  # type: ignore
+    create_user_profile = None  # type: ignore
+
+try:
+    from fund_cli.ai.tools import FUND_TOOLS
+except ImportError:
+    FUND_TOOLS = []  # type: ignore
 
 # 可选导入 - 记忆系统
 try:

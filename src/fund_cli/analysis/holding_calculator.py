@@ -86,7 +86,11 @@ class HoldingCalculator:
                 # 赎回时，按比例减少成本
                 # 先计算当前每股成本
                 if h["total_shares"] > shares:
-                    cost_per_share = h["total_cost"] / h["total_shares"]
+                    # 避免除以接近0的数
+                    if h["total_shares"] > 0.001:
+                        cost_per_share = h["total_cost"] / h["total_shares"]
+                    else:
+                        cost_per_share = 0.0
                     h["total_cost"] -= cost_per_share * shares
                     h["total_shares"] -= shares
                 else:

@@ -4,7 +4,7 @@
 
 **专业基金分析CLI工具 - 面向机构客户**
 
-[![Version](https://img.shields.io/badge/version-3.5.0-blue.svg)](https://github.com/jarrey-0804/fund-cli)
+[![Version](https://img.shields.io/badge/version-3.8.0-blue.svg)](https://github.com/jarrey-0804/fund-cli)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -16,6 +16,42 @@
 ## 简介
 
 Fund CLI 是一款面向机构客户的专业基金分析命令行工具，提供基金筛选、业绩分析、组合对比、风险监控等功能。基于开源技术栈构建，支持多数据源接入和AI辅助分析。
+
+## v3.8.0 新特性
+
+### Qieman MCP 数据源集成
+- **74个专业接口**: 完整集成Qieman MCP服务器，覆盖基金分析、资产配置、策略研究、行情资讯等
+- **双数据源架构**: AKShare + Qieman MCP 双数据源互补，提升数据质量和分析深度
+- **QDII基金持仓穿透**: 通过Qieman获取QDII基金持仓明细，解决AKShare无法获取的问题
+- **Brinson归因分析**: 股票收益归因分析，量化选股和配置贡献
+- **Campisi债券归因**: 债券基金收益归因分析
+- **组合诊断与回测**: 一键组合诊断和历史回测
+- **蒙特卡洛模拟**: 基于模拟的资产配置分析
+- **基金筛选器**: 按换手率、信用评级、券种风格筛选基金
+- **行业分析**: 行业偏好、收益贡献、配置、集中度多维分析
+- **策略研究**: 投顾策略搜索、持仓、风险分析
+- **资讯整合**: AI资讯解读、基金经理观点、财经新闻搜索
+
+### 数据源配置
+
+```bash
+# 环境变量配置
+export FUND_DATA_QIEMAN_API_KEY="your-api-key"
+export FUND_DATA_QIEMAN_ENABLED="true"
+```
+
+### Qieman 接口分类
+
+| 分类 | 数量 | 代表接口 |
+|------|------|---------|
+| 基金分析 | 30 | 净值、业绩、诊断、回测 |
+| 策略研究 | 7 | 策略搜索、持仓、风险 |
+| 行情资讯 | 7 | AI解读、经理观点、新闻 |
+| 资产配置 | 6 | 配置分析、蒙特卡洛、风险评估 |
+| 基金指标 | 6 | Brinson/Campisi归因、择时 |
+| 债券基金 | 3 | 券种配置、信用评级 |
+| 基金筛选 | 3 | 换手率、信用评级筛选 |
+| 其他 | 12 | 公告、分红、PDF渲染等 |
 
 ## v3.2 新特性
 
@@ -323,7 +359,8 @@ fund-cli/
         ┌─────────────────────┼─────────────────────┐
         ▼                     ▼                     ▼
 ┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│ TushareAdapter│    │ AKShareAdapter│    │  WindAdapter  │
+│  AKShareAdapter│   │ QiemanAdapter │    │  WindAdapter  │
+│  (开源数据)    │   │ (74个MCP接口) │    │  (专业数据)   │
 └───────────────┘    └───────────────┘    └───────────────┘
 ```
 
@@ -353,10 +390,28 @@ fund-cli/
 |------|------|
 | CLI框架 | Typer, Rich |
 | 数据处理 | Pandas, NumPy |
-| 数据源 | AKShare, Tushare |
+| 数据源 | AKShare, Qieman MCP |
 | 量化分析 | QuantStats, PyPortfolioOpt |
 | 可视化 | Plotly, Matplotlib |
 | AI集成 | LiteLLM, Qwen |
+
+---
+
+## 已知限制
+
+### 数据源限制
+
+| 限制项 | 说明 | 建议 |
+|--------|------|------|
+| **QDII基金持仓穿透** | AKShare数据源无法获取QDII基金的持仓明细数据 | 如需完整穿透分析，建议接入Wind或Bloomberg等专业数据源 |
+| **推荐新基金** | 当前推荐基于同类排名的模拟推荐，非真实基金池筛选 | 建议结合专业基金池数据（如朝阳永续）使用 |
+| **相关性分析** | 依赖基金净值数据，当数据不足时将显示提示信息 | 确保网络连接正常，或稍后重试 |
+
+### 功能限制
+
+- **基金经理评分**：细分得分（择股/择时/创新高等）为基于公开数据的估算值
+- **舆情核查**：当前仅检查公开公告，不包含社交媒体舆情
+- **调仓建议**：推荐基金列表为模拟数据，不构成投资建议
 
 ---
 

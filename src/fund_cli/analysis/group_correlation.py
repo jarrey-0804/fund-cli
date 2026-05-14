@@ -183,7 +183,18 @@ class GroupCorrelationAnalyzer:
             for code in fund_codes:
                 nav = self._dm.get_fund_nav(code)
                 if nav is not None and not nav.empty:
-                    nav_col = "累计净值" if "累计净值" in nav.columns else "单位净值"
+                    # 兼容中英文列名
+                    if "accumulated_nav" in nav.columns:
+                        nav_col = "accumulated_nav"
+                    elif "unit_nav" in nav.columns:
+                        nav_col = "unit_nav"
+                    elif "累计净值" in nav.columns:
+                        nav_col = "累计净值"
+                    elif "单位净值" in nav.columns:
+                        nav_col = "单位净值"
+                    else:
+                        logger.warning(f"基金 {code} 净值数据无可用列: {nav.columns.tolist()}")
+                        continue
                     returns_dict[code] = nav[nav_col].pct_change().dropna()
 
             if returns_dict:

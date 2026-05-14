@@ -105,6 +105,32 @@ class DataManager:
             except Exception as e:
                 logger.error("注册 WindAdapter 失败: %s", e)
 
+        # Qieman MCP（需要 qieman_enabled=True）
+        if self.config.data.qieman_enabled:
+            try:
+                from fund_cli.data.adapters.qieman_adapter import QiemanAdapter
+
+                qieman_api_key = self.config.data.qieman_api_key
+                qieman_base_url = self.config.data.qieman_base_url
+                
+                qieman_adapter = QiemanAdapter(
+                    api_key=qieman_api_key,
+                    base_url=qieman_base_url,
+                    cache=self._cache,
+                    timeout=self.config.data.qieman_timeout,
+                    max_retries=self.config.data.qieman_max_retries,
+                )
+                if qieman_adapter.is_available():
+                    self._adapters["qieman"] = qieman_adapter
+                    self._gateway.register_adapter("qieman", qieman_adapter)
+                    logger.info("已注册 QiemanAdapter")
+                else:
+                    logger.warning("Qieman MCP 不可用，跳过注册")
+            except ImportError:
+                logger.warning("QiemanAdapter 未安装，跳过注册")
+            except Exception as e:
+                logger.error("注册 QiemanAdapter 失败: %s", e)
+
         # 设置主数据源
         if self._primary_source not in self._adapters:
             # 如果配置的主数据源不可用，选择第一个可用的
@@ -286,6 +312,33 @@ class DataManager:
         return self._call_gateway(
             "get_benchmark_nav", benchmark_code, start_date, end_date, normalize=True
         )
+
+    def get_index_nav(
+        self,
+        index_code: str,
+        start_date: date | str | None = None,
+        end_date: date | str | None = None,
+    ) -> pd.DataFrame:
+        """
+        获取指数行情数据（get_benchmark_nav 的别名）
+
+        支持字符串日期参数，内部转换为 date 类型后调用 get_benchmark_nav。
+
+        Args:
+            index_code: 指数代码
+            start_date: 开始日期（支持 date 或 "YYYY-MM-DD" 字符串）
+            end_date: 结束日期（支持 date 或 "YYYY-MM-DD" 字符串）
+
+        Returns:
+            指数数据 DataFrame
+        """
+        from datetime import date as _date
+
+        if start_date is not None and isinstance(start_date, str):
+            start_date = _date.fromisoformat(start_date)
+        if end_date is not None and isinstance(end_date, str):
+            end_date = _date.fromisoformat(end_date)
+        return self.get_benchmark_nav(index_code, start_date, end_date)
 
     def get_fund_holdings(
         self,

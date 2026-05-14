@@ -26,10 +26,19 @@ class DataConfig(BaseSettings):
     wind_username: str | None = Field(default=None, description="Wind用户名")
     wind_password: str | None = Field(default=None, description="Wind密码")
 
+    # Qieman MCP 配置
+    qieman_enabled: bool = Field(default=True, description="是否启用Qieman MCP数据源")
+    qieman_api_key: str | None = Field(default=None, description="Qieman API Key")
+    qieman_base_url: str = Field(
+        default="https://stargate.yingmi.com/mcp/v2", description="Qieman MCP服务器URL"
+    )
+    qieman_timeout: int = Field(default=30, description="Qieman请求超时(秒)")
+    qieman_max_retries: int = Field(default=3, description="Qieman最大重试次数")
+
     # 数据源优先级配置
     primary_source: str = Field(default="akshare", description="主数据源")
     source_priority: str = Field(
-        default="akshare,tushare,wind", description="数据源优先级列表，逗号分隔"
+        default="qieman,akshare,tushare,wind", description="数据源优先级列表，逗号分隔"
     )
 
     # 缓存配置
