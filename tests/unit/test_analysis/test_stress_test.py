@@ -2,19 +2,17 @@
 压力测试模块测试
 """
 
+
 import pytest
-from unittest.mock import MagicMock, patch
-import pandas as pd
-import numpy as np
 
 from fund_cli.analysis.stress_test import (
-    StressTester,
-    StressScenario,
-    StressTestResult,
-    StressTestReport,
-    HistoricalScenarioEngine,
-    CustomScenarioEngine,
     HISTORICAL_SCENARIOS,
+    CustomScenarioEngine,
+    HistoricalScenarioEngine,
+    StressScenario,
+    StressTester,
+    StressTestReport,
+    StressTestResult,
     run_stress_test,
 )
 

@@ -14,8 +14,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 logger = logging.getLogger(__name__)
 
 
@@ -308,7 +306,6 @@ class ProfileManager:
             self._storage_path = Path(storage_path)
         else:
             # 使用默认路径 ~/.fund_cli/profiles
-            import os
             self._storage_path = Path.home() / ".fund_cli" / "profiles"
 
         # 确保目录存在

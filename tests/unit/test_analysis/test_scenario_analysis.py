@@ -2,22 +2,20 @@
 情景分析模块测试
 """
 
+
 import pytest
-from unittest.mock import MagicMock, patch
-import pandas as pd
-import numpy as np
 
 from fund_cli.analysis.scenario_analysis import (
-    ScenarioAnalyzer,
-    MarketScenario,
+    BullBearAnalyzer,
     InvestmentStyle,
+    MarketScenario,
+    ProbabilityWeightedAnalyzer,
+    RateSensitivityAnalyzer,
+    ScenarioAnalysisReport,
+    ScenarioAnalyzer,
     ScenarioMetrics,
     ScenarioResult,
-    ScenarioAnalysisReport,
-    BullBearAnalyzer,
-    RateSensitivityAnalyzer,
     StyleRotationAnalyzer,
-    ProbabilityWeightedAnalyzer,
     analyze_scenarios,
 )
 

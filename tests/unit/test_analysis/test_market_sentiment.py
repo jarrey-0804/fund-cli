@@ -1,19 +1,17 @@
 """市场情绪指标模块测试"""
 
-import pytest
 from fund_cli.analysis.market_sentiment import (
-    MarketSentimentAnalyzer,
     FearGreedCalculator,
-    FundPositionEstimator,
-    MarketBreadthCalculator,
-    SentimentAlertGenerator,
     FearGreedIndex,
     FundPositionEstimate,
-    MarketBreadthIndicator,
-    SentimentAlert,
-    MarketSentimentReport,
-    SentimentLevel,
+    FundPositionEstimator,
     MarketBreadth,
+    MarketBreadthCalculator,
+    MarketBreadthIndicator,
+    MarketSentimentAnalyzer,
+    MarketSentimentReport,
+    SentimentAlertGenerator,
+    SentimentLevel,
     analyze_market_sentiment,
 )
 

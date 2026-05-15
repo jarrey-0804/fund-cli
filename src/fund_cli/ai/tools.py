@@ -3733,7 +3733,7 @@ def get_fund_recommendation_by_style(style: str, top_n: int = 5) -> str:
         推荐基金列表
     """
     try:
-        from fund_cli.ai.fund_selector import InvestmentStyle, select_funds
+        from fund_cli.ai.fund_selector import select_funds
 
         style_map = {
             "value": "价值型基金",

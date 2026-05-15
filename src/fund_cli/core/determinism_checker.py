@@ -8,14 +8,13 @@ import hashlib
 import json
 import logging
 import pickle
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 import pandas as pd
-
-from fund_cli.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -159,7 +158,7 @@ class DeterminismChecker:
 
         if snapshot_path.exists():
             try:
-                with open(snapshot_path, 'r') as f:
+                with open(snapshot_path) as f:
                     snapshot = json.load(f)
                     previous_hash = snapshot.get("output_hash")
 
@@ -267,7 +266,7 @@ class DeterminismChecker:
         snapshots = []
         for snap_file in self._snapshot_dir.glob("*.snap"):
             try:
-                with open(snap_file, 'r') as f:
+                with open(snap_file) as f:
                     data = json.load(f)
                     data["test_name"] = snap_file.stem
                     snapshots.append(data)

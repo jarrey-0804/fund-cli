@@ -9,9 +9,6 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
-
-import pandas as pd
 
 from fund_cli.core.quality_trend_analyzer import (
     QualityTrend,

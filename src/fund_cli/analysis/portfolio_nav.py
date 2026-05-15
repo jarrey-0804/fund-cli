@@ -12,8 +12,6 @@ from typing import Any
 
 import pandas as pd
 
-from fund_cli.core.analyzer import Analyzer
-
 logger = logging.getLogger(__name__)
 
 

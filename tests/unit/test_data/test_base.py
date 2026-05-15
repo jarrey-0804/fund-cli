@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 数据源适配器基类测试
 
@@ -8,9 +7,6 @@
 - DataCache 类方法
 """
 
-from datetime import date
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -21,7 +17,6 @@ from fund_cli.data.base import (
     DataSourceError,
     NetworkError,
 )
-
 
 # =============================================================================
 # 异常类测试

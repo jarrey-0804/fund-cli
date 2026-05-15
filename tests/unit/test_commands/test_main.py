@@ -4,8 +4,6 @@
 测试 fund_cli.commands.main 模块。
 """
 
-import pytest
-from unittest.mock import MagicMock
 import typer
 
 from fund_cli.commands.main import register_commands
@@ -54,7 +52,7 @@ class TestRegisterCommands:
         app = typer.Typer()
         sub_app1 = typer.Typer()
         sub_app2 = typer.Typer()
-        
+
         register_commands(app, {"test": sub_app1})
         register_commands(app, {"test": sub_app2})
 

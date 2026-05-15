@@ -6,18 +6,17 @@
 
 import contextvars
 import logging
-import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # 上下文变量
 trace_id_var: contextvars.ContextVar[str] = contextvars.ContextVar('trace_id')
 span_id_var: contextvars.ContextVar[str] = contextvars.ContextVar('span_id')
-parent_span_id_var: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar('parent_span_id', default=None)
+parent_span_id_var: contextvars.ContextVar[str | None] = contextvars.ContextVar('parent_span_id', default=None)
 
 
 @dataclass
@@ -28,9 +27,9 @@ class TraceSpan:
     trace_id: str
     name: str
     start_time: datetime
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
     duration_ms: float = 0.0
-    parent_span_id: Optional[str] = None
+    parent_span_id: str | None = None
     attributes: dict[str, Any] = field(default_factory=dict)
     status: str = "ok"  # ok, error
     error_message: str = ""
@@ -58,7 +57,7 @@ class TraceContext:
     trace_id: str
     spans: list[TraceSpan] = field(default_factory=list)
     start_time: datetime = field(default_factory=datetime.now)
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典."""
@@ -82,7 +81,7 @@ class Tracer:
         self._active_traces: dict[str, TraceContext] = {}
         self._current_spans: dict[str, TraceSpan] = {}
 
-    def start_trace(self, trace_id: Optional[str] = None) -> str:
+    def start_trace(self, trace_id: str | None = None) -> str:
         """
         开始新的追踪.
 
@@ -104,7 +103,7 @@ class Tracer:
         logger.debug(f"开始追踪: {trace_id}")
         return trace_id
 
-    def end_trace(self, trace_id: Optional[str] = None) -> TraceContext:
+    def end_trace(self, trace_id: str | None = None) -> TraceContext:
         """
         结束追踪.
 
@@ -118,7 +117,7 @@ class Tracer:
             try:
                 trace_id = trace_id_var.get()
             except LookupError:
-                raise ValueError("没有活动的追踪")
+                raise ValueError("没有活动的追踪") from None
 
         context = self._active_traces.pop(trace_id, None)
         if context:
@@ -131,7 +130,7 @@ class Tracer:
     def start_span(
         self,
         name: str,
-        attributes: Optional[dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ) -> str:
         """
         开始新的Span.
@@ -177,7 +176,7 @@ class Tracer:
 
     def end_span(
         self,
-        span_id: Optional[str] = None,
+        span_id: str | None = None,
         status: str = "ok",
         error_message: str = "",
     ) -> TraceSpan:
@@ -196,7 +195,7 @@ class Tracer:
             try:
                 span_id = span_id_var.get()
             except LookupError:
-                raise ValueError("没有活动的Span")
+                raise ValueError("没有活动的Span") from None
 
         span = self._current_spans.pop(span_id, None)
         if not span:
@@ -225,14 +224,14 @@ class Tracer:
         logger.debug(f"结束Span: {span.name}, 耗时{span.duration_ms:.2f}ms")
         return span
 
-    def get_current_trace_id(self) -> Optional[str]:
+    def get_current_trace_id(self) -> str | None:
         """获取当前追踪ID."""
         try:
             return trace_id_var.get()
         except LookupError:
             return None
 
-    def get_current_span_id(self) -> Optional[str]:
+    def get_current_span_id(self) -> str | None:
         """获取当前Span ID."""
         try:
             return span_id_var.get()
@@ -256,7 +255,7 @@ class Tracer:
 
 
 # 全局追踪器实例
-_tracer: Optional[Tracer] = None
+_tracer: Tracer | None = None
 
 
 def get_tracer() -> Tracer:
@@ -274,7 +273,7 @@ class TraceContextManager:
     支持with语句自动管理trace和span生命周期。
     """
 
-    def __init__(self, name: str, attributes: Optional[dict[str, Any]] = None):
+    def __init__(self, name: str, attributes: dict[str, Any] | None = None):
         """
         初始化.
 
@@ -285,8 +284,8 @@ class TraceContextManager:
         self.name = name
         self.attributes = attributes or {}
         self.tracer = get_tracer()
-        self.span_id: Optional[str] = None
-        self.trace_id: Optional[str] = None
+        self.span_id: str | None = None
+        self.trace_id: str | None = None
 
     def __enter__(self) -> 'TraceContextManager':
         """进入上下文."""
@@ -311,7 +310,7 @@ class TraceContextManager:
         self.tracer.add_span_attribute(key, value)
 
 
-def traced(name: Optional[str] = None):
+def traced(name: str | None = None):
     """
     追踪装饰器.
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 AKShare 适配器补充测试
 
@@ -9,7 +8,7 @@ AKShare 适配器补充测试
 - 基本功能
 """
 
-from datetime import date, datetime
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -136,7 +135,7 @@ class TestCacheMechanism:
         mock_cache.exists.return_value = True
         mock_cache.get.return_value = pd.DataFrame({"test": [1]})
 
-        result = adapter_with_cache.get_all_fund_names()
+        adapter_with_cache.get_all_fund_names()
 
         mock_cache.exists.assert_called_once()
         mock_cache.get.assert_called_once()

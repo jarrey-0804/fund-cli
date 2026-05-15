@@ -4,11 +4,11 @@
 测试 fund compare 命令的各个子命令。
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
-from typer.testing import CliRunner
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+from typer.testing import CliRunner
 
 from fund_cli.commands.compare_cmd import app
 

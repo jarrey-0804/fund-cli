@@ -7,12 +7,12 @@
 import logging
 import threading
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from fund_cli.config import get_config
-from fund_cli.core.alert_notifier import AlertLevel, get_alert_notifier
+from fund_cli.core.alert_notifier import AlertLevel
 
 logger = logging.getLogger(__name__)
 

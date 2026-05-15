@@ -21,25 +21,37 @@ V3.5 新增:
 - RebalanceAdvisor: 调仓建议
 """
 
+from fund_cli.analysis.allocation_deviation import (
+    AllocationDeviationAnalyzer,
+    compute_allocation_deviation,
+)
+from fund_cli.analysis.asset_lookthrough import AssetLookthroughAnalyzer
 from fund_cli.analysis.attribution import AttributionAnalyzer
+from fund_cli.analysis.fund_evaluation import FundEvaluator
+from fund_cli.analysis.fund_scoring import FundScoringEngine, compute_fund_score
+from fund_cli.analysis.group_correlation import GroupCorrelationAnalyzer
 from fund_cli.analysis.holding import HoldingAnalyzer
+from fund_cli.analysis.index_valuation import IndexFundValuator
+from fund_cli.analysis.industry_risk import IndustryRiskAnalyzer
 from fund_cli.analysis.manager import ManagerAnalyzer
 from fund_cli.analysis.market_sentiment import (
+    FearGreedIndex,
     MarketSentimentAnalyzer,
     MarketSentimentReport,
-    FearGreedIndex,
     SentimentLevel,
     analyze_market_sentiment,
 )
 from fund_cli.analysis.money_flow import (
-    MoneyFlowAnalyzer,
     FundFlowReport,
-    SectorFlowReport,
+    MoneyFlowAnalyzer,
     NorthboundFlowReport,
+    SectorFlowReport,
     analyze_money_flow,
 )
 from fund_cli.analysis.performance import PerformanceAnalyzer
 from fund_cli.analysis.portfolio import PortfolioAnalyzer
+from fund_cli.analysis.portfolio_nav import PortfolioNavCalculator
+from fund_cli.analysis.rebalance_advisor import RebalanceAdvisor
 from fund_cli.analysis.risk import RiskAnalyzer
 from fund_cli.analysis.risk_budget import (
     RiskBudgetAnalyzer,
@@ -49,35 +61,26 @@ from fund_cli.analysis.risk_budget import (
     optimize_risk_parity,
 )
 from fund_cli.analysis.scenario_analysis import (
-    ScenarioAnalyzer,
-    ScenarioAnalysisReport,
-    MarketScenario,
     InvestmentStyle,
+    MarketScenario,
+    ScenarioAnalysisReport,
+    ScenarioAnalyzer,
     analyze_scenarios,
 )
 from fund_cli.analysis.sector_rotation import (
+    SectorPerformance,
     SectorRotationAnalyzer,
     SectorRotationReport,
-    SectorPerformance,
     analyze_sector_rotation,
 )
 from fund_cli.analysis.stress_test import (
+    StressScenario,
     StressTester,
     StressTestReport,
     StressTestResult,
-    StressScenario,
     run_stress_test,
 )
-from fund_cli.analysis.portfolio_nav import PortfolioNavCalculator
-from fund_cli.analysis.fund_scoring import FundScoringEngine, compute_fund_score
-from fund_cli.analysis.allocation_deviation import AllocationDeviationAnalyzer, compute_allocation_deviation
-from fund_cli.analysis.asset_lookthrough import AssetLookthroughAnalyzer
-from fund_cli.analysis.industry_risk import IndustryRiskAnalyzer
 from fund_cli.analysis.style_tagging import StockStyleTagger
-from fund_cli.analysis.index_valuation import IndexFundValuator
-from fund_cli.analysis.fund_evaluation import FundEvaluator
-from fund_cli.analysis.group_correlation import GroupCorrelationAnalyzer
-from fund_cli.analysis.rebalance_advisor import RebalanceAdvisor
 
 __all__ = [
     # V3.3 新增 - 市场分析能力

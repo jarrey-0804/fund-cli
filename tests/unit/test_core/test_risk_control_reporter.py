@@ -1,10 +1,8 @@
 """合规风控报告生成器单元测试."""
 
-import pytest
-import pandas as pd
+
 import numpy as np
-from datetime import date
-from unittest.mock import MagicMock, patch
+import pandas as pd
 
 from fund_cli.core.reporters.risk_control_reporter import RiskControlReporter
 
@@ -221,7 +219,7 @@ class TestRiskControlReporter:
 
         import os
         assert os.path.exists(output_path)
-        with open(output_path, "r", encoding="utf-8") as f:
+        with open(output_path, encoding="utf-8") as f:
             assert f.read() == content
 
     def test_get_formats(self):

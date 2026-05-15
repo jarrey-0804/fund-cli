@@ -2,24 +2,20 @@
 市场解读助手模块测试
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-import pandas as pd
-import numpy as np
 
 from fund_cli.ai.market_analyst import (
-    MarketAnalyst,
-    SentimentAnalyzer,
-    SectorRotationAnalyzer,
-    HotspotTracker,
-    MarketSentimentReport,
-    SectorRotationReport,
-    HotspotReport,
-    MarketSentiment,
-    SectorStrength,
-    SentimentIndicator,
-    SectorRotationItem,
     HotspotItem,
+    HotspotReport,
+    HotspotTracker,
+    MarketAnalyst,
+    MarketSentiment,
+    MarketSentimentReport,
+    SectorRotationAnalyzer,
+    SectorRotationItem,
+    SectorRotationReport,
+    SectorStrength,
+    SentimentAnalyzer,
+    SentimentIndicator,
     analyze_market_sentiment,
     analyze_sector_rotation,
     track_market_hotspots,

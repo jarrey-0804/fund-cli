@@ -1,6 +1,5 @@
 """AI输出验证器单元测试."""
 
-import pytest
 from fund_cli.core.ai_validator import AIOutputValidator, AIValidationResult
 
 

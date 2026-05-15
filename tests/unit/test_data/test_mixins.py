@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 数据源适配器混合类单元测试
 
@@ -7,8 +6,6 @@
 """
 
 import inspect
-from datetime import date
-from typing import Any
 
 import pandas as pd
 import pytest

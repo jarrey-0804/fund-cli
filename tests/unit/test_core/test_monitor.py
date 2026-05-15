@@ -1,8 +1,9 @@
 """基金监控管理器测试"""
 
-import pytest
 from unittest.mock import MagicMock, patch
+
 import pandas as pd
+import pytest
 
 from fund_cli.core.monitor import FundMonitor
 

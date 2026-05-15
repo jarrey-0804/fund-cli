@@ -16,7 +16,6 @@ import pandas as pd
 
 from fund_cli.analysis.performance import PerformanceAnalyzer
 from fund_cli.analysis.risk import RiskAnalyzer
-from fund_cli.core.cross_validator import CrossValidator
 from fund_cli.core.data_manager import DataManager
 
 logger = logging.getLogger(__name__)
@@ -452,7 +451,7 @@ class PortfolioDoctor:
         # 构建权重字典
         if weights is None:
             weights = [1.0 / len(funds)] * len(funds)
-        weights_dict = dict(zip(funds, weights))
+        weights_dict = dict(zip(funds, weights, strict=False))
 
         diagnoses = []
 

@@ -12,8 +12,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from fund_cli.core.analyzer import Analyzer
-
 logger = logging.getLogger(__name__)
 
 
@@ -122,7 +120,7 @@ class FundScoringEngine:
 
         # 加权汇总
         weighted_score = sum(
-            s["综合得分"] * w for s, w in zip(individual_scores, weights)
+            s["综合得分"] * w for s, w in zip(individual_scores, weights, strict=False)
         )
 
         return {

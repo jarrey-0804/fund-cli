@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 DataManager 数据管理器单元测试
 
@@ -15,7 +14,6 @@ DataManager 数据管理器单元测试
 """
 
 from datetime import date
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -23,7 +21,6 @@ import pytest
 
 from fund_cli.core.data_manager import DataManager, get_data_manager
 from fund_cli.data.base import DataSourceError
-
 
 # =============================================================================
 # Fixtures
@@ -208,7 +205,7 @@ class TestInitAdapters:
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch("fund_cli.core.data_manager.AKShareAdapter"):
                     with patch.dict("sys.modules", {"fund_cli.data.adapters.tushare_adapter": MagicMock(TushareAdapter=lambda **kwargs: mock_adapter)}):
-                        dm = DataManager()
+                        DataManager()
                         # 注意：由于 import 机制，这里可能需要额外处理
 
     def test_init_tushare_no_token(self, mock_config):
@@ -231,7 +228,7 @@ class TestInitAdapters:
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch("fund_cli.core.data_manager.AKShareAdapter"):
                     with patch.dict("sys.modules", {"fund_cli.data.adapters.wind_adapter": MagicMock(WindAdapter=lambda **kwargs: mock_adapter)}):
-                        dm = DataManager()
+                        DataManager()
 
     def test_init_wind_enabled_unavailable(self, mock_config):
         """测试 Wind 启用但不可用"""
@@ -243,7 +240,7 @@ class TestInitAdapters:
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch("fund_cli.core.data_manager.AKShareAdapter"):
                     with patch.dict("sys.modules", {"fund_cli.data.adapters.wind_adapter": MagicMock(WindAdapter=lambda **kwargs: mock_adapter)}):
-                        dm = DataManager()
+                        DataManager()
 
     def test_init_wind_disabled(self, mock_config):
         """测试 Wind 禁用"""
@@ -296,7 +293,7 @@ class TestRegisterAdapter:
                 with patch.object(DataManager, "_init_adapters"):
                     dm = DataManager()
                     dm.register_adapter("test", mock_adapter)
-                    
+
                     new_adapter = MagicMock()
                     dm.register_adapter("test", new_adapter)
                     assert dm._adapters["test"] is new_adapter
@@ -307,12 +304,12 @@ class TestRegisterAdapter:
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch.object(DataManager, "_init_adapters"):
                     dm = DataManager()
-                    
+
                     adapter1 = MagicMock()
                     adapter2 = MagicMock()
                     dm.register_adapter("adapter1", adapter1)
                     dm.register_adapter("adapter2", adapter2)
-                    
+
                     assert len(dm._adapters) == 2
                     assert "adapter1" in dm._adapters
                     assert "adapter2" in dm._adapters
@@ -334,7 +331,7 @@ class TestProperties:
                     dm = DataManager()
                     dm.register_adapter("akshare", mock_adapter)
                     dm.register_adapter("tushare", mock_adapter)
-                    
+
                     sources = dm.available_sources
                     assert isinstance(sources, list)
                     assert "akshare" in sources
@@ -382,7 +379,7 @@ class TestGetAdapter:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     result = dm.get_adapter()
                     assert result is mock_adapter
 
@@ -392,15 +389,15 @@ class TestGetAdapter:
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch.object(DataManager, "_init_adapters"):
                     dm = DataManager()
-                    
+
                     adapter1 = MagicMock()
                     adapter1.is_available.return_value = True
                     adapter2 = MagicMock()
                     adapter2.is_available.return_value = True
-                    
+
                     dm.register_adapter("akshare", adapter1)
                     dm.register_adapter("tushare", adapter2)
-                    
+
                     result = dm.get_adapter("tushare")
                     assert result is adapter2
 
@@ -410,20 +407,20 @@ class TestGetAdapter:
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch.object(DataManager, "_init_adapters"):
                     dm = DataManager()
-                    
+
                     with pytest.raises(DataSourceError, match="未配置或不可用"):
                         dm.get_adapter("nonexistent")
 
     def test_get_adapter_raises_for_unavailable_source(self, mock_config, mock_adapter):
         """测试获取不可用的数据源抛出异常"""
         mock_adapter.is_available.return_value = False
-        
+
         with patch("fund_cli.core.data_manager.get_config", return_value=mock_config):
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch.object(DataManager, "_init_adapters"):
                     dm = DataManager()
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     with pytest.raises(DataSourceError, match="不可用"):
                         dm.get_adapter("akshare")
 
@@ -435,7 +432,7 @@ class TestGetAdapter:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     result = dm._adapter
                     assert result is mock_adapter
 
@@ -456,7 +453,7 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     result = dm.get_fund_info("000001")
                     mock_adapter.get_fund_info.assert_called_once_with("000001")
                     assert result["fund_code"] == "000001"
@@ -469,8 +466,8 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
-                    result = dm.get_fund_nav("000001", date(2024, 1, 1), date(2024, 12, 31))
+
+                    dm.get_fund_nav("000001", date(2024, 1, 1), date(2024, 12, 31))
                     mock_adapter.get_fund_nav.assert_called_once()
 
     def test_search_funds_calls_adapter(self, mock_config, mock_adapter):
@@ -481,8 +478,8 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
-                    result = dm.search_funds(fund_type="混合型", limit=50)
+
+                    dm.search_funds(fund_type="混合型", limit=50)
                     mock_adapter.search_funds.assert_called_once()
 
     def test_get_fund_list_calls_adapter(self, mock_config, mock_adapter):
@@ -493,8 +490,8 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
-                    result = dm.get_fund_list("股票型")
+
+                    dm.get_fund_list("股票型")
                     mock_adapter.get_fund_list.assert_called_once_with("股票型")
 
     def test_get_benchmark_nav_calls_adapter(self, mock_config, mock_adapter):
@@ -505,8 +502,8 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
-                    result = dm.get_benchmark_nav("000300")
+
+                    dm.get_benchmark_nav("000300")
                     mock_adapter.get_benchmark_nav.assert_called_once()
 
     def test_get_fund_holdings_calls_adapter(self, mock_config, mock_adapter):
@@ -517,8 +514,8 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
-                    result = dm.get_fund_holdings("000001", date(2024, 6, 30))
+
+                    dm.get_fund_holdings("000001", date(2024, 6, 30))
                     mock_adapter.get_fund_holdings.assert_called_once()
 
     def test_get_fund_manager_calls_adapter(self, mock_config, mock_adapter):
@@ -529,8 +526,8 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
-                    result = dm.get_fund_manager("000001")
+
+                    dm.get_fund_manager("000001")
                     mock_adapter.get_fund_manager.assert_called_once_with("000001")
 
     def test_get_fund_fee_calls_adapter(self, mock_config, mock_adapter):
@@ -541,8 +538,8 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
-                    result = dm.get_fund_fee("000001")
+
+                    dm.get_fund_fee("000001")
                     mock_adapter.get_fund_fee.assert_called_once_with("000001")
 
     def test_get_fund_rating_calls_adapter(self, mock_config, mock_adapter):
@@ -553,8 +550,8 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
-                    result = dm.get_fund_rating("000001")
+
+                    dm.get_fund_rating("000001")
                     mock_adapter.get_fund_rating.assert_called_once_with("000001")
 
     def test_batch_get_fund_nav_calls_adapter(self, mock_config, mock_adapter):
@@ -565,8 +562,8 @@ class TestDataAccessProxy:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
-                    result = dm.batch_get_fund_nav(["000001", "000002"])
+
+                    dm.batch_get_fund_nav(["000001", "000002"])
                     mock_adapter.batch_get_fund_nav.assert_called_once()
 
 
@@ -586,7 +583,7 @@ class TestP0Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_all_fund_names()
                     mock_adapter.get_all_fund_names.assert_called_once()
 
@@ -598,7 +595,7 @@ class TestP0Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_info_ths("000001")
                     mock_adapter.get_fund_info_ths.assert_called_once_with("000001")
 
@@ -610,7 +607,7 @@ class TestP0Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_index_fund_info("沪深指数", "被动指数型")
                     mock_adapter.get_index_fund_info.assert_called_once_with("沪深指数", "被动指数型")
 
@@ -622,7 +619,7 @@ class TestP0Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_overview("000001")
                     mock_adapter.get_fund_overview.assert_called_once_with("000001")
 
@@ -634,7 +631,7 @@ class TestP0Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_purchase_status()
                     mock_adapter.get_fund_purchase_status.assert_called_once()
 
@@ -646,7 +643,7 @@ class TestP0Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_daily_nav()
                     mock_adapter.get_fund_daily_nav.assert_called_once()
 
@@ -658,7 +655,7 @@ class TestP0Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_etf_spot()
                     mock_adapter.get_etf_spot.assert_called_once()
 
@@ -670,7 +667,7 @@ class TestP0Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_lof_spot()
                     mock_adapter.get_lof_spot.assert_called_once()
 
@@ -716,7 +713,7 @@ class TestRepr:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     result = repr(dm)
                     assert "DataManager" in result
                     assert "akshare" in result
@@ -728,7 +725,7 @@ class TestRepr:
                 with patch.object(DataManager, "_init_adapters"):
                     dm = DataManager()
                     dm._primary_source = "akshare"
-                    
+
                     result = repr(dm)
                     assert "sources=[]" in result
 

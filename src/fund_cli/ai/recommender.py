@@ -16,10 +16,9 @@ import numpy as np
 import pandas as pd
 
 from fund_cli.ai.user_profile import (
-    UserProfile,
-    RiskTolerance,
     InvestmentGoal,
-    InvestmentStyle,
+    RiskTolerance,
+    UserProfile,
 )
 from fund_cli.core.data_manager import DataManager
 

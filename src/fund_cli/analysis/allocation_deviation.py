@@ -9,8 +9,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fund_cli.core.analyzer import Analyzer
-
 logger = logging.getLogger(__name__)
 
 

@@ -2,18 +2,17 @@
 智能选基助手测试
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
 
 from fund_cli.ai.fund_selector import (
-    FundSelector,
     FundRecommendation,
-    InvestmentNeed,
-    NeedParser,
     FundScorer,
+    FundSelector,
+    InvestmentNeed,
+    InvestmentStyle,
+    NeedParser,
     RecommendationGenerator,
     RiskLevel,
-    InvestmentStyle,
     select_funds,
 )
 from fund_cli.data.models import FundType

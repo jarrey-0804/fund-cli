@@ -1,28 +1,27 @@
 """投资建议生成器测试"""
 
 import pytest
+
 from fund_cli.ai.advisor import (
-    InvestmentAdvisor,
-    HoldingAnalyzer,
-    RebalanceAdvisor,
-    DCAAdvisor,
-    RiskAlerter,
-    AdviceItem,
-    RebalanceSuggestion,
-    DCASuggestion,
-    InvestmentAdviceReport,
     AdviceType,
+    DCAAdvisor,
+    DCASuggestion,
+    HoldingAnalyzer,
+    InvestmentAdviceReport,
+    InvestmentAdvisor,
     Priority,
+    RebalanceAdvisor,
+    RiskAlerter,
     generate_investment_advice,
 )
 from fund_cli.ai.user_profile import (
-    UserProfile,
-    RiskAssessment,
-    InvestmentPreferences,
-    RiskTolerance,
     InvestmentGoal,
     InvestmentHorizon,
+    InvestmentPreferences,
     InvestmentStyle,
+    RiskAssessment,
+    RiskTolerance,
+    UserProfile,
 )
 
 

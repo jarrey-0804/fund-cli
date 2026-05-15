@@ -2,23 +2,20 @@
 风险预算模块测试
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from fund_cli.analysis.risk_budget import (
-    RiskBudgetAnalyzer,
-    RiskContributionCalculator,
-    RiskConcentrationAnalyzer,
-    TailRiskAnalyzer,
-    RiskBudgetOptimizer,
-    RiskContribution,
-    RiskBudgetResult,
-    TailRiskContribution,
-    RiskBudgetReport,
     OptimizationObjective,
+    RiskBudgetAnalyzer,
+    RiskBudgetOptimizer,
+    RiskBudgetReport,
+    RiskConcentrationAnalyzer,
+    RiskContribution,
+    RiskContributionCalculator,
     RiskMeasure,
+    TailRiskAnalyzer,
+    TailRiskContribution,
     analyze_risk_budget,
     optimize_risk_parity,
 )

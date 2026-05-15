@@ -8,9 +8,8 @@ import unittest
 from datetime import datetime, timedelta
 
 import pandas as pd
-import pytest
 
-from fund_cli.core.data_quality import DataQualityChecker, ExpectationResult
+from fund_cli.core.data_quality import DataQualityChecker
 from fund_cli.core.quality_gate import QualityGate
 
 

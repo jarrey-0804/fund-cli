@@ -5,6 +5,38 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [3.8.1] - 2026-05-15
+
+### Fixed - 技术债务清理与工程加固
+
+#### 版本同步
+- 修复 `__init__.py` 版本号与 `pyproject.toml` 不一致问题（3.5.0 → 3.8.1）
+- 统一作者信息为 `jarrey-0804`
+
+#### 代码质量
+- 标记 `WindAdapter` 为 deprecated，实例化时发出 `DeprecationWarning`
+- `WindAdapter._ensure_api()` 改为抛出 `NotImplementedError`，明确提示未集成状态
+- 改进 `DataSourceAdapterMixin` 文档说明，明确接口契约
+- 修复 `data_manager.py` 中 `get_fund_industry_allocation` 重复定义
+- 修复 `market_sentiment.py` 中类型注解格式错误
+- 修复 `manager.py` 中重复的 `import pandas as pd`
+- 修复 `trace_context.py` 中异常链缺失 `from` 关键字
+- 修复 `report_validator.py` 中循环变量遮蔽导入名
+
+#### CI/CD
+- 恢复并优化 GitHub Actions CI workflow
+- 新增 Ruff format 检查步骤
+- 新增 Bandit 安全扫描步骤
+- 新增 `twine check` 包检查步骤
+- 移除 Docker 构建步骤（简化 CI 流程）
+
+#### 工程规范
+- 创建 Release Checklist 文档（`.github/RELEASE_CHECKLIST.md`）
+- 生成依赖锁定文件 `requirements-lock.txt`
+- Ruff 代码检查：0 errors（修复 1764 个问题）
+- Bandit 安全扫描：0 High，2 Medium（已知安全场景）
+- 全量测试：2317 passed, 0 failed
+
 ## [3.8.0] - 2026-05-14
 
 ### Added - Qieman MCP 数据源集成

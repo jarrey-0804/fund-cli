@@ -6,9 +6,7 @@
 
 import time
 import unittest
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from fund_cli.core.rate_limiter import RateLimiter, TokenBucket, get_rate_limiter
 

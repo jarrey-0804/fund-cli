@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 DataNormalizer 数据标准化器单元测试
 
@@ -18,7 +17,6 @@ import pandas as pd
 import pytest
 
 from fund_cli.data.normalizer import DataNormalizer
-
 
 # =============================================================================
 # 测试类：基金代码标准化

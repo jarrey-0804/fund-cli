@@ -7,9 +7,8 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -130,7 +129,7 @@ class RiskContributionCalculator:
             if returns is not None:
                 volatilities = {a: returns[a].std() * np.sqrt(252) for a in assets if a in returns.columns}
             else:
-                volatilities = {a: 0.15 for a in assets}  # 默认15%年化波动率
+                volatilities = dict.fromkeys(assets, 0.15)  # 默认15%年化波动率
 
         vols_arr = np.array([volatilities.get(a, 0.15) for a in assets])
 
@@ -258,7 +257,7 @@ class TailRiskAnalyzer:
             return []
 
         assets = list(weights.keys())
-        n = len(assets)
+        len(assets)
 
         # 计算组合收益率
         weights_arr = np.array([weights[a] for a in assets])
@@ -345,7 +344,7 @@ class RiskBudgetOptimizer:
             if returns is not None:
                 volatilities = {a: returns[a].std() * np.sqrt(252) for a in assets}
             else:
-                volatilities = {a: 0.15 for a in assets}
+                volatilities = dict.fromkeys(assets, 0.15)
 
         vols_arr = np.array([volatilities.get(a, 0.15) for a in assets])
 
@@ -440,7 +439,7 @@ class RiskBudgetAnalyzer:
         # 构建权重字典
         if weights is None:
             weights = [1.0 / len(funds)] * len(funds)
-        weights_dict = dict(zip(funds, weights))
+        weights_dict = dict(zip(funds, weights, strict=False))
 
         # 计算风险贡献
         contributions = self._contribution_calculator.calculate(

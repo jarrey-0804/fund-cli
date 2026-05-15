@@ -4,9 +4,9 @@
 测试 fund_cli.core.optimizers.risk_parity 模块。
 """
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 
 from fund_cli.core.optimizers.risk_parity import RiskParityOptimizer
 
@@ -45,7 +45,7 @@ class TestRiskParityOptimizer:
     def test_optimize_with_pypfopt(self, optimizer, sample_returns):
         """测试使用 pypfopt 优化."""
         try:
-            from pypfopt import HRPOpt
+            import pypfopt  # noqa: F401
             has_pypfopt = True
         except ImportError:
             has_pypfopt = False
@@ -100,7 +100,7 @@ class TestRiskParityOptimizer:
 
         # 应该处理错误或返回合理结果
         try:
-            result = optimizer.optimize(returns)
+            optimizer.optimize(returns)
         except Exception:
             pass  # 预期可能抛出异常
 

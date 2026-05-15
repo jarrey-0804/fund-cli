@@ -5,8 +5,7 @@
 """
 
 import unittest
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from fund_cli.core.alert_notifier import (
     AlertLevel,

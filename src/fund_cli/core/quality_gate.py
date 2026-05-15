@@ -8,7 +8,7 @@ import logging
 
 import pandas as pd
 
-from fund_cli.core.alert_notifier import AlertLevel, get_alert_notifier
+from fund_cli.core.alert_notifier import AlertLevel
 from fund_cli.core.data_quality import DataQualityChecker, QualityReport
 
 logger = logging.getLogger(__name__)

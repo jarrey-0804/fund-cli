@@ -1,7 +1,6 @@
 """交叉验证器单元测试."""
 
-import pytest
-from fund_cli.core.cross_validator import CrossValidator, CrossValidationResult
+from fund_cli.core.cross_validator import CrossValidationResult, CrossValidator
 
 
 class TestCrossValidator:

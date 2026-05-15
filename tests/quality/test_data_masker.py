@@ -9,7 +9,6 @@ import unittest
 from fund_cli.utils.data_masker import (
     DataMasker,
     get_data_masker,
-    mask_report_data,
 )
 
 

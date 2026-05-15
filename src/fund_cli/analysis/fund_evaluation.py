@@ -13,8 +13,6 @@ from typing import Any
 
 import pandas as pd
 
-from fund_cli.core.analyzer import Analyzer
-
 logger = logging.getLogger(__name__)
 
 
@@ -101,12 +99,12 @@ class FundEvaluator:
     ) -> dict[str, Any]:
         """
         计算基金细分得分
-        
+
         Args:
             fund_code: 基金代码
             nav_series: 净值序列
             peer_returns_list: 同类基金收益率列表
-            
+
         Returns:
             {
                 "最大回撤得分": float,
@@ -119,9 +117,8 @@ class FundEvaluator:
                 "近2年排名": float,
             }
         """
-        import numpy as np
         from datetime import datetime, timedelta
-        
+
         result = {
             "最大回撤得分": 0.5,
             "区间收益得分": 0.5,
@@ -132,17 +129,17 @@ class FundEvaluator:
             "近1年排名": 50.0,
             "近2年排名": 50.0,
         }
-        
+
         # 自动获取净值数据
         if nav_series is None:
             nav_series = self._auto_fetch_nav(fund_code)
-        
+
         if nav_series is None or nav_series.empty or len(nav_series) < 30:
             return result
-        
+
         try:
             returns = nav_series.pct_change().dropna()
-            
+
             # 1. 最大回撤得分（回撤越小得分越高）
             cum_returns = (1 + returns).cumprod()
             rolling_max = cum_returns.cummax()
@@ -150,7 +147,7 @@ class FundEvaluator:
             max_dd = abs(drawdown.min())
             # 回撤0%得1分，回撤50%得0分
             result["最大回撤得分"] = max(0, min(1, 1 - max_dd * 2))
-            
+
             # 2. 区间收益得分
             total_return = cum_returns.iloc[-1] / cum_returns.iloc[0] - 1
             # 年化收益映射到得分
@@ -168,7 +165,7 @@ class FundEvaluator:
                 result["区间收益得分"] = 0.5
             else:
                 result["区间收益得分"] = max(0.2, 0.5 + annual_return)
-            
+
             # 3. 规模得分（基于基金信息估算）
             try:
                 info = self._dm.get_fund_info(fund_code)
@@ -186,7 +183,7 @@ class FundEvaluator:
                             result["规模得分"] = 0.6  # 规模较小
             except Exception:
                 pass
-            
+
             # 4. 创新高得分（统计创新高次数）
             new_high_count = 0
             for i in range(1, len(cum_returns)):
@@ -194,7 +191,7 @@ class FundEvaluator:
                     new_high_count += 1
             new_high_ratio = new_high_count / len(cum_returns)
             result["创新高得分"] = min(1, new_high_ratio * 5)  # 20%创新高率即为满分
-            
+
             # 5. 择股得分（基于超额收益估算）
             if peer_returns_list and len(peer_returns_list) > 0:
                 # 计算相对同类的超额收益
@@ -204,7 +201,7 @@ class FundEvaluator:
                     result["择股得分"] = min(1, 0.6 + excess * 100)
                 else:
                     result["择股得分"] = max(0.3, 0.5 + excess * 50)
-            
+
             # 6. 择时得分（基于下行捕获比率估算）
             negative_returns = returns[returns < 0]
             if len(negative_returns) > 5 and peer_returns_list:
@@ -218,7 +215,7 @@ class FundEvaluator:
                         capture_ratio = abs(fund_down / peer_down)
                         # 捕获比率越小越好（跌得少）
                         result["择时得分"] = min(1, max(0.3, 1 - capture_ratio * 0.5))
-            
+
             # 7. 近1年/近2年排名（基于收益率估算百分位）
             end_date = datetime.now()
             for years, key in [(1, "近1年排名"), (2, "近2年排名")]:
@@ -228,7 +225,7 @@ class FundEvaluator:
                         period_nav = nav_series[(nav_series.index >= start_date) & (nav_series.index <= end_date)]
                     else:
                         period_nav = nav_series  # 无法筛选日期时使用全部数据
-                    
+
                     if len(period_nav) > 20:
                         period_return = period_nav.iloc[-1] / period_nav.iloc[0] - 1
                         annual_ret = period_return / years
@@ -247,10 +244,10 @@ class FundEvaluator:
                             result[key] = 80.0  # 后20%
                 except Exception:
                     pass
-                    
+
         except Exception as e:
             logger.warning(f"计算细分得分失败: {e}")
-        
+
         return result
 
     def _is_index_fund(self, fund_type: str, fund_name: str) -> bool:

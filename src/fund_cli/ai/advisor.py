@@ -13,9 +13,8 @@ from enum import Enum
 from typing import Any
 
 import numpy as np
-import pandas as pd
 
-from fund_cli.ai.user_profile import UserProfile, RiskTolerance
+from fund_cli.ai.user_profile import RiskTolerance, UserProfile
 from fund_cli.core.data_manager import DataManager
 
 logger = logging.getLogger(__name__)
@@ -152,7 +151,7 @@ class HoldingAnalyzer:
 
         # 分析风险匹配
         for h in holdings:
-            fund_risk = h.get("risk_level", "中风险")
+            h.get("risk_level", "中风险")
             if profile.risk_assessment.tolerance == RiskTolerance.CONSERVATIVE:
                 if "股票" in h.get("fund_type", ""):
                     advices.append(

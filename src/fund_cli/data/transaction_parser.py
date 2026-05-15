@@ -10,7 +10,6 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 
@@ -61,7 +60,7 @@ def _parse_amount(val: str | float | int | None) -> float:
         return 0.0
 
 
-def _parse_date_int(val: int | float | None) -> Optional[date]:
+def _parse_date_int(val: int | float | None) -> date | None:
     """
     将整数日期（如 20190102）转为 date 对象。
     如果是Excel序列号（< 100000），则按Excel日期系统转换。

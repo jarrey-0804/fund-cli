@@ -6,15 +6,15 @@ Qieman MCP 适配器子模块
 
 from fund_cli.data.adapters.qieman.client import QiemanMCPClient
 from fund_cli.data.adapters.qieman.models import (
-    FundDetail,
-    FundNavHistory,
-    FundPerformance,
-    FundHolding,
+    BacktestResult,
     BrinsonIndicator,
     CampisiIndicator,
-    PortfolioDiagnosis,
-    BacktestResult,
     CorrelationResult,
+    FundDetail,
+    FundHolding,
+    FundNavHistory,
+    FundPerformance,
+    PortfolioDiagnosis,
     RiskAnalysis,
 )
 from fund_cli.data.adapters.qieman.tools import QIEMAN_TOOLS, get_tool_definition

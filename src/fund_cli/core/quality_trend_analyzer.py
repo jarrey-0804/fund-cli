@@ -6,14 +6,12 @@
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
-
-from fund_cli.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +47,9 @@ class QualityTrendAnalyzer:
 
     def load_quality_logs(
         self,
-        fund_code: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        fund_code: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> pd.DataFrame:
         """
         加载质量检查日志.
@@ -69,7 +67,7 @@ class QualityTrendAnalyzer:
         # 遍历审计日志文件
         for log_file in self._audit_log_dir.glob("audit_*.jsonl"):
             try:
-                with open(log_file, 'r', encoding='utf-8') as f:
+                with open(log_file, encoding='utf-8') as f:
                     for line in f:
                         try:
                             record = json.loads(line.strip())
@@ -153,7 +151,7 @@ class QualityTrendAnalyzer:
             trend = "stable"
 
         # 检测异常值
-        blocked_count = df[df["blocked"] == True].shape[0]
+        blocked_count = df[df["blocked"]].shape[0]
         warning_count = df[df["quality_level"] == "warning"].shape[0]
 
         return {
@@ -190,7 +188,7 @@ class QualityTrendAnalyzer:
 
     def detect_anomalies(
         self,
-        fund_code: Optional[str] = None,
+        fund_code: str | None = None,
         days: int = 7,
         score_threshold: float = 60.0,
     ) -> list[dict[str, Any]]:
@@ -227,7 +225,7 @@ class QualityTrendAnalyzer:
             })
 
         # 检测被拦截的记录
-        blocked = df[df["blocked"] == True]
+        blocked = df[df["blocked"]]
         for _, row in blocked.iterrows():
             anomalies.append({
                 "type": "blocked",
@@ -259,7 +257,7 @@ class QualityTrendAnalyzer:
         total_checks = len(df)
         unique_funds = df["fund_code"].nunique()
         avg_score = df["quality_score"].mean()
-        blocked_count = df[df["blocked"] == True].shape[0]
+        blocked_count = df[df["blocked"]].shape[0]
 
         # 按基金统计
         fund_stats = []
@@ -269,7 +267,7 @@ class QualityTrendAnalyzer:
                 "fund_code": fund_code,
                 "check_count": len(fund_df),
                 "avg_score": round(fund_df["quality_score"].mean(), 2),
-                "blocked_count": fund_df[fund_df["blocked"] == True].shape[0],
+                "blocked_count": fund_df[fund_df["blocked"]].shape[0],
             })
 
         # 排序：问题最多的在前
@@ -287,7 +285,7 @@ class QualityTrendAnalyzer:
 
 
 # 全局趋势分析器实例
-_analyzer: Optional[QualityTrendAnalyzer] = None
+_analyzer: QualityTrendAnalyzer | None = None
 
 
 def get_quality_trend_analyzer() -> QualityTrendAnalyzer:

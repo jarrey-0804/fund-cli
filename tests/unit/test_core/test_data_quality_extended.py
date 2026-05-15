@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 数据质量检查器补充测试
 
@@ -9,7 +8,6 @@
 - 异常处理
 """
 
-from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -17,7 +15,6 @@ import pandas as pd
 import pytest
 
 from fund_cli.core.data_quality import DataQualityChecker
-
 
 # =============================================================================
 # Fixtures

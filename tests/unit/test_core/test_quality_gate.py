@@ -1,11 +1,12 @@
 """质量门禁单元测试."""
 
-import pytest
-import pandas as pd
+
 import numpy as np
-from unittest.mock import MagicMock, patch
+import pandas as pd
+import pytest
+
+from fund_cli.core.data_quality import QualityReport
 from fund_cli.core.quality_gate import QualityGate
-from fund_cli.core.data_quality import QualityReport, ExpectationResult
 
 
 class TestQualityGate:

@@ -10,11 +10,10 @@ from unittest.mock import MagicMock, patch
 
 from fund_cli.core.sla_monitor import (
     SLAConfig,
-    SLAViolation,
     SLAMonitor,
+    SLAViolation,
     get_sla_monitor,
 )
-from fund_cli.core.alert_notifier import AlertLevel
 
 
 class TestSLAConfig(unittest.TestCase):

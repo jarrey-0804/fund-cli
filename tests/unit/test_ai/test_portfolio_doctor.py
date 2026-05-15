@@ -2,21 +2,18 @@
 投资组合诊断模块测试
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 import pandas as pd
-import numpy as np
 
 from fund_cli.ai.portfolio_doctor import (
-    PortfolioDoctor,
-    PortfolioDiagnosis,
-    DiagnosisItem,
-    DiversificationAnalyzer,
     ConcentrationAnalyzer,
     CorrelationAnalyzer,
-    RiskExposureAnalyzer,
-    HealthLevel,
     DiagnosisCategory,
+    DiagnosisItem,
+    DiversificationAnalyzer,
+    HealthLevel,
+    PortfolioDiagnosis,
+    PortfolioDoctor,
+    RiskExposureAnalyzer,
     diagnose_portfolio,
 )
 

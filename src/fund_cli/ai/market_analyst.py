@@ -8,12 +8,11 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
 import numpy as np
-import pandas as pd
 
 from fund_cli.core.data_manager import DataManager
 

@@ -4,10 +4,10 @@
 测试 fund holding 命令的各个子命令。
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
-from typer.testing import CliRunner
+
 import pandas as pd
+from typer.testing import CliRunner
 
 from fund_cli.commands.holding_cmd import app
 
@@ -277,7 +277,7 @@ class TestHoldingFundCodeValidation:
         mock_dm = MagicMock()
         mock_dm.get_fund_holdings.return_value = MagicMock()
         mock_dm_cls.return_value = mock_dm
-        
+
         result = runner.invoke(app, ["query", "INVALID"])
         # 验证器会抛出异常或返回错误
         assert result.exit_code in [0, 1]
@@ -288,6 +288,6 @@ class TestHoldingFundCodeValidation:
         mock_dm = MagicMock()
         mock_dm.get_fund_holdings.return_value = MagicMock()
         mock_dm_cls.return_value = mock_dm
-        
+
         result = runner.invoke(app, ["industry", "INVALID"])
         assert result.exit_code in [0, 1]

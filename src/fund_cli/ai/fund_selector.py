@@ -393,8 +393,8 @@ class RecommendationGenerator:
         reasons = []
         warnings = []
 
-        fund_name = fund_info.get("name", "该基金")
-        fund_type = fund_info.get("type", "未知类型")
+        fund_info.get("name", "该基金")
+        fund_info.get("type", "未知类型")
 
         # 基于排名的推荐
         if rank <= 3:
@@ -445,7 +445,7 @@ class RecommendationGenerator:
 
         # 默认推荐理由
         if not reasons:
-            reasons.append(f"综合表现符合筛选条件")
+            reasons.append("综合表现符合筛选条件")
 
         # 默认风险提示
         if not warnings:
@@ -519,7 +519,7 @@ class FundSelector:
 
         # 6. 生成推荐结果
         recommendations = []
-        for rank, (idx, row) in enumerate(df.iterrows(), 1):
+        for rank, (_idx, row) in enumerate(df.iterrows(), 1):
             fund_info = row.to_dict()
             reason, warning = self._generator.generate(fund_info, need, row["score"], rank)
 

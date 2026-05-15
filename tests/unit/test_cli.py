@@ -4,8 +4,8 @@ CLI 主入口测试.
 测试 fund 命令的主入口和全局命令。
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 from typer.testing import CliRunner
 
 from fund_cli.cli import app, version_callback
@@ -28,14 +28,14 @@ class TestCLIMain:
         result = runner.invoke(app, ["--version"])
 
         assert result.exit_code == 0
-        assert "3.5.0" in result.output
+        assert "3.8.1" in result.output
 
     def test_cli_version_short_flag(self):
         """测试 -v 短标志."""
         result = runner.invoke(app, ["-v"])
 
         assert result.exit_code == 0
-        assert "3.5.0" in result.output
+        assert "3.8.1" in result.output
 
     def test_version_command(self):
         """测试 version 命令."""
@@ -43,7 +43,7 @@ class TestCLIMain:
 
         assert result.exit_code == 0
         assert "Fund CLI" in result.output
-        assert "3.5.0" in result.output
+        assert "3.8.1" in result.output
 
     def test_version_callback(self):
         """测试 version_callback 函数."""
@@ -51,7 +51,7 @@ class TestCLIMain:
         # 应该抛出 typer.Exit
         try:
             version_callback(True)
-            assert False, "应该抛出异常"
+            raise AssertionError("应该抛出异常")
         except typer.Exit:
             pass  # 正确
 
@@ -108,7 +108,7 @@ class TestInfoCommand:
     @patch("fund_cli.commands.analyze_cmd.info_fund")
     def test_info_command(self, mock_info):
         """测试 info 命令调用."""
-        result = runner.invoke(app, ["info", "000001"])
+        runner.invoke(app, ["info", "000001"])
 
         # 命令应该被调用
         mock_info.assert_called_once_with("000001")

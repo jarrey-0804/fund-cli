@@ -4,10 +4,6 @@ AI 工具测试.
 测试 fund_cli.ai.tools 模块。
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
-import pandas as pd
-import numpy as np
 
 from fund_cli.ai.tools import (
     _period_to_dates,

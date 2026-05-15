@@ -4,8 +4,9 @@ AI 分析器测试.
 测试 fund_cli.ai.analyzer 模块。
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from fund_cli.ai.analyzer import AIAnalyzer
 

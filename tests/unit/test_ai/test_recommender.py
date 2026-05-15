@@ -1,25 +1,26 @@
 """个性化推荐引擎测试"""
 
 import pytest
+
 from fund_cli.ai.recommender import (
-    FundRecommender,
-    ContentBasedRecommender,
     CollaborativeRecommender,
-    HybridRecommender,
+    ContentBasedRecommender,
+    FundRecommender,
     FundScore,
+    HybridRecommender,
     RecommendationItem,
     RecommendationReport,
     RecommendationType,
     recommend_funds,
 )
 from fund_cli.ai.user_profile import (
-    UserProfile,
-    RiskAssessment,
-    InvestmentPreferences,
-    RiskTolerance,
     InvestmentGoal,
     InvestmentHorizon,
+    InvestmentPreferences,
     InvestmentStyle,
+    RiskAssessment,
+    RiskTolerance,
+    UserProfile,
 )
 
 

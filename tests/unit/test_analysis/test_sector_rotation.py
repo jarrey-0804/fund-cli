@@ -1,15 +1,13 @@
 """行业轮动分析模块测试"""
 
-import pytest
 from fund_cli.analysis.sector_rotation import (
-    SectorRotationAnalyzer,
-    SectorPerformanceCalculator,
+    RotationSignal,
     RotationSignalDetector,
     SectorPerformance,
-    RotationPair,
+    SectorPerformanceCalculator,
+    SectorRotationAnalyzer,
     SectorRotationReport,
     SectorTrend,
-    RotationSignal,
     analyze_sector_rotation,
 )
 

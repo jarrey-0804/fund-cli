@@ -11,14 +11,13 @@ P2 - 辅助分析功能接口 (57个)
 - 其他 (2个)
 """
 
-from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
 from fund_cli.data.adapters.akshare_adapter import AKShareAdapter
-from fund_cli.data.base import DataNotFoundError, DataSourceError
+from fund_cli.data.base import DataSourceError
 
 
 @pytest.fixture

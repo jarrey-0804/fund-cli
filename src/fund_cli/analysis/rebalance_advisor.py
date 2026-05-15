@@ -9,8 +9,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fund_cli.core.analyzer import Analyzer
-
 logger = logging.getLogger(__name__)
 
 
@@ -90,7 +88,7 @@ class RebalanceAdvisor:
         """计算当前资产配置"""
         allocation: dict[str, float] = {"权益": 0, "固收": 0, "现金": 0, "其他": 0}
 
-        for code, weight in zip(fund_codes, weights):
+        for code, weight in zip(fund_codes, weights, strict=False):
             try:
                 info = self._dm.get_fund_info(code)
                 fund_type = info.get("type", "") if info else ""
@@ -120,7 +118,7 @@ class RebalanceAdvisor:
             if dev > 0.05:  # 超配超过5%
                 # 找到该资产类别中权重最大的基金
                 candidates = []
-                for code, weight in zip(fund_codes, weights):
+                for code, weight in zip(fund_codes, weights, strict=False):
                     try:
                         info = self._dm.get_fund_info(code)
                         ftype = info.get("type", "") if info else ""

@@ -4,8 +4,8 @@
 测试核心功能的完整流程。
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
+
 from typer.testing import CliRunner
 
 from fund_cli.cli import app
@@ -56,7 +56,7 @@ class TestEndToEndReportGeneration:
     def test_report_generation_flow(self, mock_fetch):
         """测试报告生成流程."""
         import pandas as pd
-        
+
         mock_metrics = {
             "total_return": 0.1,
             "annualized_return": 0.12,
@@ -83,7 +83,7 @@ class TestEndToEndDataQuality:
     def test_quality_gate_integration(self, mock_get_nav):
         """测试质量门禁集成."""
         import pandas as pd
-        
+
         # 提供高质量数据
         mock_nav = pd.DataFrame({
             "nav_date": pd.date_range("2024-01-01", periods=100),
@@ -113,13 +113,13 @@ class TestEndToEndCLI:
         result = runner.invoke(app, ["--version"])
 
         assert result.exit_code == 0
-        assert "3.5.0" in result.output
+        assert "3.8.1" in result.output
 
     @patch("fund_cli.core.data_manager.DataManager.search_funds")
     def test_filter_command_flow(self, mock_search):
         """测试筛选命令流程."""
         import pandas as pd
-        
+
         mock_search.return_value = pd.DataFrame({
             "fund_code": ["000001", "000002"],
             "fund_name": ["基金A", "基金B"],

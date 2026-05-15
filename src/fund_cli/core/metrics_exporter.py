@@ -7,7 +7,7 @@
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from fund_cli.config import get_config
 
@@ -237,12 +237,12 @@ class MetricsExporter:
         """
         return {
             "total_metrics": len(self._metrics),
-            "metric_names": list(set(m.name for m in self._metrics)),
+            "metric_names": list({m.name for m in self._metrics}),
         }
 
 
 # 全局指标导出器实例
-_exporter: Optional[MetricsExporter] = None
+_exporter: MetricsExporter | None = None
 
 
 def get_metrics_exporter() -> MetricsExporter:

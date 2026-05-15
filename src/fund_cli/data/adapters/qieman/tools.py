@@ -9,7 +9,7 @@ from typing import Any
 
 class ToolDefinition:
     """工具定义"""
-    
+
     def __init__(
         self,
         name: str,
@@ -20,7 +20,7 @@ class ToolDefinition:
     ):
         """
         初始化工具定义
-        
+
         Args:
             name: 工具名称
             description: 工具描述
@@ -33,7 +33,7 @@ class ToolDefinition:
         self.parameters = parameters or {}
         self.category = category
         self.priority = priority
-    
+
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
@@ -375,7 +375,7 @@ P1_TOOLS = [
         category="fund_indicator",
         priority="P1",
     ),
-    
+
     # ----- 行业分析接口 (5个) -----
     ToolDefinition(
         name="getFundIndustryPreference",
@@ -461,7 +461,7 @@ P1_TOOLS = [
         category="fund_analysis",
         priority="P1",
     ),
-    
+
     # ----- 债券基金接口 (3个) -----
     ToolDefinition(
         name="getBondAllocationByFundCode",
@@ -511,7 +511,7 @@ P1_TOOLS = [
         category="bond_fund",
         priority="P1",
     ),
-    
+
     # ----- 基金筛选接口 (3个) -----
     ToolDefinition(
         name="filterStockFundByStockTurnover",
@@ -565,7 +565,7 @@ P1_TOOLS = [
         category="fund_filter",
         priority="P1",
     ),
-    
+
     # ----- 其他基金分析接口 (4个) -----
     ToolDefinition(
         name="getQdFundAreaAllocation",
@@ -736,7 +736,7 @@ P2_TOOLS = [
         category="asset_allocation",
         priority="P2",
     ),
-    
+
     # ----- 行情资讯接口 (7个) -----
     ToolDefinition(
         name="GetLatestQuotations",
@@ -842,7 +842,7 @@ P2_TOOLS = [
         category="market_data",
         priority="P2",
     ),
-    
+
     # ----- 策略接口 (7个) -----
     ToolDefinition(
         name="GetStrategyDetails",
@@ -934,7 +934,7 @@ P2_TOOLS = [
         category="strategy",
         priority="P2",
     ),
-    
+
     # ----- 其他接口 (23个) -----
     ToolDefinition(
         name="GetFundAnnouncement",
@@ -1317,10 +1317,10 @@ TOOL_NAME_MAP = {tool.name: tool for tool in QIEMAN_TOOLS}
 def get_tool_definition(tool_name: str) -> ToolDefinition | None:
     """
     获取工具定义
-    
+
     Args:
         tool_name: 工具名称
-        
+
     Returns:
         工具定义，不存在则返回 None
     """
@@ -1330,10 +1330,10 @@ def get_tool_definition(tool_name: str) -> ToolDefinition | None:
 def get_tools_by_category(category: str) -> list[ToolDefinition]:
     """
     按分类获取工具列表
-    
+
     Args:
         category: 分类名称
-        
+
     Returns:
         该分类下的工具列表
     """
@@ -1343,10 +1343,10 @@ def get_tools_by_category(category: str) -> list[ToolDefinition]:
 def get_tools_by_priority(priority: str) -> list[ToolDefinition]:
     """
     按优先级获取工具列表
-    
+
     Args:
         priority: 优先级 (P0/P1/P2)
-        
+
     Returns:
         该优先级下的工具列表
     """
@@ -1356,7 +1356,7 @@ def get_tools_by_priority(priority: str) -> list[ToolDefinition]:
 def list_all_tools() -> list[str]:
     """
     列出所有工具名称
-    
+
     Returns:
         工具名称列表
     """

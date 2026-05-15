@@ -53,7 +53,7 @@ def ai_select(
             raise typer.Exit(0) from None
 
         # 格式化输出
-        lines = [f"# 智能选基推荐结果\n"]
+        lines = ["# 智能选基推荐结果\n"]
         lines.append(f"查询条件: {query}")
         lines.append(f"共找到 {len(recommendations)} 只符合条件的基金：\n")
 
@@ -247,7 +247,7 @@ def ai_profile(
             risk_answers = risk_answer_map.get(risk_level or "moderate", risk_answer_map["moderate"])
 
             # 解析投资期限
-            from fund_cli.ai.user_profile import InvestmentHorizon, InvestmentGoal
+            from fund_cli.ai.user_profile import InvestmentGoal, InvestmentHorizon
             horizon_map = {
                 "short": InvestmentHorizon.SHORT_TERM,
                 "medium": InvestmentHorizon.MEDIUM_TERM,
@@ -277,7 +277,7 @@ def ai_profile(
                 investment_horizon=horizon,
             )
 
-            console.print(f"[green]✓ 用户画像创建成功[/green]")
+            console.print("[green]✓ 用户画像创建成功[/green]")
             console.print(f"  用户名: {profile.name}")
             console.print(f"  风险等级: {profile.risk_assessment.tolerance.value}")
             console.print(f"  投资期限: {profile.investment_horizon.value}")
@@ -326,7 +326,7 @@ def ai_profile(
             total_score = sum(answers)
             assessment = questionnaire.calculate_risk_level(total_score)
 
-            console.print(f"\n[green]风险评估完成！[/green]")
+            console.print("\n[green]风险评估完成！[/green]")
             console.print(f"  总得分: {total_score}")
             console.print(f"  风险等级: {assessment['level']}")
             console.print(f"  风险描述: {assessment['description']}")
@@ -377,7 +377,7 @@ def ai_recommend(
             # 基于基金推荐相似基金
             recommendations = recommender.recommend_similar(fund_code, top_n)
 
-            lines = [f"# 相似基金推荐\n"]
+            lines = ["# 相似基金推荐\n"]
             lines.append(f"参考基金: {fund_code}")
             lines.append(f"推荐策略: {strategy}")
             lines.append(f"共推荐 {len(recommendations)} 只相似基金：\n")
@@ -404,7 +404,7 @@ def ai_recommend(
             rec_type = strategy_map.get(strategy.lower(), "RISK_MATCHED")
             report = recommender.recommend(profile, top_n, rec_type)
 
-            lines = [f"# 个性化基金推荐\n"]
+            lines = ["# 个性化基金推荐\n"]
             lines.append(f"用户: {profile.name}")
             lines.append(f"风险等级: {profile.risk_assessment.tolerance.value}")
             lines.append(f"推荐策略: {strategy}")

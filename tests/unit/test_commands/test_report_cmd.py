@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 report_cmd 报告生成命令单元测试
 
@@ -17,8 +16,8 @@ import pytest
 from typer.testing import CliRunner
 
 from fund_cli.commands.report_cmd import (
-    REPORTERS,
     REPORT_TYPES,
+    REPORTERS,
     app,
     get_reporter,
 )
@@ -64,8 +63,9 @@ class TestGetReporter:
         assert isinstance(reporter, MarkdownReporter)
 
     def test_get_unsupported_reporter(self):
-        """测试获取不支持的格式时抛出异常"""
-        with pytest.raises(Exception):
+        """测试获取不支持的格式时抛出 typer.Exit"""
+        import typer
+        with pytest.raises(typer.Exit):
             get_reporter("excel")
 
     def test_get_reporter_returns_instance(self):

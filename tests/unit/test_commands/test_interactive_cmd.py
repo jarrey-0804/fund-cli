@@ -4,7 +4,6 @@
 测试 fund_cli.commands.interactive_cmd 模块。
 """
 
-import pytest
 from typer.testing import CliRunner
 
 from fund_cli.commands.interactive_cmd import app, interactive_mode

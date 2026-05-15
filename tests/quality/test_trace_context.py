@@ -6,15 +6,14 @@
 
 import unittest
 from datetime import datetime
-from unittest.mock import patch
 
 from fund_cli.core.trace_context import (
-    TraceSpan,
     TraceContext,
-    Tracer,
     TraceContextManager,
-    traced,
+    Tracer,
+    TraceSpan,
     get_tracer,
+    traced,
 )
 
 
@@ -92,7 +91,7 @@ class TestTracer(unittest.TestCase):
         self.tracer = Tracer()
         # 清除全局上下文变量
         try:
-            from fund_cli.core.trace_context import trace_id_var, span_id_var
+            from fund_cli.core.trace_context import span_id_var, trace_id_var
             trace_id_var.set("")
             span_id_var.set("")
         except LookupError:
@@ -214,7 +213,7 @@ class TestTraceContextManager(unittest.TestCase):
         """设置测试环境."""
         # 清除全局上下文变量
         try:
-            from fund_cli.core.trace_context import trace_id_var, span_id_var
+            from fund_cli.core.trace_context import span_id_var, trace_id_var
             trace_id_var.set("")
             span_id_var.set("")
         except LookupError:
@@ -236,7 +235,7 @@ class TestTraceContextManager(unittest.TestCase):
 
     def test_context_manager_error(self):
         """测试异常的上下文管理."""
-        tracer = Tracer()
+        Tracer()
 
         try:
             with TraceContextManager("test_operation"):
@@ -267,7 +266,7 @@ class TestTracedDecorator(unittest.TestCase):
         """设置测试环境."""
         # 清除全局上下文变量
         try:
-            from fund_cli.core.trace_context import trace_id_var, span_id_var
+            from fund_cli.core.trace_context import span_id_var, trace_id_var
             trace_id_var.set("")
             span_id_var.set("")
         except LookupError:

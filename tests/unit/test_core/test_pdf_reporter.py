@@ -1,6 +1,6 @@
 """PdfReporter PDF报告生成器单元测试"""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -167,19 +167,19 @@ class TestPdfReporterInheritance:
     def test_has_generate_method(self, reporter):
         """测试PdfReporter有generate方法"""
         assert hasattr(reporter, "generate")
-        assert callable(getattr(reporter, "generate"))
+        assert callable(reporter.generate)
 
     def test_has_save_method(self, reporter):
         """测试PdfReporter有save方法"""
         assert hasattr(reporter, "save")
-        assert callable(getattr(reporter, "save"))
+        assert callable(reporter.save)
 
     def test_has_get_formats_method(self, reporter):
         """测试PdfReporter有get_formats方法"""
         assert hasattr(reporter, "get_formats")
-        assert callable(getattr(reporter, "get_formats"))
+        assert callable(reporter.get_formats)
 
     def test_has_export_pdf_method(self, reporter):
         """测试PdfReporter继承基类的export_pdf方法"""
         assert hasattr(reporter, "export_pdf")
-        assert callable(getattr(reporter, "export_pdf"))
+        assert callable(reporter.export_pdf)

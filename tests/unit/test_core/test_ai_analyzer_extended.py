@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 AI 分析器扩展单元测试
 
@@ -18,13 +17,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from fund_cli.core.ai_analyzer import (
-    AIBackend,
     AIAnalyzer,
+    AIBackend,
     AnalysisResult,
     OpenAIBackend,
-    RuleBasedBackend,
 )
-
 
 # =============================================================================
 # 测试类：analyze_fund 完整流程

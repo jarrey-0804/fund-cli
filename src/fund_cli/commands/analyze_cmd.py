@@ -519,7 +519,7 @@ def stress_test_fund(
         fund analyze stress-test 000001 --scenario "2008金融危机"
         fund analyze stress-test 000001 --shock -30
     """
-    from fund_cli.analysis.stress_test import StressTester, StressScenario
+    from fund_cli.analysis.stress_test import StressScenario, StressTester
 
     try:
         tester = StressTester()
@@ -601,7 +601,7 @@ def risk_budget_analyze(
         fund analyze risk-budget 000001,000002 --weights 0.6,0.4
         fund analyze risk-budget 000001,000002,000003 --optimize
     """
-    from fund_cli.analysis.risk_budget import RiskBudgetAnalyzer, OptimizationObjective
+    from fund_cli.analysis.risk_budget import OptimizationObjective, RiskBudgetAnalyzer
 
     try:
         codes = [c.strip() for c in fund_codes.split(",")]

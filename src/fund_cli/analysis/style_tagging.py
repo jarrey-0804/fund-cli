@@ -9,8 +9,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fund_cli.core.analyzer import Analyzer
-
 logger = logging.getLogger(__name__)
 
 
@@ -65,7 +63,7 @@ class StockStyleTagger:
         normalized = self._normalize_stocks(top_stocks)
 
         # 风格得分
-        style_scores: dict[str, float] = {style: 0.0 for style in self.STYLE_KEYWORDS}
+        style_scores: dict[str, float] = dict.fromkeys(self.STYLE_KEYWORDS, 0.0)
         for stock in normalized:
             name = stock["股票名称"]
             weight = stock.get("合并占比", stock.get("占比", 0))

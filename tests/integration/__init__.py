@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Fund CLI 集成测试包
 

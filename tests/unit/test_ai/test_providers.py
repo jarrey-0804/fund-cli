@@ -617,7 +617,7 @@ class TestLiteLLMProviderAdvanced:
 
         # 模拟litellm已安装
         mock_spec = Mock()
-        mock_spec is not None
+        assert mock_spec is not None
 
         with patch("importlib.util.find_spec") as mock_find_spec:
             mock_find_spec.return_value = mock_spec

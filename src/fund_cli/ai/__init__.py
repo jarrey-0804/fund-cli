@@ -19,9 +19,9 @@ V3.4 新增:
 
 # 核心模块（不依赖 langchain）
 from fund_cli.ai.portfolio_doctor import (
-    PortfolioDoctor,
-    PortfolioDiagnosis,
     DiagnosisItem,
+    PortfolioDiagnosis,
+    PortfolioDoctor,
     diagnose_portfolio,
 )
 
@@ -40,8 +40,8 @@ except ImportError:
 
 try:
     from fund_cli.ai.fund_selector import (
-        FundSelector,
         FundRecommendation,
+        FundSelector,
         InvestmentNeed,
         NeedParser,
         select_funds,
@@ -55,10 +55,10 @@ except ImportError:
 
 try:
     from fund_cli.ai.market_analyst import (
+        HotspotReport,
         MarketAnalyst,
         MarketSentimentReport,
         SectorRotationReport,
-        HotspotReport,
         analyze_market_sentiment,
         analyze_sector_rotation,
         track_market_hotspots,
@@ -99,17 +99,17 @@ except ImportError:
 
 try:
     from fund_cli.ai.advisor import (
-        AdviceType,
-        Priority,
         AdviceItem,
-        RebalanceSuggestion,
-        DCASuggestion,
-        InvestmentAdviceReport,
-        HoldingAnalyzer,
-        RebalanceAdvisor,
+        AdviceType,
         DCAAdvisor,
-        RiskAlerter,
+        DCASuggestion,
+        HoldingAnalyzer,
+        InvestmentAdviceReport,
         InvestmentAdvisor,
+        Priority,
+        RebalanceAdvisor,
+        RebalanceSuggestion,
+        RiskAlerter,
         generate_investment_advice,
     )
 except ImportError:
@@ -128,14 +128,14 @@ except ImportError:
 
 try:
     from fund_cli.ai.recommender import (
-        RecommendationType,
+        CollaborativeRecommender,
+        ContentBasedRecommender,
+        FundRecommender,
         FundScore,
+        HybridRecommender,
         RecommendationItem,
         RecommendationReport,
-        ContentBasedRecommender,
-        CollaborativeRecommender,
-        HybridRecommender,
-        FundRecommender,
+        RecommendationType,
         recommend_funds,
     )
 except ImportError:
@@ -151,16 +151,16 @@ except ImportError:
 
 try:
     from fund_cli.ai.user_profile import (
-        RiskTolerance,
         InvestmentGoal,
         InvestmentHorizon,
-        InvestmentStyle,
-        RiskAssessment,
         InvestmentPreferences,
-        UserProfile,
-        RiskQuestionnaire,
-        StyleAnalyzer,
+        InvestmentStyle,
         ProfileManager,
+        RiskAssessment,
+        RiskQuestionnaire,
+        RiskTolerance,
+        StyleAnalyzer,
+        UserProfile,
         create_user_profile,
     )
 except ImportError:

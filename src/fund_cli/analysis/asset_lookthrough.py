@@ -11,8 +11,6 @@ from typing import Any
 
 import pandas as pd
 
-from fund_cli.core.analyzer import Analyzer
-
 logger = logging.getLogger(__name__)
 
 
@@ -298,7 +296,7 @@ class AssetLookthroughAnalyzer:
             "腾讯": "TENCENT",
             "贵州茅台": "MOUTAI",
         }
-        
+
         merged_stocks = []
         seen_names = {}  # 标准化名 → 索引
         for name, data in sorted_stocks:
@@ -307,11 +305,11 @@ class AssetLookthroughAnalyzer:
             if not std_name:
                 std_name = name.upper().replace(" ", "").replace(".", "").replace(",", "").replace("-", "")
             # 反向匹配：检查标准化名是否包含某个英文别名
-            for cn, en in STOCK_NAME_ALIASES.items():
+            for _cn, en in STOCK_NAME_ALIASES.items():
                 if en in std_name:
                     std_name = en
                     break
-            
+
             if std_name in seen_names:
                 idx = seen_names[std_name]
                 merged_stocks[idx]["合并占比"] += data["合并占比"]

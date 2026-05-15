@@ -8,8 +8,6 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from jinja2 import UndefinedError
-
 logger = logging.getLogger(__name__)
 
 
@@ -172,14 +170,14 @@ class ReportValidator:
 
         # 检查数值范围
         numeric_fields = ["nav", "unit_nav", "total_return", "annualized_return"]
-        for field in numeric_fields:
-            if field in template_variables:
-                value = template_variables[field]
+        for fld in numeric_fields:
+            if fld in template_variables:
+                value = template_variables[fld]
                 if isinstance(value, (int, float)):
                     if value < 0:
-                        warnings.append(f"{field}为负数: {value}")
+                        warnings.append(f"{fld}为负数: {value}")
                     elif value > 10000:  # 净值上限
-                        warnings.append(f"{field}超出合理范围: {value}")
+                        warnings.append(f"{fld}超出合理范围: {value}")
 
         return ReportValidationResult(
             passed=len(missing) == 0,

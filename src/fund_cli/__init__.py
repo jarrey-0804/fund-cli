@@ -12,8 +12,8 @@ warnings.filterwarnings(
     message=r".*allowed_objects.*will change.*",
 )
 
-__version__ = "3.5.0"
-__author__ = "Fund CLI Team"
+__version__ = "3.8.1"
+__author__ = "jarrey-0804"
 __license__ = "MIT"
 
 from fund_cli.cli import app  # noqa: E402

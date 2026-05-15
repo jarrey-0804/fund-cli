@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 AKShare 适配器增强测试
 
@@ -9,14 +8,14 @@ AKShare 适配器增强测试
 - 边界条件
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
 from fund_cli.data.adapters.akshare_adapter import AKShareAdapter
-from fund_cli.data.base import DataNotFoundError, DataSourceError
+from fund_cli.data.base import DataSourceError
 
 
 @pytest.fixture

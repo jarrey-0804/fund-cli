@@ -6,11 +6,11 @@ SLA监控器.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any
 
 from fund_cli.config import get_config
-from fund_cli.core.alert_notifier import AlertLevel, get_alert_notifier
+from fund_cli.core.alert_notifier import AlertLevel
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class SLAViolation:
     """SLA违规记录."""
 
     sla_type: str
-    fund_code: Optional[str]
+    fund_code: str | None
     expected: Any
     actual: Any
     severity: str
@@ -75,7 +75,7 @@ class SLAMonitor:
         self,
         fund_code: str,
         last_update: datetime,
-    ) -> Optional[SLAViolation]:
+    ) -> SLAViolation | None:
         """
         检查数据新鲜度SLA.
 
@@ -106,7 +106,7 @@ class SLAMonitor:
         self,
         fund_code: str,
         quality_score: float,
-    ) -> Optional[SLAViolation]:
+    ) -> SLAViolation | None:
         """
         检查质量评分SLA.
 
@@ -135,7 +135,7 @@ class SLAMonitor:
         self,
         operation: str,
         response_time_seconds: float,
-    ) -> Optional[SLAViolation]:
+    ) -> SLAViolation | None:
         """
         检查响应时间SLA.
 
@@ -165,7 +165,7 @@ class SLAMonitor:
         if not self._alert_notifier:
             return
 
-        from fund_cli.core.alert_notifier import AlertMessage, AlertLevel
+        from fund_cli.core.alert_notifier import AlertMessage
 
         level = AlertLevel.WARNING if violation.severity == "warning" else AlertLevel.CRITICAL
 
@@ -199,7 +199,7 @@ class SLAMonitor:
 
 
 # 全局SLA监控器实例
-_sla_monitor: Optional[SLAMonitor] = None
+_sla_monitor: SLAMonitor | None = None
 
 
 def get_sla_monitor() -> SLAMonitor:

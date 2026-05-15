@@ -1,8 +1,6 @@
 """计算结果验证器单元测试."""
 
-import math
-import pytest
-from fund_cli.core.calc_validator import CalcValidator, MetricValidation, REASONABLE_BOUNDS
+from fund_cli.core.calc_validator import REASONABLE_BOUNDS, CalcValidator
 
 
 class TestCalcValidator:

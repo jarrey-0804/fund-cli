@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 DataSourceGateway 数据源网关单元测试
 
@@ -24,7 +23,6 @@ from fund_cli.core.data_gateway import (
     get_data_gateway,
 )
 from fund_cli.data.base import DataNotFoundError, DataSourceError
-
 
 # =============================================================================
 # Fixtures
@@ -227,14 +225,14 @@ class TestCircuitBreaker:
 
     def test_circuit_opens_after_threshold_failures(self, gateway):
         """测试连续失败达到阈值（5次）后熔断器打开"""
-        for i in range(5):
+        for _i in range(5):
             gateway._update_circuit_state("akshare", success=False)
         assert gateway._circuit_states["akshare"] == CircuitState.OPEN
         assert gateway._failure_counts["akshare"] == 5
 
     def test_circuit_stays_closed_below_threshold(self, gateway):
         """测试失败次数未达阈值时熔断器保持关闭"""
-        for i in range(4):
+        for _i in range(4):
             gateway._update_circuit_state("akshare", success=False)
         assert gateway._circuit_states["akshare"] == CircuitState.CLOSED
         assert gateway._failure_counts["akshare"] == 4
@@ -252,7 +250,7 @@ class TestCircuitBreaker:
     def test_open_circuit_transitions_to_half_open_after_timeout(self, gateway):
         """测试熔断打开后超过恢复时间转为半开"""
         # 先打开熔断器
-        for i in range(5):
+        for _i in range(5):
             gateway._update_circuit_state("akshare", success=False)
         assert gateway._circuit_states["akshare"] == CircuitState.OPEN
 
@@ -264,7 +262,7 @@ class TestCircuitBreaker:
     def test_half_open_success_closes_circuit(self, gateway):
         """测试半开状态连续成功后熔断器关闭"""
         # 打开熔断器
-        for i in range(5):
+        for _i in range(5):
             gateway._update_circuit_state("akshare", success=False)
         assert gateway._circuit_states["akshare"] == CircuitState.OPEN
 
@@ -284,7 +282,7 @@ class TestCircuitBreaker:
     def test_half_open_failure_reopens_circuit(self, gateway):
         """测试半开状态失败后重新打开熔断器"""
         # 打开熔断器
-        for i in range(5):
+        for _i in range(5):
             gateway._update_circuit_state("akshare", success=False)
 
         # 超时后转为半开
@@ -298,7 +296,7 @@ class TestCircuitBreaker:
 
     def test_open_circuit_no_transition_within_timeout(self, gateway):
         """测试熔断打开后在恢复时间内不转换状态"""
-        for i in range(5):
+        for _i in range(5):
             gateway._update_circuit_state("akshare", success=False)
         assert gateway._circuit_states["akshare"] == CircuitState.OPEN
 
@@ -378,7 +376,7 @@ class TestCallWithFallback:
 
     def test_call_uses_primary_adapter_first(self, gateway, mock_adapter_akshare):
         """测试 call 方法优先使用主数据源"""
-        result = gateway.call("get_fund_info", "000001")
+        gateway.call("get_fund_info", "000001")
         mock_adapter_akshare.get_fund_info.assert_called_once_with("000001")
 
     def test_call_falls_back_to_secondary(self, gateway, mock_adapter_akshare, mock_adapter_tushare):
@@ -397,7 +395,7 @@ class TestCallWithFallback:
         """测试逐级降级直到找到可用数据源"""
         gateway._adapters["akshare"].get_fund_info.side_effect = Exception("故障1")
         gateway._adapters["tushare"].get_fund_info.side_effect = Exception("故障2")
-        result = gateway.call("get_fund_info", "000001")
+        gateway.call("get_fund_info", "000001")
         # 应该使用 wind
         gateway._adapters["wind"].get_fund_info.assert_called_once_with("000001")
 
@@ -418,7 +416,7 @@ class TestCallWithFallback:
     def test_call_skips_data_not_found_and_continues(self, gateway, mock_adapter_akshare, mock_adapter_tushare):
         """测试 DataNotFoundError 时跳过当前数据源继续尝试下一个"""
         mock_adapter_akshare.get_fund_info.side_effect = DataNotFoundError("未找到")
-        result = gateway.call("get_fund_info", "000001")
+        gateway.call("get_fund_info", "000001")
         mock_adapter_tushare.get_fund_info.assert_called_once_with("000001")
 
     def test_call_raises_when_no_available_adapters(self, mock_config):
@@ -438,12 +436,12 @@ class TestCallWithFallback:
     def test_call_circuit_breaker_excludes_adapter(self, gateway, mock_adapter_akshare):
         """测试熔断打开的适配器被排除在调用之外"""
         # 打开 akshare 的熔断器
-        for i in range(5):
+        for _i in range(5):
             gateway._update_circuit_state("akshare", success=False)
         assert gateway._circuit_states["akshare"] == CircuitState.OPEN
 
         # call 应该跳过 akshare，使用 tushare
-        result = gateway.call("get_fund_info", "000001")
+        gateway.call("get_fund_info", "000001")
         mock_adapter_akshare.get_fund_info.assert_not_called()
         gateway._adapters["tushare"].get_fund_info.assert_called_once_with("000001")
 
@@ -502,7 +500,7 @@ class TestGetStatus:
 
     def test_get_status_reflects_circuit_open(self, gateway):
         """测试状态反映熔断打开"""
-        for i in range(5):
+        for _i in range(5):
             gateway._update_circuit_state("akshare", success=False)
         status = gateway.get_status()
         assert status["adapters"]["akshare"]["circuit_state"] == "open"
@@ -524,36 +522,36 @@ class TestConvenienceMethods:
 
     def test_get_fund_nav(self, gateway, mock_adapter_akshare):
         """测试 get_fund_nav 便捷方法"""
-        result = gateway.get_fund_nav("000001", "2024-01-01", "2024-12-31")
+        gateway.get_fund_nav("000001", "2024-01-01", "2024-12-31")
         mock_adapter_akshare.get_fund_nav.assert_called_once_with(
             "000001", "2024-01-01", "2024-12-31"
         )
 
     def test_get_fund_manager(self, gateway, mock_adapter_akshare):
         """测试 get_fund_manager 便捷方法"""
-        result = gateway.get_fund_manager("000001")
+        gateway.get_fund_manager("000001")
         mock_adapter_akshare.get_fund_manager.assert_called_once_with("000001")
 
     def test_get_fund_holdings(self, gateway, mock_adapter_akshare):
         """测试 get_fund_holdings 便捷方法"""
-        result = gateway.get_fund_holdings("000001", "2024-06-30")
+        gateway.get_fund_holdings("000001", "2024-06-30")
         mock_adapter_akshare.get_fund_holdings.assert_called_once_with(
             "000001", "2024-06-30"
         )
 
     def test_get_fund_asset_allocation(self, gateway, mock_adapter_akshare):
         """测试 get_fund_asset_allocation 便捷方法"""
-        result = gateway.get_fund_asset_allocation("000001")
+        gateway.get_fund_asset_allocation("000001")
         mock_adapter_akshare.get_fund_asset_allocation.assert_called_once_with("000001")
 
     def test_get_etf_spot(self, gateway, mock_adapter_akshare):
         """测试 get_etf_spot 便捷方法"""
-        result = gateway.get_etf_spot()
+        gateway.get_etf_spot()
         mock_adapter_akshare.get_etf_spot.assert_called_once()
 
     def test_get_lof_spot(self, gateway, mock_adapter_akshare):
         """测试 get_lof_spot 便捷方法"""
-        result = gateway.get_lof_spot()
+        gateway.get_lof_spot()
         mock_adapter_akshare.get_lof_spot.assert_called_once()
 
 
@@ -695,13 +693,13 @@ class TestCallMethodParameters:
 
     def test_call_with_positional_args_only(self, gateway, mock_adapter_akshare):
         """测试仅使用位置参数调用"""
-        result = gateway.call("get_fund_info", "000001")
+        gateway.call("get_fund_info", "000001")
         mock_adapter_akshare.get_fund_info.assert_called_once_with("000001")
 
     def test_call_with_keyword_args(self, gateway, mock_adapter_akshare):
         """测试使用关键字参数调用"""
         mock_adapter_akshare.get_fund_nav.return_value = pd.DataFrame()
-        result = gateway.call("get_fund_nav", "000001", start_date="2024-01-01", end_date="2024-12-31")
+        gateway.call("get_fund_nav", "000001", start_date="2024-01-01", end_date="2024-12-31")
         mock_adapter_akshare.get_fund_nav.assert_called_once_with(
             "000001", start_date="2024-01-01", end_date="2024-12-31"
         )
@@ -709,18 +707,18 @@ class TestCallMethodParameters:
     def test_call_with_mixed_args(self, gateway, mock_adapter_akshare):
         """测试混合位置参数和关键字参数"""
         mock_adapter_akshare.get_fund_nav.return_value = pd.DataFrame()
-        result = gateway.call("get_fund_nav", "000001", "2024-01-01", end_date="2024-12-31")
+        gateway.call("get_fund_nav", "000001", "2024-01-01", end_date="2024-12-31")
         mock_adapter_akshare.get_fund_nav.assert_called_once()
 
     def test_call_with_no_args(self, gateway, mock_adapter_akshare):
         """测试无参数调用"""
-        result = gateway.call("get_etf_spot")
+        gateway.call("get_etf_spot")
         mock_adapter_akshare.get_etf_spot.assert_called_once_with()
 
     def test_call_with_complex_args(self, gateway, mock_adapter_akshare):
         """测试复杂参数调用"""
         mock_adapter_akshare.search_funds.return_value = pd.DataFrame()
-        result = gateway.call(
+        gateway.call(
             "search_funds",
             fund_type="混合型",
             company="华夏",
@@ -734,7 +732,7 @@ class TestCallMethodParameters:
     def test_call_with_fallback_true(self, gateway, mock_adapter_akshare, mock_adapter_tushare):
         """测试 fallback=True 时降级行为"""
         mock_adapter_akshare.get_fund_info.side_effect = Exception("故障")
-        result = gateway.call("get_fund_info", "000001", fallback=True)
+        gateway.call("get_fund_info", "000001", fallback=True)
         mock_adapter_tushare.get_fund_info.assert_called_once()
 
     def test_call_with_fallback_false_raises(self, gateway, mock_adapter_akshare):
@@ -771,20 +769,20 @@ class TestGetStatusCompleteness:
     def test_get_status_available_is_boolean(self, gateway):
         """测试 available 字段为布尔值"""
         status = gateway.get_status()
-        for adapter_name, adapter_status in status["adapters"].items():
+        for _adapter_name, adapter_status in status["adapters"].items():
             assert isinstance(adapter_status["available"], bool)
 
     def test_get_status_circuit_state_is_string(self, gateway):
         """测试 circuit_state 字段为字符串"""
         status = gateway.get_status()
         valid_states = ["closed", "open", "half_open"]
-        for adapter_name, adapter_status in status["adapters"].items():
+        for _adapter_name, adapter_status in status["adapters"].items():
             assert adapter_status["circuit_state"] in valid_states
 
     def test_get_status_counts_are_integers(self, gateway):
         """测试计数器字段为整数"""
         status = gateway.get_status()
-        for adapter_name, adapter_status in status["adapters"].items():
+        for _adapter_name, adapter_status in status["adapters"].items():
             assert isinstance(adapter_status["failure_count"], int)
             assert isinstance(adapter_status["success_count"], int)
 
@@ -905,7 +903,7 @@ class TestFallbackCompleteFlow:
         gateway._adapters["akshare"].get_fund_info.side_effect = Exception("故障1")
         gateway._adapters["tushare"].get_fund_info.side_effect = Exception("故障2")
 
-        result = gateway.call("get_fund_info", "000001")
+        gateway.call("get_fund_info", "000001")
         # 应该使用 wind（第三个优先级）
         gateway._adapters["wind"].get_fund_info.assert_called_once()
 
@@ -915,7 +913,7 @@ class TestFallbackCompleteFlow:
         for _ in range(5):
             gateway._update_circuit_state("akshare", success=False)
 
-        result = gateway.call("get_fund_info", "000001")
+        gateway.call("get_fund_info", "000001")
         # 应该跳过 akshare，使用 tushare
         gateway._adapters["akshare"].get_fund_info.assert_not_called()
         gateway._adapters["tushare"].get_fund_info.assert_called_once()
@@ -924,7 +922,7 @@ class TestFallbackCompleteFlow:
         """测试降级跳过不可用的适配器"""
         mock_adapter_akshare.is_available.return_value = False
 
-        result = gateway.call("get_fund_info", "000001")
+        gateway.call("get_fund_info", "000001")
         # 应该跳过 akshare，使用 tushare
         gateway._adapters["tushare"].get_fund_info.assert_called_once()
 
@@ -1004,7 +1002,7 @@ class TestConvenienceMethodsExtended:
         mock_adapter_akshare.get_fund_benchmark = MagicMock(return_value={"benchmark": "沪深300"})
         gw = DataSourceGateway()
         gw.register_adapter("akshare", mock_adapter_akshare)
-        result = gw.get_fund_benchmark("000001")
+        gw.get_fund_benchmark("000001")
         mock_adapter_akshare.get_fund_benchmark.assert_called_once_with("000001")
 
     def test_get_all_fund_names(self, mock_config, mock_adapter_akshare):
@@ -1012,7 +1010,7 @@ class TestConvenienceMethodsExtended:
         mock_adapter_akshare.get_all_fund_names = MagicMock(return_value=pd.DataFrame())
         gw = DataSourceGateway()
         gw.register_adapter("akshare", mock_adapter_akshare)
-        result = gw.get_all_fund_names()
+        gw.get_all_fund_names()
         mock_adapter_akshare.get_all_fund_names.assert_called_once()
 
     def test_get_fund_daily_nav(self, mock_config, mock_adapter_akshare):
@@ -1020,7 +1018,7 @@ class TestConvenienceMethodsExtended:
         mock_adapter_akshare.get_fund_daily_nav = MagicMock(return_value=pd.DataFrame())
         gw = DataSourceGateway()
         gw.register_adapter("akshare", mock_adapter_akshare)
-        result = gw.get_fund_daily_nav()
+        gw.get_fund_daily_nav()
         mock_adapter_akshare.get_fund_daily_nav.assert_called_once()
 
     def test_get_fund_purchase_status(self, mock_config, mock_adapter_akshare):
@@ -1028,5 +1026,5 @@ class TestConvenienceMethodsExtended:
         mock_adapter_akshare.get_fund_purchase_status = MagicMock(return_value=pd.DataFrame())
         gw = DataSourceGateway()
         gw.register_adapter("akshare", mock_adapter_akshare)
-        result = gw.get_fund_purchase_status()
+        gw.get_fund_purchase_status()
         mock_adapter_akshare.get_fund_purchase_status.assert_called_once()

@@ -1,16 +1,15 @@
 """资金流向分析模块测试"""
 
-import pytest
 from fund_cli.analysis.money_flow import (
-    MoneyFlowAnalyzer,
-    FundFlowAnalyzer,
-    SectorFlowAnalyzer,
-    NorthboundFlowAnalyzer,
-    FundFlowReport,
-    SectorFlowReport,
-    NorthboundFlowReport,
     FlowDirection,
     FlowIntensity,
+    FundFlowAnalyzer,
+    FundFlowReport,
+    MoneyFlowAnalyzer,
+    NorthboundFlowAnalyzer,
+    NorthboundFlowReport,
+    SectorFlowAnalyzer,
+    SectorFlowReport,
     analyze_money_flow,
 )
 

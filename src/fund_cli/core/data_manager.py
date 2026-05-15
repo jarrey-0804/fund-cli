@@ -112,7 +112,7 @@ class DataManager:
 
                 qieman_api_key = self.config.data.qieman_api_key
                 qieman_base_url = self.config.data.qieman_base_url
-                
+
                 qieman_adapter = QiemanAdapter(
                     api_key=qieman_api_key,
                     base_url=qieman_base_url,
@@ -348,12 +348,12 @@ class DataManager:
     ) -> pd.DataFrame:
         """
         获取基金持仓数据
-        
+
         Args:
             fund_code: 基金代码
             report_date: 报告期
             top_n: 返回前N大持仓（可选）
-        
+
         Returns:
             持仓数据 DataFrame
         """
@@ -373,11 +373,11 @@ class DataManager:
     ) -> pd.DataFrame:
         """
         获取基金行业配置
-        
+
         Args:
             fund_code: 基金代码
             year: 年份（默认最新）
-        
+
         Returns:
             行业配置 DataFrame
         """
@@ -497,14 +497,6 @@ class DataManager:
     ) -> pd.DataFrame:
         """获取基金债券持仓"""
         return self._adapter.get_fund_bond_holdings(code, year)
-
-    def get_fund_industry_allocation(
-        self,
-        code: str,
-        year: int | None = None,
-    ) -> pd.DataFrame:
-        """获取基金行业配置"""
-        return self._adapter.get_fund_industry_allocation(code, year)
 
     def get_fund_portfolio_change(
         self,

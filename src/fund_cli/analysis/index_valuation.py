@@ -12,8 +12,6 @@ from typing import Any
 
 import pandas as pd
 
-from fund_cli.core.analyzer import Analyzer
-
 logger = logging.getLogger(__name__)
 
 
@@ -54,9 +52,8 @@ class IndexFundValuator:
             {超额收益, 超额收益评价, 当前PE, 近五年PE分位, 估值判断, 综合建议}
         """
         from fund_cli.analysis.performance import PerformanceAnalyzer
-        from fund_cli.analysis.fund_scoring import FundScoringEngine
 
-        perf = PerformanceAnalyzer()
+        PerformanceAnalyzer()
         fund_returns = fund_nav.pct_change().dropna()
 
         # 维度1: 超额收益
@@ -84,7 +81,7 @@ class IndexFundValuator:
                             aligned_fund = fund_returns[common_start:common_end]
                             aligned_peer = pr[common_start:common_end]
                             if len(aligned_fund) > 10 and len(aligned_peer) > 10:
-                                fund_ret = (1 + aligned_fund).prod() - 1
+                                (1 + aligned_fund).prod() - 1
                                 peer_ret = (1 + aligned_peer).prod() - 1
                                 peer_totals.append(peer_ret)
                     except Exception:

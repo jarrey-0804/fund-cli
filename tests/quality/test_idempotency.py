@@ -4,17 +4,13 @@
 验证请求去重和幂等执行功能。
 """
 
-import threading
-import time
 import unittest
-from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
 
 from fund_cli.utils.idempotency import (
     IdempotencyKey,
-    RequestLock,
     IdempotentExecutor,
+    RequestLock,
     get_idempotent_executor,
     idempotent,
 )

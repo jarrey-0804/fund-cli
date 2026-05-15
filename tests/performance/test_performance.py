@@ -4,7 +4,6 @@
 测试核心模块的性能表现，确保优化后的代码满足性能要求。
 """
 import time
-import pytest
 
 
 class TestDataNormalizerPerformance:
@@ -15,8 +14,8 @@ class TestDataNormalizerPerformance:
         from fund_cli.data.normalizer import DataNormalizer
 
         start = time.time()
-        for i in range(1000):
-            DataNormalizer.normalize_fund_code(f"000001.OF")
+        for _i in range(1000):
+            DataNormalizer.normalize_fund_code("000001.OF")
         elapsed = time.time() - start
 
         assert elapsed < 1.0, f"标准化1000次基金代码耗时 {elapsed:.2f}s，超过1秒"
@@ -30,8 +29,8 @@ class TestDataNormalizerPerformance:
             DataNormalizer.normalize_fund_code_cached(f"{i:06d}.OF")
 
         start = time.time()
-        for i in range(1000):
-            DataNormalizer.normalize_fund_code_cached(f"000001.OF")
+        for _i in range(1000):
+            DataNormalizer.normalize_fund_code_cached("000001.OF")
         elapsed = time.time() - start
 
         # 缓存后应该非常快
@@ -42,7 +41,7 @@ class TestDataNormalizerPerformance:
         from fund_cli.data.normalizer import DataNormalizer
 
         start = time.time()
-        for i in range(1000):
+        for _i in range(1000):
             DataNormalizer.normalize_date("2024-01-01")
         elapsed = time.time() - start
 
@@ -56,7 +55,7 @@ class TestDataNormalizerPerformance:
         DataNormalizer.normalize_date_cached("2024-01-01")
 
         start = time.time()
-        for i in range(1000):
+        for _i in range(1000):
             DataNormalizer.normalize_date_cached("2024-01-01")
         elapsed = time.time() - start
 
@@ -72,7 +71,7 @@ class TestTemplateEnginePerformance:
         from fund_cli.core.template_engine import TemplateEngine
 
         start = time.time()
-        engine = TemplateEngine()
+        TemplateEngine()
         elapsed = time.time() - start
 
         assert elapsed < 1.0, f"模板引擎初始化耗时 {elapsed:.2f}s，超过1秒"
@@ -84,7 +83,7 @@ class TestTemplateEnginePerformance:
         engine = TemplateEngine()
 
         start = time.time()
-        for i in range(100):
+        for _i in range(100):
             engine.render_string("{{ name }}", name="test")
         elapsed = time.time() - start
 
@@ -103,7 +102,7 @@ class TestTemplateEnginePerformance:
         items = [{"name": f"item_{i}", "value": i} for i in range(100)]
 
         start = time.time()
-        for i in range(10):
+        for _i in range(10):
             engine.render_string(template, items=items)
         elapsed = time.time() - start
 
@@ -126,7 +125,7 @@ class TestAIAnalyzerPerformance:
         }
 
         start = time.time()
-        for i in range(10):
+        for _i in range(10):
             result = analyzer.analyze_fund("000001", "测试基金", metrics)
         elapsed = time.time() - start
 
@@ -150,8 +149,8 @@ class TestAIAnalyzerPerformance:
 
         # 第二次分析（有缓存）
         start = time.time()
-        for i in range(100):
-            result = analyzer.analyze_fund("000001", "测试基金", metrics)
+        for _i in range(100):
+            analyzer.analyze_fund("000001", "测试基金", metrics)
         elapsed = time.time() - start
 
         # 缓存后应该非常快
@@ -166,7 +165,7 @@ class TestDataGatewayPerformance:
         from fund_cli.core.data_gateway import DataSourceGateway
 
         start = time.time()
-        gateway = DataSourceGateway()
+        DataSourceGateway()
         elapsed = time.time() - start
 
         assert elapsed < 1.0, f"网关初始化耗时 {elapsed:.2f}s，超过1秒"
@@ -200,19 +199,15 @@ class TestOverallPerformance:
     def test_import_performance(self):
         """测试模块导入性能"""
         start = time.time()
-        from fund_cli.data.normalizer import DataNormalizer
-        from fund_cli.core.template_engine import TemplateEngine
-        from fund_cli.core.ai_analyzer import AIAnalyzer
-        from fund_cli.core.data_gateway import DataSourceGateway
         elapsed = time.time() - start
 
         assert elapsed < 3.0, f"导入核心模块耗时 {elapsed:.2f}s，超过3秒"
 
     def test_end_to_end_performance(self):
         """测试端到端性能"""
-        from fund_cli.data.normalizer import DataNormalizer
-        from fund_cli.core.template_engine import TemplateEngine
         from fund_cli.core.ai_analyzer import AIAnalyzer
+        from fund_cli.core.template_engine import TemplateEngine
+        from fund_cli.data.normalizer import DataNormalizer
 
         start = time.time()
 
@@ -222,7 +217,7 @@ class TestOverallPerformance:
 
         # 模板渲染
         engine = TemplateEngine()
-        for i in range(10):
+        for _i in range(10):
             engine.render_string("{{ name }}", name="test")
 
         # AI分析

@@ -24,7 +24,7 @@
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -39,14 +39,14 @@ console = Console()
 
 @app.command("account")
 def diagnose_account(
-    funds: Annotated[Optional[str], typer.Option("--funds", "-f", help="基金代码（逗号分隔）")] = None,
-    weights: Annotated[Optional[str], typer.Option("--weights", "-w", help="权重（逗号分隔）")] = None,
-    transactions: Annotated[Optional[str], typer.Option("--transactions", "-t", help="交易记录Excel文件路径")] = None,
+    funds: Annotated[str | None, typer.Option("--funds", "-f", help="基金代码（逗号分隔）")] = None,
+    weights: Annotated[str | None, typer.Option("--weights", "-w", help="权重（逗号分隔）")] = None,
+    transactions: Annotated[str | None, typer.Option("--transactions", "-t", help="交易记录Excel文件路径")] = None,
     min_weight: Annotated[float, typer.Option("--min-weight", help="最小持仓权重百分比（默认0，即包含所有持仓）")] = 0.0,
-    start: Annotated[Optional[str], typer.Option("--start", "-s", help="开始日期")] = None,
-    end: Annotated[Optional[str], typer.Option("--end", "-e", help="结束日期")] = None,
-    module: Annotated[Optional[str], typer.Option("--module", "-m", help="指定模块: performance/overview/allocation/correlation/evaluation/rebalance/risk")] = None,
-    output: Annotated[Optional[str], typer.Option("--output", "-o", help="输出文件路径")] = None,
+    start: Annotated[str | None, typer.Option("--start", "-s", help="开始日期")] = None,
+    end: Annotated[str | None, typer.Option("--end", "-e", help="结束日期")] = None,
+    module: Annotated[str | None, typer.Option("--module", "-m", help="指定模块: performance/overview/allocation/correlation/evaluation/rebalance/risk")] = None,
+    output: Annotated[str | None, typer.Option("--output", "-o", help="输出文件路径")] = None,
 ) -> None:
     """
     完整账户诊断（一键生成报告）
@@ -58,9 +58,9 @@ def diagnose_account(
         fund diagnose account --funds 000001,000002 --module performance
         fund diagnose account --funds 000001,000002 --output report.md
     """
+    from fund_cli.analysis.performance import PerformanceAnalyzer
     from fund_cli.analysis.portfolio_nav import PortfolioNavCalculator
     from fund_cli.analysis.risk import RiskAnalyzer
-    from fund_cli.analysis.performance import PerformanceAnalyzer
 
     try:
         # 参数校验：--funds 和 --transactions 至少提供一个
@@ -85,13 +85,13 @@ def diagnose_account(
             parser = TransactionParser()
             trans_df = parser.parse_excel(transactions)
 
-            console.print(f"[cyan]正在计算持仓...[/cyan]")
+            console.print("[cyan]正在计算持仓...[/cyan]")
             calc = HoldingCalculator()
             holdings_df = calc.calculate_holdings(trans_df, min_weight_pct=min_weight)
 
             fund_codes = holdings_df["fund_code"].tolist()
             weight_list = holdings_df["weight"].tolist()
-            
+
             # 计算总市值和总成本
             if "total_cost" in holdings_df.columns:
                 total_cost = holdings_df["total_cost"].sum()
@@ -121,13 +121,13 @@ def diagnose_account(
             raise typer.Exit(1) from None
 
         # 构建持仓权重字典（用于后续计算）
-        current_weights = dict(zip(fund_codes, [w * 100 for w in weight_list]))  # 转为百分比
+        current_weights = dict(zip(fund_codes, [w * 100 for w in weight_list], strict=False))  # 转为百分比
 
         # 报告头部
         lines = ["# 基金账户诊断报告（完整版）\n"]
         lines.append(f"> 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        lines.append(f"> 数据来源: AKShare 真实市场数据")
-        lines.append(f"> 分析工具: Fund CLI v3.8.0")
+        lines.append("> 数据来源: AKShare 真实市场数据")
+        lines.append("> 分析工具: Fund CLI v3.8.0")
         lines.append(f"> 分析基准期: {start or '2024-01-01'} 至 {end or '2026-05-12'}")
         lines.append("\n---\n")
 
@@ -136,7 +136,7 @@ def diagnose_account(
         # =========================================================
         if module is None or module == "overview":
             lines.append("## 一、持仓基金\n")
-            
+
             # 核心财务数据（无条件显示）
             # 当使用 --funds 参数时，通过AKShare获取最新净值估算总市值
             if total_value == 0 and not transactions:
@@ -148,7 +148,7 @@ def diagnose_account(
                         if nav is not None and not nav.empty:
                             nav_col = "accumulated_nav" if "accumulated_nav" in nav.columns else "unit_nav"
                             latest_nav = nav[nav_col].iloc[-1]
-                            idx = fund_codes.index(code)
+                            fund_codes.index(code)
                             shares_est = 10000  # 默认按1万份估算
                             total_value += shares_est * latest_nav
                 except Exception:
@@ -168,15 +168,15 @@ def diagnose_account(
                     profit_status = "盈利" if profit > 0 else "亏损" if profit < 0 else "持平"
                     lines.append(f"| 盈亏状态 | {profit_status} |")
                 lines.append("")
-            
+
             lines.append("### 1.2 持仓明细（按市值权重排序）\n")
 
             # 持仓明细表格
             lines.append("| 序号 | 基金代码 | 基金名称 | 投资类型 | 权重 | 综合得分 | 建议 |")
             lines.append("| --- | --- | --- | --- | --- | --- | --- |")
 
-            from fund_cli.core.data_manager import get_data_manager
             from fund_cli.analysis.fund_evaluation import FundEvaluator
+            from fund_cli.core.data_manager import get_data_manager
             dm = get_data_manager()
             evaluator = FundEvaluator()
 
@@ -187,12 +187,12 @@ def diagnose_account(
                     # 截断名称
                     if len(fund_name) > 20:
                         fund_name = fund_name[:18] + "..."
-                    
+
                     # 获取投资类型（二级分类）
                     fund_type = info.get("fund_type", info.get("type", "未知")) if info else "未知"
                     if len(fund_type) > 10:
                         fund_type = fund_type[:8] + ".."
-                    
+
                     # 获取评分
                     result = evaluator.evaluate(code, portfolio_codes=fund_codes)
                     score = result.get("综合得分", 0)
@@ -202,7 +202,7 @@ def diagnose_account(
                     fund_type = "未知"
                     score = 0.5
                     advice = "观察"
-                
+
                 lines.append(f"| {i} | {code} | {fund_name} | {fund_type} | {weight:.2f}% | {score:.2f} | {advice} |")
             lines.append("")
 
@@ -225,11 +225,11 @@ def diagnose_account(
                 lines.append("### 2.1 组合整体涨幅与基准对比\n")
                 lines.append("| 对比项 | 收益率 | 超额收益 | 结论 |")
                 lines.append("| --- | --- | --- | --- |")
-                
+
                 # 计算组合总收益
                 total_return = (portfolio_nav.iloc[-1] / portfolio_nav.iloc[0] - 1) * 100
                 lines.append(f"| **本组合** | **{total_return:.2f}%** | - | - |")
-                
+
                 for name, data in comparisons.items():
                     ret = data.get("指数收益", 0) * 100 if isinstance(data.get("指数收益"), (int, float)) else 0
                     excess = data.get("超额收益", 0) * 100 if isinstance(data.get("超额收益"), (int, float)) else 0
@@ -239,37 +239,37 @@ def diagnose_account(
 
                 # 2.2 收益风险指标汇总
                 lines.append("### 2.2 收益风险指标汇总\n")
-                
+
                 returns = calculator.compute_portfolio_returns(portfolio_nav)
                 perf_analyzer = PerformanceAnalyzer()
                 risk_analyzer = RiskAnalyzer()
-                
+
                 perf_metrics = perf_analyzer.analyze(returns)
-                risk_metrics = risk_analyzer.analyze(returns)
-                
+                risk_analyzer.analyze(returns)
+
                 lines.append("| 指标类别 | 指标 | 数值 |")
                 lines.append("| --- | --- | --- |")
-                
+
                 # 收益指标
                 lines.append(f"| 收益 | 累计收益 | {perf_metrics.get('total_return', 0):.2f}% |")
                 lines.append(f"| 收益 | 年化收益 (CAGR) | {perf_metrics.get('cagr', 0):.2f}% |")
-                
+
                 # 风险指标
                 lines.append(f"| 风险 | 年化波动率 | {perf_metrics.get('volatility', 0):.2f}% |")
                 lines.append(f"| 风险 | 最大回撤 | {perf_metrics.get('max_drawdown', 0):.2f}% |")
                 lines.append(f"| 风险 | VaR (95%) | {perf_metrics.get('var_95', 0):.2f}% |")
                 lines.append(f"| 风险 | CVaR (95%) | {perf_metrics.get('cvar_95', 0):.2f}% |")
-                
+
                 # 风险调整收益
                 lines.append(f"| 风险调整 | 夏普比率 | {perf_metrics.get('sharpe', 0):.2f} |")
                 lines.append(f"| 风险调整 | 索提诺比率 | {perf_metrics.get('sortino', 0):.2f} |")
                 lines.append(f"| 风险调整 | 卡玛比率 | {perf_metrics.get('calmar', 0):.2f} |")
-                
+
                 # 分布特征
                 lines.append(f"| 分布 | 偏度 | {perf_metrics.get('skew', 0):.2f} |")
                 lines.append(f"| 分布 | 峰度 | {perf_metrics.get('kurtosis', 0):.2f} |")
                 lines.append(f"| 分布 | 胜率 | {perf_metrics.get('win_rate', 0):.2f}% |")
-                
+
                 # 极端情况
                 lines.append(f"| 极端 | 最佳单日 | {perf_metrics.get('best_day', 0):.2f}% |")
                 lines.append(f"| 极端 | 最差单日 | {perf_metrics.get('worst_day', 0):.2f}% |")
@@ -317,7 +317,7 @@ def diagnose_account(
                 lines.append("### 2.5 单只基金收益排名\n")
                 lines.append("| 排名 | 基金代码 | 基金名称 | 总收益 | 年化收益 |")
                 lines.append("| --- | --- | --- | --- | --- |")
-                
+
                 fund_returns = []
                 for code in fund_codes:
                     try:
@@ -335,7 +335,7 @@ def diagnose_account(
                             fund_returns.append((code, name, total_ret * 100, ann_ret * 100))
                     except Exception:
                         pass
-                
+
                 fund_returns.sort(key=lambda x: x[2], reverse=True)
                 for i, (code, name, total_ret, ann_ret) in enumerate(fund_returns, 1):
                     lines.append(f"| {i} | {code} | {name} | {total_ret:.2f}% | {ann_ret:.2f}% |")
@@ -365,7 +365,7 @@ def diagnose_account(
                 from fund_cli.analysis.style_tagging import StockStyleTagger
 
                 lookthrough = AssetLookthroughAnalyzer()
-                values = dict(zip(fund_codes, weight_list))
+                values = dict(zip(fund_codes, weight_list, strict=False))
 
                 # 3.1 大类资产穿透
                 asset_alloc = lookthrough.asset_allocation_lookthrough(fund_codes, values)
@@ -390,8 +390,8 @@ def diagnose_account(
                 lines.append("### 3.3 行业穿透（Top 15）\n")
                 lines.append("| 行业 | 占比 |")
                 lines.append("| --- | --- |")
-                
-                holding_analyzer = HoldingAnalyzer()
+
+                HoldingAnalyzer()
                 domestic_industries = {}
                 for code in fund_codes:
                     try:
@@ -405,7 +405,7 @@ def diagnose_account(
                                     domestic_industries[industry] = domestic_industries.get(industry, 0) + ratio * fund_weight
                     except Exception:
                         pass
-                
+
                 for industry, ratio in sorted(domestic_industries.items(), key=lambda x: x[1], reverse=True)[:15]:
                     lines.append(f"| {industry} | {ratio:.2%} |")
                 lines.append("")
@@ -414,7 +414,7 @@ def diagnose_account(
                 lines.append("### 3.4 重仓股穿透合并（Top 15）\n")
                 lines.append("| 排名 | 股票名称 | 合并占比 | 来源基金 |")
                 lines.append("| --- | --- | --- | --- |")
-                
+
                 top_stocks = []
                 stock_sources = {}
                 for code in fund_codes:
@@ -465,7 +465,7 @@ def diagnose_account(
                 if domestic_industries:
                     try:
                         prosperity_result = industry_risk.evaluate_industry_prosperity(domestic_industries, use_ai=False)
-                        
+
                         # 高景气行业
                         high_prosperity = prosperity_result.get("行业景气度评分", {}).get("高景气", [])
                         if high_prosperity:
@@ -475,7 +475,7 @@ def diagnose_account(
                             for item in high_prosperity[:5]:
                                 lines.append(f"| {item['行业']} | {item['占比']} | {item['评分']} |")
                             lines.append("")
-                        
+
                         # 中景气行业
                         mid_prosperity = prosperity_result.get("行业景气度评分", {}).get("中景气", [])
                         if mid_prosperity:
@@ -485,7 +485,7 @@ def diagnose_account(
                             for item in mid_prosperity[:5]:
                                 lines.append(f"| {item['行业']} | {item['占比']} | {item['评分']} |")
                             lines.append("")
-                        
+
                         # 低景气行业
                         low_prosperity = prosperity_result.get("行业景气度评分", {}).get("低景气", [])
                         if low_prosperity:
@@ -493,7 +493,7 @@ def diagnose_account(
                             for item in low_prosperity[:3]:
                                 lines.append(f"- {item['行业']}（{item['占比']}，评分{item['评分']}）")
                             lines.append("")
-                        
+
                         # 整体评价
                         lines.append(f"**整体评价**: {prosperity_result.get('整体评价', 'N/A')}")
                         if prosperity_result.get('风险提示'):
@@ -575,7 +575,7 @@ def diagnose_account(
                 lines.append("### 4.2 基金经理穿透\n")
                 lines.append("| 经理姓名 | 管理基金数 | 合计权重 |")
                 lines.append("| --- | --- | --- |")
-                
+
                 manager_exposure = {}
                 manager_funds = {}
                 for code in fund_codes:
@@ -599,33 +599,33 @@ def diagnose_account(
                 try:
                     from fund_cli.analysis.manager import ManagerAnalyzer
                     manager_analyzer = ManagerAnalyzer()
-                    
+
                     lines.append("| 经理姓名 | 管理基金数 | 近1年百分位 | 近1年等级 | 近2年百分位 | 近2年等级 | 回撤得分 | 收益得分 | 规模得分 | 综合评级 |")
                     lines.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
-                    
+
                     for manager, funds in manager_funds.items():
                         try:
                             eval_result = manager_analyzer.evaluate_manager_performance(manager, funds)
-                            
+
                             # 获取细分得分
                             detailed_scores = manager_analyzer.compute_manager_detailed_scores(manager, funds)
-                            
+
                             data_1y = eval_result.get("近1年", {})
                             data_2y = eval_result.get("近2年", {})
-                            
+
                             pct_1y = data_1y.get("百分位", "N/A")
                             grade_1y = data_1y.get("等级", "N/A")
                             pct_2y = data_2y.get("百分位", "N/A")
                             grade_2y = data_2y.get("等级", "N/A")
                             overall = eval_result.get("综合评级", "N/A")
-                            
+
                             pct_1y_str = f"前{100-pct_1y:.0f}%" if isinstance(pct_1y, (int, float)) else "N/A"
                             pct_2y_str = f"前{100-pct_2y:.0f}%" if isinstance(pct_2y, (int, float)) else "N/A"
-                            
+
                             dd_score = detailed_scores.get("回撤得分", 0.5)
                             ret_score = detailed_scores.get("收益得分", 0.5)
                             scale_score = detailed_scores.get("规模得分", 0.5)
-                            
+
                             lines.append(
                                 f"| {manager} | {len(funds)} | "
                                 f"{pct_1y_str} | {grade_1y} | "
@@ -679,11 +679,11 @@ def diagnose_account(
                     lines.append(f"**建议**: {group_data['建议']}")
                     lines.append("")
 
-                lines.append(f"### 总体建议")
+                lines.append("### 总体建议")
                 lines.append(f"- {result['总体建议']}")
                 lines.append("")
 
-            except Exception as e:
+            except Exception:
                 lines.append("*当前基金净值数据获取受限，无法完成相关性分析。建议稍后重试或检查网络连接。*\n")
 
         # =========================================================
@@ -700,7 +700,7 @@ def diagnose_account(
 
                 # 存储各基金的细分得分用于后续表格
                 fund_detailed_scores = {}
-                
+
                 for code in fund_codes:
                     result = evaluator.evaluate(code, portfolio_codes=fund_codes)
                     fund_name = result.get('基金名称', code)
@@ -709,13 +709,13 @@ def diagnose_account(
                     score = result.get('综合得分', 0)
                     level = "良好" if score >= 0.6 else "一般" if score >= 0.35 else "较差"
                     advice = result.get('建议', '观察')
-                    
+
                     # 获取细分得分和排名
                     detailed = evaluator.compute_detailed_scores(code)
                     fund_detailed_scores[code] = detailed
                     rank_1y = detailed.get("近1年排名", 50)
                     rank_2y = detailed.get("近2年排名", 50)
-                    
+
                     lines.append(f"| {code} | {fund_name} | {result.get('评价路径', 'N/A')} | {score:.2f} | 前{rank_1y:.0f}% | 前{rank_2y:.0f}% | {level} | {advice} |")
                 lines.append("")
 
@@ -724,10 +724,10 @@ def diagnose_account(
                 try:
                     from fund_cli.analysis.annual_return_tracker import AnnualReturnTracker
                     tracker = AnnualReturnTracker(dm)
-                    
+
                     lines.append("| 基金代码 | 基金名称 | 2024年收益 | 2025年收益 | 2026年初以来 | 业绩稳定性 |")
                     lines.append("| --- | --- | --- | --- | --- | --- |")
-                    
+
                     for code in fund_codes[:10]:  # 限制前10只
                         try:
                             annual_result = tracker.track_annual_returns(code)
@@ -736,16 +736,16 @@ def diagnose_account(
                                 name = info.get("fund_name", info.get("name", code)) if info else code
                                 if len(name) > 15:
                                     name = name[:13] + "..."
-                                
+
                                 ret_2024 = annual_result.get("2024年", {}).get("收益", "N/A")
                                 ret_2025 = annual_result.get("2025年", {}).get("收益", "N/A")
                                 ret_2026 = annual_result.get("2026年初以来", {}).get("收益", "N/A")
                                 stability = annual_result.get("业绩稳定性", "N/A")
-                                
+
                                 ret_2024_str = f"{ret_2024}%" if isinstance(ret_2024, (int, float)) else "N/A"
                                 ret_2025_str = f"{ret_2025}%" if isinstance(ret_2025, (int, float)) else "N/A"
                                 ret_2026_str = f"{ret_2026}%" if isinstance(ret_2026, (int, float)) else "N/A"
-                                
+
                                 lines.append(f"| {code} | {name} | {ret_2024_str} | {ret_2025_str} | {ret_2026_str} | {stability} |")
                         except Exception:
                             pass
@@ -773,7 +773,7 @@ def diagnose_account(
                 # 6.3 产品诊断详情（优化新增）
                 lines.append("### 6.3 产品诊断详情\n")
                 lines.append("*以下为各基金的简要产品诊断，供投资参考*\n")
-                
+
                 for code in fund_codes[:10]:  # 限制前10只
                     try:
                         result = evaluator.evaluate(code, portfolio_codes=fund_codes)
@@ -781,13 +781,13 @@ def diagnose_account(
                         fund_name = result.get('基金名称', info.get("fund_name", info.get("name", code)) if info else code)
                         if len(fund_name) > 25:
                             fund_name = fund_name[:23] + "..."
-                        
+
                         score = result.get('综合得分', 0)
                         ret_score = result.get('收益得分', 0)
                         risk_score = result.get('风险得分', 0)
                         advice = result.get('建议', '观察')
                         fund_type = result.get('评价路径', '未知')
-                        
+
                         # 生成产品诊断描述
                         if score >= 0.8:
                             performance = "表现优秀"
@@ -797,7 +797,7 @@ def diagnose_account(
                             performance = "表现一般"
                         else:
                             performance = "表现较差"
-                        
+
                         lines.append(f"**{code} {fund_name}**\n")
                         lines.append(f"- **产品类型**: {fund_type}")
                         lines.append(f"- **综合评分**: {score:.0%}（{performance}）")
@@ -812,7 +812,7 @@ def diagnose_account(
                 lines.append("*以下为各基金的细分评分，用于深入分析基金各项能力*\n")
                 lines.append("| 基金代码 | 最大回撤得分 | 区间收益得分 | 规模得分 | 创新高得分 | 择股得分 | 择时得分 |")
                 lines.append("| --- | --- | --- | --- | --- | --- | --- |")
-                
+
                 for code in fund_codes[:10]:  # 限制前10只
                     detailed = fund_detailed_scores.get(code, {})
                     lines.append(
@@ -959,7 +959,7 @@ def diagnose_account(
                 # 7.4 基金舆情与公告核查（新增）
                 lines.append("### 7.4 基金舆情与公告核查\n")
                 lines.append("*以下为持仓基金的舆情与公告核查结果*\n")
-                
+
                 # 检查项列表
                 check_items = [
                     "重大变更",
@@ -968,10 +968,10 @@ def diagnose_account(
                     "清盘警告",
                     "经理离任"
                 ]
-                
+
                 lines.append("| 基金代码 | 基金名称 | 检查项 | 状态 | 说明 |")
                 lines.append("| --- | --- | --- | --- | --- |")
-                
+
                 # 尝试获取基金公告信息
                 fund_announcements = {}
                 try:
@@ -990,7 +990,7 @@ def diagnose_account(
                             pass
                 except Exception:
                     pass
-                
+
                 # 输出检查结果
                 for code in fund_codes[:5]:
                     try:
@@ -1000,13 +1000,13 @@ def diagnose_account(
                             fund_name = fund_name[:13] + "..."
                     except Exception:
                         fund_name = code
-                    
+
                     # 检查各项
                     for item in check_items:
                         # 默认显示"暂无重大负面信息"
                         status = "正常"
                         desc = "暂无重大负面信息"
-                        
+
                         # 如果有公告数据，尝试匹配
                         if code in fund_announcements and fund_announcements[code]:
                             for ann in fund_announcements[code][:2]:
@@ -1023,7 +1023,7 @@ def diagnose_account(
                                     if item == "清盘警告":
                                         status = "警告"
                                         desc = title[:20]
-                        
+
                         lines.append(f"| {code} | {fund_name} | {item} | {status} | {desc} |")
                 lines.append("")
                 lines.append("> **说明**: 以上信息基于公开公告数据，仅供参考。建议定期关注基金公司官方公告。\n")
@@ -1075,7 +1075,7 @@ def diagnose_account(
                 # 8.3 推荐新基金（新增）
                 lines.append("### 8.3 推荐新基金\n")
                 lines.append("*以下为基于同类排名推荐的优质基金，供调仓参考*\n")
-                
+
                 # 获取推荐基金（基于AKShare同类排名）
                 recommended_funds = []
                 try:
@@ -1096,7 +1096,7 @@ def diagnose_account(
                                         fund_type_rec = info_rec.get("fund_type", info_rec.get("type", "混合型"))
                                 except Exception:
                                     pass
-                                
+
                                 recommended_funds.append({
                                     "基金代码": fund_code_rec,
                                     "基金名称": fund_name_rec[:20] if len(fund_name_rec) > 20 else fund_name_rec,
@@ -1120,7 +1120,7 @@ def diagnose_account(
                         {"基金代码": "000751", "基金名称": "嘉实新兴产业混合", "投资类型": "混合型", "综合评分": 0.82, "基金经理评分": 0.85, "简评": "成长性突出"},
                         {"基金代码": "519778", "基金名称": "交银定期支付双息", "投资类型": "混合型", "综合评分": 0.80, "基金经理评分": 0.82, "简评": "稳健收益"},
                     ]
-                
+
                 lines.append("| 基金代码 | 基金名称 | 投资类型 | 综合评分 | 基金经理评分 | 简评 |")
                 lines.append("| --- | --- | --- | --- | --- | --- |")
                 for fund in recommended_funds[:5]:
@@ -1132,7 +1132,7 @@ def diagnose_account(
 
                 # 8.4 调仓后配置对比（新增）
                 lines.append("### 8.4 调仓后配置对比\n")
-                
+
                 # 计算调仓后配置
                 target_allocation = {"权益": 0.70, "固收": 0.15, "现金": 0.15}
                 lines.append("| 资产类别 | 当前配置 | 目标配置 | 调整幅度 |")
@@ -1147,9 +1147,9 @@ def diagnose_account(
                 # 8.5 调仓批次安排（新增）
                 lines.append("### 8.5 调仓批次安排\n")
                 lines.append("*建议分3批次执行调仓，每批次间隔1个月，降低择时风险*\n")
-                
+
                 today = datetime.now()
-                
+
                 lines.append("| 批次 | 执行时间 | 调仓比例 | 主要操作 |")
                 lines.append("| --- | --- | --- | --- |")
                 lines.append(f"| 第1批 | {today.strftime('%Y-%m-%d')} | 40% | 优先调整超配资产，减仓高风险基金 |")
@@ -1169,10 +1169,10 @@ def diagnose_account(
             try:
                 # 9.1 情景分析
                 lines.append("### 9.1 情景分析\n")
-                
+
                 from fund_cli.analysis.scenario_analysis import ScenarioAnalyzer
-                scenario_analyzer = ScenarioAnalyzer()
-                
+                ScenarioAnalyzer()
+
                 # 计算组合收益率
                 try:
                     calculator = PortfolioNavCalculator()
@@ -1180,12 +1180,12 @@ def diagnose_account(
                     returns = calculator.compute_portfolio_returns(portfolio_nav)
                 except Exception:
                     returns = None
-                
+
                 if returns is not None and len(returns) > 0:
                     # 简化的情景分析
                     mean_ret = returns.mean() * 252 * 100  # 年化收益
                     std_ret = returns.std() * (252 ** 0.5) * 100  # 年化波动率
-                    
+
                     lines.append("| 情景 | 预期收益 | 预期最大回撤 |")
                     lines.append("| --- | --- | --- |")
                     lines.append(f"| 牛市(收益+1个标准差) | {mean_ret + std_ret:.2f}% | -{std_ret * 0.8:.2f}% |")
@@ -1197,10 +1197,10 @@ def diagnose_account(
 
                 # 9.2 市场风险
                 lines.append("### 9.2 市场风险\n")
-                
+
                 equity_ratio = asset_alloc.get("权益", 0)
                 overseas_ratio = country_alloc.get("海外", 0)
-                
+
                 lines.append(f"- 权益类占比约 {equity_ratio:.0%}，市场下跌时组合波动较大")
                 lines.append(f"- 海外资产占比约 {overseas_ratio:.0%}，受汇率波动影响")
                 lines.append("- QDII基金赎回可能受额度限制")
@@ -1208,7 +1208,7 @@ def diagnose_account(
 
                 # 9.3 流动性风险
                 lines.append("### 9.3 流动性风险\n")
-                
+
                 low_weight_count = sum(1 for w in current_weights.values() if w < 1)
                 lines.append(f"- {low_weight_count} 只基金持仓权重低于1%，流动性可能较差")
                 lines.append("- 建议保留部分流动性资产（货币基金）应对赎回需求")
@@ -1217,22 +1217,24 @@ def diagnose_account(
                 # 9.4 全球化配置分析
                 lines.append("### 9.4 全球化配置分析\n")
                 try:
-                    from fund_cli.analysis.global_allocation_analyzer import GlobalAllocationAnalyzer
+                    from fund_cli.analysis.global_allocation_analyzer import (
+                        GlobalAllocationAnalyzer,
+                    )
                     global_analyzer = GlobalAllocationAnalyzer(dm)
-                    
+
                     global_result = global_analyzer.analyze_global_allocation(
-                        fund_codes, weight_list, 
-                        start or "2024-01-01", 
+                        fund_codes, weight_list,
+                        start or "2024-01-01",
                         end or "2026-05-12"
                     )
-                    
+
                     # 海外资产占比
                     overseas_ratio = global_result.get("海外资产占比", 0)
                     domestic_ratio = global_result.get("国内资产占比", 0)
                     lines.append(f"**海外资产占比**: {overseas_ratio:.2%}")
                     lines.append(f"**国内资产占比**: {domestic_ratio:.2%}")
                     lines.append("")
-                    
+
                     # 全球化超额收益
                     excess_data = global_result.get("全球化超额收益", {})
                     lines.append("**全球化超额收益**:\n")
@@ -1240,7 +1242,7 @@ def diagnose_account(
                     lines.append(f"- MSCI全球指数收益: {excess_data.get('MSCI全球指数收益', 'N/A')}%")
                     lines.append(f"- 超额收益: {excess_data.get('超额收益', 'N/A')}% ({excess_data.get('结论', 'N/A')})")
                     lines.append("")
-                    
+
                     # 各地区贡献
                     lines.append("**各地区贡献**:\n")
                     lines.append("| 地区 | 权重 | 收益 | 贡献 |")
@@ -1251,19 +1253,19 @@ def diagnose_account(
                             f"{data.get('收益', 'N/A')}% | {data.get('贡献', 'N/A')}% |"
                         )
                     lines.append("")
-                    
+
                     # 美股科技配置
                     tech_data = global_result.get("美股科技配置", {})
                     tech_ratio = tech_data.get("科技七巨头合计占比", 0)
                     lines.append(f"**美股科技七巨头配置**: {tech_ratio}% ({tech_data.get('评价', 'N/A')})")
-                    
+
                     if tech_data.get("持仓明细"):
                         lines.append("\n| 股票 | 占比 |")
                         lines.append("| --- | --- |")
                         for stock in tech_data["持仓明细"][:5]:
                             lines.append(f"| {stock['股票']} | {stock['占比']} |")
                     lines.append("")
-                    
+
                     # 整体评价
                     lines.append(f"**整体评价**: {global_result.get('评价', 'N/A')}")
                     lines.append("")
@@ -1281,7 +1283,7 @@ def diagnose_account(
             try:
                 # 10.1 综合评价
                 lines.append("### 10.1 综合评价\n")
-                
+
                 # 计算组合整体评分
                 overall_score = 60  # 默认值
                 try:
@@ -1289,7 +1291,7 @@ def diagnose_account(
                         overall_score = diagnosis.overall_score
                 except Exception:
                     pass
-                
+
                 # 风险等级
                 equity_ratio = asset_alloc.get("权益", 0)
                 if equity_ratio > 0.80:
@@ -1302,7 +1304,7 @@ def diagnose_account(
                     risk_level = "中低风险"
                 else:
                     risk_level = "低风险"
-                
+
                 # 配置评价
                 if equity_ratio >= 0.60 and equity_ratio <= 0.80:
                     allocation_eval = "权益配置适中，符合积极型投资者标准"
@@ -1312,19 +1314,19 @@ def diagnose_account(
                     allocation_eval = "权益配置偏低，收益弹性不足"
                 else:
                     allocation_eval = "权益配置较为合理"
-                
+
                 lines.append("| 评价维度 | 结果 |")
                 lines.append("| --- | --- |")
                 lines.append(f"| **组合整体评分** | **{overall_score:.0f}/100** |")
                 lines.append(f"| **风险等级** | **{risk_level}** (权益占比 {equity_ratio:.1%}) |")
                 lines.append(f"| **配置评价** | {allocation_eval} |")
                 lines.append("")
-                
+
                 # 10.2 关键结论
                 lines.append("### 10.2 关键结论\n")
-                
+
                 conclusions = []
-                
+
                 # 基于收益表现
                 try:
                     if 'total_return' in dir() and total_return is not None:
@@ -1336,7 +1338,7 @@ def diagnose_account(
                             conclusions.append(f"组合收益承压，分析期间总收益为 {total_return:.2f}%，建议审视持仓")
                 except Exception:
                     pass
-                
+
                 # 基于风险表现
                 try:
                     if 'max_dd' in dir() and max_dd is not None:
@@ -1348,7 +1350,7 @@ def diagnose_account(
                             conclusions.append(f"组合风险控制良好，最大回撤仅 {abs(max_dd):.2f}%")
                 except Exception:
                     pass
-                
+
                 # 基于配置偏离
                 total_dev = 0
                 target_allocation = {"权益": 0.70, "固收": 0.15, "现金": 0.15}
@@ -1356,14 +1358,14 @@ def diagnose_account(
                     curr = asset_alloc.get(asset, 0)
                     tgt = target_allocation.get(asset, 0.15)
                     total_dev += abs(curr - tgt)
-                
+
                 if total_dev > 0.30:
                     conclusions.append(f"配置偏离度较大（{total_dev:.1%}），建议进行再平衡")
                 elif total_dev > 0.15:
                     conclusions.append(f"配置偏离度适中（{total_dev:.1%}），可考虑适度调整")
                 else:
                     conclusions.append(f"配置偏离度较小（{total_dev:.1%}），组合结构较为合理")
-                
+
                 # 基于基金质量
                 try:
                     if 'fund_detailed_scores' in dir() and fund_detailed_scores:
@@ -1376,29 +1378,29 @@ def diagnose_account(
                             conclusions.append("持仓基金整体质量一般，建议优化持仓结构")
                 except Exception:
                     pass
-                
+
                 # 基于行业集中度
                 if domestic_industries:
                     top_industry = max(domestic_industries.items(), key=lambda x: x[1])
                     if top_industry[1] > 0.30:
                         conclusions.append(f"行业集中度较高，{top_industry[0]}占比达 {top_industry[1]:.1%}，需关注行业风险")
-                
+
                 # 输出结论（3-5条）
                 for i, conclusion in enumerate(conclusions[:5], 1):
                     lines.append(f"{i}. {conclusion}")
-                
+
                 if not conclusions:
                     lines.append("组合整体表现平稳，建议持续关注市场变化并定期审视持仓。")
                 lines.append("")
-                
+
                 # 10.3 操作建议摘要
                 lines.append("### 10.3 操作建议摘要\n")
-                
+
                 # 分类基金
                 keep_funds = []
                 watch_funds = []
                 replace_funds = []
-                
+
                 try:
                     if 'fund_detailed_scores' in dir() and fund_detailed_scores:
                         for code in fund_codes:
@@ -1413,10 +1415,10 @@ def diagnose_account(
                 except Exception:
                     # 如果无法获取得分，默认全部为观察
                     watch_funds = fund_codes[:]
-                
+
                 lines.append("**建议保留的基金**（评分>=0.6）:\n")
                 if keep_funds:
-                    lines.append(f"| 基金代码 | 建议操作 |")
+                    lines.append("| 基金代码 | 建议操作 |")
                     lines.append("| --- | --- |")
                     for code in keep_funds[:5]:
                         lines.append(f"| {code} | 继续持有，定期关注 |")
@@ -1425,10 +1427,10 @@ def diagnose_account(
                 else:
                     lines.append("暂无评分>=0.6的基金")
                 lines.append("")
-                
+
                 lines.append("**建议观察的基金**（评分0.4-0.6）:\n")
                 if watch_funds:
-                    lines.append(f"| 基金代码 | 建议操作 |")
+                    lines.append("| 基金代码 | 建议操作 |")
                     lines.append("| --- | --- |")
                     for code in watch_funds[:5]:
                         lines.append(f"| {code} | 密切关注，择机调整 |")
@@ -1437,10 +1439,10 @@ def diagnose_account(
                 else:
                     lines.append("暂无评分0.4-0.6的基金")
                 lines.append("")
-                
+
                 lines.append("**建议替换的基金**（评分<0.4）:\n")
                 if replace_funds:
-                    lines.append(f"| 基金代码 | 建议操作 |")
+                    lines.append("| 基金代码 | 建议操作 |")
                     lines.append("| --- | --- |")
                     for code in replace_funds[:5]:
                         lines.append(f"| {code} | 建议替换为同类优质基金 |")
@@ -1449,9 +1451,9 @@ def diagnose_account(
                 else:
                     lines.append("暂无评分<0.4的基金，组合整体质量良好")
                 lines.append("")
-                
+
                 lines.append("> **最终建议**: 建议按照第八章调仓建议分批执行优化，优先处理评分较低的基金，同时关注市场变化及时调整策略。\n")
-                
+
             except Exception as e:
                 lines.append(f"*总结生成失败: {e}*\n")
 
@@ -1518,7 +1520,7 @@ def diagnose_evaluate(
 @app.command("lookthrough")
 def diagnose_lookthrough(
     funds: Annotated[str, typer.Option("--funds", "-f", help="基金代码（逗号分隔）")],
-    weights: Annotated[Optional[str], typer.Option("--weights", "-w", help="权重（逗号分隔）")] = None,
+    weights: Annotated[str | None, typer.Option("--weights", "-w", help="权重（逗号分隔）")] = None,
     lookthrough_type: Annotated[str, typer.Option("--type", "-t", help="穿透类型: asset/country/industry/stock")] = "asset",
 ) -> None:
     """
@@ -1533,7 +1535,7 @@ def diagnose_lookthrough(
     try:
         fund_codes = [c.strip() for c in funds.split(",")]
         weight_list = [float(w.strip()) for w in weights.split(",")] if weights else [1.0 / len(fund_codes)] * len(fund_codes)
-        values = dict(zip(fund_codes, weight_list))
+        values = dict(zip(fund_codes, weight_list, strict=False))
 
         analyzer = AssetLookthroughAnalyzer()
 
@@ -1578,8 +1580,8 @@ def diagnose_lookthrough(
 @app.command("deviation")
 def diagnose_deviation(
     funds: Annotated[str, typer.Option("--funds", "-f", help="基金代码（逗号分隔）")],
-    weights: Annotated[Optional[str], typer.Option("--weights", "-w", help="权重（逗号分隔）")] = None,
-    target: Annotated[Optional[str], typer.Option("--target", "-t", help="目标配置（如: 权益:0.7,固收:0.15,现金:0.15）")] = None,
+    weights: Annotated[str | None, typer.Option("--weights", "-w", help="权重（逗号分隔）")] = None,
+    target: Annotated[str | None, typer.Option("--target", "-t", help="目标配置（如: 权益:0.7,固收:0.15,现金:0.15）")] = None,
 ) -> None:
     """
     配置偏离度分析
@@ -1594,7 +1596,7 @@ def diagnose_deviation(
     try:
         fund_codes = [c.strip() for c in funds.split(",")]
         weight_list = [float(w.strip()) for w in weights.split(",")] if weights else [1.0 / len(fund_codes)] * len(fund_codes)
-        values = dict(zip(fund_codes, weight_list))
+        values = dict(zip(fund_codes, weight_list, strict=False))
 
         # 获取当前配置
         lookthrough = AssetLookthroughAnalyzer()

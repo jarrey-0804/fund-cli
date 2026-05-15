@@ -8,12 +8,9 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
-
-import numpy as np
-import pandas as pd
 
 from fund_cli.core.data_manager import DataManager
 
@@ -82,7 +79,7 @@ class MarketBreadthIndicator:
     advance_decline_ratio: float  # 涨跌比
     new_high_low: int  # 创新高-创新低差
     breadth_level: MarketBreadth
-    up_volume_ratio: float  % 上涨成交量占比
+    up_volume_ratio: float  # 上涨成交量占比
     description: str
 
 

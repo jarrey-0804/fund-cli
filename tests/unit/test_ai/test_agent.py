@@ -7,7 +7,6 @@ AI Agent 模块测试
 - 工作流执行
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
 
 
@@ -91,10 +90,10 @@ class TestTools:
     @patch('fund_cli.ai.tools._get_analyzer')
     def test_get_fund_performance(self, mock_get_analyzer, mock_get_adapter):
         """测试获取基金业绩"""
-        from fund_cli.ai.tools import get_fund_performance
-
         # Mock 数据
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_performance
         mock_adapter = MagicMock()
         mock_adapter.get_fund_nav.return_value = pd.DataFrame({
             'unit_nav': [1.0, 1.1, 1.2],
@@ -145,7 +144,7 @@ class TestTools:
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_info.return_value = {'name': '测试基金'}
-        
+
         import pandas as pd
         mock_adapter.get_fund_nav.return_value = pd.DataFrame({
             'unit_nav': [1.0, 1.1, 1.2]
@@ -162,8 +161,9 @@ class TestState:
 
     def test_fund_agent_state_structure(self):
         """测试 Agent 状态结构"""
-        from fund_cli.ai.state import FundAgentState
         from typing import get_type_hints
+
+        from fund_cli.ai.state import FundAgentState
 
         hints = get_type_hints(FundAgentState)
 
@@ -175,8 +175,9 @@ class TestState:
 
     def test_chat_state_structure(self):
         """测试对话状态结构"""
-        from fund_cli.ai.state import ChatState
         from typing import get_type_hints
+
+        from fund_cli.ai.state import ChatState
 
         hints = get_type_hints(ChatState)
 
@@ -196,8 +197,9 @@ class TestNodes:
 
     def test_system_node_execution(self):
         """测试系统节点执行"""
-        from fund_cli.ai.nodes import create_system_node
         from langchain_core.messages import HumanMessage
+
+        from fund_cli.ai.nodes import create_system_node
 
         node = create_system_node()
         state = {
@@ -213,8 +215,9 @@ class TestNodes:
 
     def test_router_node_with_tools(self):
         """测试路由节点 - 有工具调用"""
-        from fund_cli.ai.nodes import router_node
         from langchain_core.messages import AIMessage
+
+        from fund_cli.ai.nodes import router_node
 
         # 创建带有工具调用的消息
         state = {
@@ -236,8 +239,9 @@ class TestNodes:
 
     def test_router_node_without_tools(self):
         """测试路由节点 - 无工具调用"""
-        from fund_cli.ai.nodes import router_node
         from langchain_core.messages import AIMessage
+
+        from fund_cli.ai.nodes import router_node
 
         state = {
             "messages": [
@@ -280,7 +284,7 @@ class TestAgent:
 
     def test_get_fund_agent_singleton(self):
         """测试 Agent 单例"""
-        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent
+        from fund_cli.ai.agent import reset_fund_agent
 
         # 重置
         reset_fund_agent()
@@ -291,8 +295,9 @@ class TestPeriodToDateFix:
 
     def test_period_to_dates_1y(self):
         """测试 1y 周期转换"""
+        from datetime import date
+
         from fund_cli.ai.tools import _period_to_dates
-        from datetime import date, timedelta
 
         start, end = _period_to_dates("1y")
         assert isinstance(start, date)
@@ -303,8 +308,9 @@ class TestPeriodToDateFix:
 
     def test_period_to_dates_1m(self):
         """测试 1m 周期转换"""
-        from fund_cli.ai.tools import _period_to_dates
         from datetime import date
+
+        from fund_cli.ai.tools import _period_to_dates
 
         start, end = _period_to_dates("1m")
         assert isinstance(start, date)
@@ -314,8 +320,9 @@ class TestPeriodToDateFix:
 
     def test_period_to_dates_ytd(self):
         """测试 ytd 周期转换"""
-        from fund_cli.ai.tools import _period_to_dates
         from datetime import date
+
+        from fund_cli.ai.tools import _period_to_dates
 
         start, end = _period_to_dates("ytd")
         assert isinstance(start, date)
@@ -356,8 +363,9 @@ class TestHoldingsFix:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_holdings_dataframe_format(self, mock_get_adapter):
         """测试 DataFrame 格式的持仓数据"""
-        from fund_cli.ai.tools import get_fund_holdings
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_holdings
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_holdings.return_value = pd.DataFrame({
@@ -375,8 +383,9 @@ class TestHoldingsFix:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_holdings_empty(self, mock_get_adapter):
         """测试空持仓数据"""
-        from fund_cli.ai.tools import get_fund_holdings
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_holdings
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_holdings.return_value = pd.DataFrame()
@@ -393,8 +402,9 @@ class TestFundListFix:
     @patch('fund_cli.ai.tools._get_analyzer')
     def test_filter_with_dataframe_fund_list(self, mock_get_analyzer, mock_get_dm):
         """测试 DataFrame 格式的基金列表"""
-        from fund_cli.ai.tools import filter_funds_by_performance
         import pandas as pd
+
+        from fund_cli.ai.tools import filter_funds_by_performance
 
         mock_dm = MagicMock()
         # 返回 DataFrame 格式的基金列表
@@ -491,7 +501,7 @@ class TestAgentLegacy:
 
     def test_reset_fund_agent(self):
         """测试重置 Agent"""
-        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent, _fund_agent
+        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent
 
         reset_fund_agent()
 
@@ -558,13 +568,13 @@ class TestModuleImports:
     def test_ai_module_imports(self):
         """测试 AI 模块导入"""
         from fund_cli.ai import (
-            FundAgent,
-            get_fund_agent,
-            reset_fund_agent,
-            FundAgentState,
             FUND_TOOLS,
             AIAnalyzer,
+            FundAgent,
+            FundAgentState,
             PromptTemplates,
+            get_fund_agent,
+            reset_fund_agent,
         )
 
         assert FundAgent is not None
@@ -578,12 +588,12 @@ class TestModuleImports:
     def test_tools_module_imports(self):
         """测试工具模块导入"""
         from fund_cli.ai.tools import (
-            get_fund_basic_info,
-            get_fund_performance,
-            get_fund_holdings,
-            search_funds,
-            compare_funds,
             FUND_TOOLS,
+            compare_funds,
+            get_fund_basic_info,
+            get_fund_holdings,
+            get_fund_performance,
+            search_funds,
         )
 
         assert get_fund_basic_info is not None
@@ -816,8 +826,9 @@ class TestCheckpointer:
     @patch('fund_cli.ai.agent.get_config')
     def test_memory_saver_default(self, mock_get_config, mock_chat_openai):
         """测试默认使用 MemorySaver"""
-        from fund_cli.ai.agent import FundAgent, reset_fund_agent
         from langgraph.checkpoint.memory import MemorySaver
+
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
 
         reset_fund_agent()
 
@@ -941,8 +952,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_ratings_list(self, mock_get_adapter):
         """测试基金评级列表工具"""
-        from fund_cli.ai.tools import get_fund_ratings_list
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_ratings_list
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_ratings.return_value = pd.DataFrame({
@@ -961,8 +973,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_dividend_history(self, mock_get_adapter):
         """测试基金分红历史工具"""
-        from fund_cli.ai.tools import get_fund_dividend_history
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_dividend_history
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_dividends.return_value = pd.DataFrame({
@@ -979,8 +992,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_split_history(self, mock_get_adapter):
         """测试基金拆分历史工具"""
-        from fund_cli.ai.tools import get_fund_split_history
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_split_history
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_splits.return_value = pd.DataFrame({
@@ -997,8 +1011,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_rank_overall(self, mock_get_adapter):
         """测试基金综合排行工具"""
-        from fund_cli.ai.tools import get_fund_rank_overall
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_rank_overall
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_rank_by_type.return_value = pd.DataFrame({
@@ -1016,8 +1031,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_rank_by_etf(self, mock_get_adapter):
         """测试ETF排行工具"""
-        from fund_cli.ai.tools import get_fund_rank_by_etf
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_rank_by_etf
 
         mock_adapter = MagicMock()
         mock_adapter.get_exchange_fund_rank.return_value = pd.DataFrame({
@@ -1035,8 +1051,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_rank_by_money(self, mock_get_adapter):
         """测试货币基金排行工具"""
-        from fund_cli.ai.tools import get_fund_rank_by_money
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_rank_by_money
 
         mock_adapter = MagicMock()
         mock_adapter.get_money_fund_rank.return_value = pd.DataFrame({
@@ -1054,8 +1071,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_achievement_analysis(self, mock_get_adapter):
         """测试基金业绩评价工具"""
-        from fund_cli.ai.tools import get_fund_achievement_analysis
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_achievement_analysis
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_achievement.return_value = pd.DataFrame({
@@ -1075,8 +1093,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_risk_metrics(self, mock_get_adapter):
         """测试基金风险指标工具"""
-        from fund_cli.ai.tools import get_fund_risk_metrics
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_risk_metrics
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_risk_analysis.return_value = pd.DataFrame({
@@ -1096,8 +1115,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_profit_stats(self, mock_get_adapter):
         """测试基金盈利概率工具"""
-        from fund_cli.ai.tools import get_fund_profit_stats
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_profit_stats
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_profit_probability.return_value = pd.DataFrame({
@@ -1116,8 +1136,9 @@ class TestPhaseOneTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_asset_allocation_info(self, mock_get_adapter):
         """测试基金资产配置工具"""
-        from fund_cli.ai.tools import get_fund_asset_allocation_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_asset_allocation_info
 
         mock_adapter = MagicMock()
         mock_adapter.get_fund_asset_allocation.return_value = pd.DataFrame({
@@ -1145,18 +1166,18 @@ class TestPhaseOneTools:
         """测试新增工具都在FUND_TOOLS列表中"""
         from fund_cli.ai.tools import (
             FUND_TOOLS,
-            get_fund_fee_info,
-            get_fund_rating_info,
-            get_fund_ratings_list,
+            get_fund_achievement_analysis,
+            get_fund_asset_allocation_info,
             get_fund_dividend_history,
-            get_fund_split_history,
-            get_fund_rank_overall,
+            get_fund_fee_info,
+            get_fund_profit_stats,
             get_fund_rank_by_etf,
             get_fund_rank_by_money,
-            get_fund_achievement_analysis,
+            get_fund_rank_overall,
+            get_fund_rating_info,
+            get_fund_ratings_list,
             get_fund_risk_metrics,
-            get_fund_profit_stats,
-            get_fund_asset_allocation_info,
+            get_fund_split_history,
         )
 
         new_tools = [
@@ -1189,8 +1210,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_gdp(self, mock_get_adapter):
         """测试GDP工具"""
-        from fund_cli.ai.tools import get_macro_gdp
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_gdp
 
         mock_adapter = MagicMock()
         mock_adapter.get_gdp_yearly.return_value = pd.DataFrame({
@@ -1206,8 +1228,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_cpi(self, mock_get_adapter):
         """测试CPI工具"""
-        from fund_cli.ai.tools import get_macro_cpi
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_cpi
 
         mock_adapter = MagicMock()
         mock_adapter.get_cpi_monthly.return_value = pd.DataFrame({
@@ -1223,8 +1246,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_ppi(self, mock_get_adapter):
         """测试PPI工具"""
-        from fund_cli.ai.tools import get_macro_ppi
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_ppi
 
         mock_adapter = MagicMock()
         mock_adapter.get_ppi_yearly.return_value = pd.DataFrame({
@@ -1240,8 +1264,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_trade(self, mock_get_adapter):
         """测试进出口贸易工具"""
-        from fund_cli.ai.tools import get_macro_trade
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_trade
 
         mock_adapter = MagicMock()
         mock_adapter.get_exports_yearly.return_value = pd.DataFrame({
@@ -1261,8 +1286,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_pmi(self, mock_get_adapter):
         """测试PMI工具"""
-        from fund_cli.ai.tools import get_macro_pmi
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_pmi
 
         mock_adapter = MagicMock()
         mock_adapter.get_pmi_official.return_value = pd.DataFrame({
@@ -1277,8 +1303,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_interest_rate(self, mock_get_adapter):
         """测试利率工具"""
-        from fund_cli.ai.tools import get_macro_interest_rate
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_interest_rate
 
         mock_adapter = MagicMock()
         mock_adapter.get_china_interest_rate.return_value = pd.DataFrame({
@@ -1295,8 +1322,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_money_supply(self, mock_get_adapter):
         """测试货币供应量工具"""
-        from fund_cli.ai.tools import get_macro_money_supply
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_money_supply
 
         mock_adapter = MagicMock()
         mock_adapter.get_m2_yearly.return_value = pd.DataFrame({
@@ -1316,8 +1344,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_industrial(self, mock_get_adapter):
         """测试工业数据工具"""
-        from fund_cli.ai.tools import get_macro_industrial
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_industrial
 
         mock_adapter = MagicMock()
         mock_adapter.get_industrial_production.return_value = pd.DataFrame({
@@ -1334,8 +1363,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_retail(self, mock_get_adapter):
         """测试零售数据工具"""
-        from fund_cli.ai.tools import get_macro_retail
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_retail
 
         mock_adapter = MagicMock()
         mock_adapter.get_retail_sales_yearly.return_value = pd.DataFrame({
@@ -1349,8 +1379,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_macro_unemployment(self, mock_get_adapter):
         """测试失业率工具"""
-        from fund_cli.ai.tools import get_macro_unemployment
         import pandas as pd
+
+        from fund_cli.ai.tools import get_macro_unemployment
 
         mock_adapter = MagicMock()
         mock_adapter.get_urban_unemployment.return_value = pd.DataFrame({
@@ -1364,8 +1395,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_market_sector_flow(self, mock_get_adapter):
         """测试行业资金流向工具"""
-        from fund_cli.ai.tools import get_market_sector_flow
         import pandas as pd
+
+        from fund_cli.ai.tools import get_market_sector_flow
 
         mock_adapter = MagicMock()
         mock_adapter.get_sector_fund_flow.return_value = pd.DataFrame({
@@ -1380,8 +1412,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_market_north_flow(self, mock_get_adapter):
         """测试北向资金工具"""
-        from fund_cli.ai.tools import get_market_north_flow
         import pandas as pd
+
+        from fund_cli.ai.tools import get_market_north_flow
 
         mock_adapter = MagicMock()
         mock_adapter.get_north_fund_flow.return_value = pd.DataFrame({
@@ -1395,8 +1428,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_market_overall_flow(self, mock_get_adapter):
         """测试市场整体资金流向工具"""
-        from fund_cli.ai.tools import get_market_overall_flow
         import pandas as pd
+
+        from fund_cli.ai.tools import get_market_overall_flow
 
         mock_adapter = MagicMock()
         mock_adapter.get_market_fund_flow.return_value = pd.DataFrame({
@@ -1410,8 +1444,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_industry_boards_info(self, mock_get_adapter):
         """测试行业板块工具"""
-        from fund_cli.ai.tools import get_industry_boards_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_industry_boards_info
 
         mock_adapter = MagicMock()
         mock_adapter.get_industry_boards.return_value = pd.DataFrame({
@@ -1427,8 +1462,9 @@ class TestPhaseTwoTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_concept_boards_info(self, mock_get_adapter):
         """测试概念板块工具"""
-        from fund_cli.ai.tools import get_concept_boards_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_concept_boards_info
 
         mock_adapter = MagicMock()
         mock_adapter.get_concept_boards.return_value = pd.DataFrame({
@@ -1451,13 +1487,21 @@ class TestPhaseTwoTools:
         """测试阶段二新增工具都在FUND_TOOLS列表中"""
         from fund_cli.ai.tools import (
             FUND_TOOLS,
-            get_macro_gdp, get_macro_cpi, get_macro_ppi,
-            get_macro_trade, get_macro_pmi, get_macro_interest_rate,
-            get_macro_money_supply, get_macro_industrial,
-            get_macro_retail, get_macro_unemployment,
-            get_market_sector_flow, get_market_north_flow,
-            get_market_overall_flow, get_industry_boards_info,
             get_concept_boards_info,
+            get_industry_boards_info,
+            get_macro_cpi,
+            get_macro_gdp,
+            get_macro_industrial,
+            get_macro_interest_rate,
+            get_macro_money_supply,
+            get_macro_pmi,
+            get_macro_ppi,
+            get_macro_retail,
+            get_macro_trade,
+            get_macro_unemployment,
+            get_market_north_flow,
+            get_market_overall_flow,
+            get_market_sector_flow,
         )
 
         phase2_tools = [
@@ -1485,8 +1529,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_bond_yield_curve_info(self, mock_get_adapter):
         """测试债券收益率曲线工具"""
-        from fund_cli.ai.tools import get_bond_yield_curve_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_bond_yield_curve_info
         mock_adapter = MagicMock()
         mock_adapter.get_bond_yield_curve.return_value = pd.DataFrame({
             'date': ['2024-01'], 'yield_1y': ['2.1%'], 'yield_10y': ['2.8%']
@@ -1498,8 +1543,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_convertible_bonds_list(self, mock_get_adapter):
         """测试可转债列表工具"""
-        from fund_cli.ai.tools import get_convertible_bonds_list
         import pandas as pd
+
+        from fund_cli.ai.tools import get_convertible_bonds_list
         mock_adapter = MagicMock()
         mock_adapter.get_convertible_bonds.return_value = pd.DataFrame({
             'code': ['110001'], 'name': ['中行转债'], 'price': ['105.5']
@@ -1511,8 +1557,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_market_valuation_info(self, mock_get_adapter):
         """测试A股估值工具"""
-        from fund_cli.ai.tools import get_market_valuation_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_market_valuation_info
         mock_adapter = MagicMock()
         mock_adapter.get_a_share_valuation.return_value = pd.DataFrame({
             'index': ['上证指数'], 'pe': ['15.2'], 'pb': ['1.3']
@@ -1524,8 +1571,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_stock_fund_flow_detail(self, mock_get_adapter):
         """测试个股资金流向工具"""
-        from fund_cli.ai.tools import get_stock_fund_flow_detail
         import pandas as pd
+
+        from fund_cli.ai.tools import get_stock_fund_flow_detail
         mock_adapter = MagicMock()
         mock_adapter.get_stock_fund_flow.return_value = pd.DataFrame({
             'date': ['2024-01-15'], 'main_net_inflow': ['5.2亿']
@@ -1537,8 +1585,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_company_aum_rank(self, mock_get_adapter):
         """测试基金公司规模排行工具"""
-        from fund_cli.ai.tools import get_fund_company_aum_rank
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_company_aum_rank
         mock_adapter = MagicMock()
         mock_adapter.get_fund_company_aum.return_value = pd.DataFrame({
             'name': ['华夏基金', '易方达基金'], 'aum': ['15000亿', '12000亿']
@@ -1550,8 +1599,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_holder_structure_info(self, mock_get_adapter):
         """测试持有人结构工具"""
-        from fund_cli.ai.tools import get_fund_holder_structure_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_holder_structure_info
         mock_adapter = MagicMock()
         mock_adapter.get_fund_holder_structure.return_value = pd.DataFrame({
             'holder_type': ['个人', '机构'], 'ratio': ['45.2%', '54.8%']
@@ -1563,8 +1613,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_all_fund_managers_list(self, mock_get_adapter):
         """测试基金经理列表工具"""
-        from fund_cli.ai.tools import get_all_fund_managers_list
         import pandas as pd
+
+        from fund_cli.ai.tools import get_all_fund_managers_list
         mock_adapter = MagicMock()
         mock_adapter.get_all_fund_managers.return_value = pd.DataFrame({
             'name': ['张三', '李四'], 'fund_code': ['000001', '000002']
@@ -1576,8 +1627,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_bond_holdings_info(self, mock_get_adapter):
         """测试基金债券持仓工具"""
-        from fund_cli.ai.tools import get_fund_bond_holdings_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_bond_holdings_info
         mock_adapter = MagicMock()
         mock_adapter.get_fund_bond_holdings.return_value = pd.DataFrame({
             'bond_name': ['国债2301'], 'ratio': ['5.2%']
@@ -1589,8 +1641,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_industry_allocation_info(self, mock_get_adapter):
         """测试基金行业配置工具"""
-        from fund_cli.ai.tools import get_fund_industry_allocation_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_industry_allocation_info
         mock_adapter = MagicMock()
         mock_adapter.get_fund_industry_allocation.return_value = pd.DataFrame({
             'industry': ['银行', '电子'], 'ratio': ['15.2%', '12.5%']
@@ -1602,8 +1655,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_china_us_bond_spread(self, mock_get_adapter):
         """测试中美利差工具"""
-        from fund_cli.ai.tools import get_china_us_bond_spread
         import pandas as pd
+
+        from fund_cli.ai.tools import get_china_us_bond_spread
         mock_adapter = MagicMock()
         mock_adapter.get_china_us_bond_yield.return_value = pd.DataFrame({
             'date': ['2024-01'], 'china_10y': ['2.8%'], 'us_10y': ['4.2%']
@@ -1615,8 +1669,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_etf_hist_data(self, mock_get_adapter):
         """测试ETF历史行情工具"""
-        from fund_cli.ai.tools import get_etf_hist_data
         import pandas as pd
+
+        from fund_cli.ai.tools import get_etf_hist_data
         mock_adapter = MagicMock()
         mock_adapter.get_etf_hist.return_value = pd.DataFrame({
             'date': ['2024-01-15'], 'close': ['3.5'], 'volume': ['1000万']
@@ -1628,8 +1683,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_lof_spot_info(self, mock_get_adapter):
         """测试LOF实时行情工具"""
-        from fund_cli.ai.tools import get_lof_spot_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_lof_spot_info
         mock_adapter = MagicMock()
         mock_adapter.get_lof_spot.return_value = pd.DataFrame({
             'code': ['163001'], 'name': ['兴业趋势'], 'price': ['1.5']
@@ -1641,8 +1697,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_purchase_status_info(self, mock_get_adapter):
         """测试基金申赎状态工具"""
-        from fund_cli.ai.tools import get_fund_purchase_status_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_purchase_status_info
         mock_adapter = MagicMock()
         mock_adapter.get_fund_purchase_status.return_value = pd.DataFrame({
             'code': ['000001'], 'name': ['华夏成长'], 'purchase_status': ['开放申购']
@@ -1654,8 +1711,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_index_spot_em_info(self, mock_get_adapter):
         """测试东方财富指数行情工具"""
-        from fund_cli.ai.tools import get_index_spot_em_info
         import pandas as pd
+
+        from fund_cli.ai.tools import get_index_spot_em_info
         mock_adapter = MagicMock()
         mock_adapter.get_index_spot_em.return_value = pd.DataFrame({
             'code': ['000001'], 'name': ['上证指数'], 'price': ['3000']
@@ -1667,8 +1725,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_dividend_ranking(self, mock_get_adapter):
         """测试基金分红排行工具"""
-        from fund_cli.ai.tools import get_fund_dividend_ranking
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_dividend_ranking
         mock_adapter = MagicMock()
         mock_adapter.get_fund_dividend_rank.return_value = pd.DataFrame({
             'code': ['000001'], 'name': ['华夏成长'], 'dividend': ['5.2亿']
@@ -1680,8 +1739,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_fund_rating_sh_detail(self, mock_get_adapter):
         """测试上海证券评级工具"""
-        from fund_cli.ai.tools import get_fund_rating_sh_detail
         import pandas as pd
+
+        from fund_cli.ai.tools import get_fund_rating_sh_detail
         mock_adapter = MagicMock()
         mock_adapter.get_fund_rating_sh.return_value = pd.DataFrame({
             'code': ['000001'], 'name': ['华夏成长'], 'rating': ['5星']
@@ -1693,8 +1753,9 @@ class TestPhaseThreeFourTools:
     @patch('fund_cli.ai.tools._get_adapter')
     def test_get_index_fund_info_detail(self, mock_get_adapter):
         """测试指数基金信息工具"""
-        from fund_cli.ai.tools import get_index_fund_info_detail
         import pandas as pd
+
+        from fund_cli.ai.tools import get_index_fund_info_detail
         mock_adapter = MagicMock()
         mock_adapter.get_index_fund_info.return_value = pd.DataFrame({
             'code': ['510050'], 'name': ['50ETF'], 'return_1y': ['10.5%']
@@ -1768,8 +1829,9 @@ class TestFundAgentAdvanced:
     @patch('fund_cli.ai.agent.get_config')
     def test_agent_with_custom_checkpointer(self, mock_get_config, mock_chat_openai):
         """测试使用自定义checkpointer初始化"""
-        from fund_cli.ai.agent import FundAgent, reset_fund_agent
         from langgraph.checkpoint.memory import MemorySaver
+
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
 
         reset_fund_agent()
 
@@ -1808,7 +1870,7 @@ class TestFundAgentAdvanced:
         mock_llm = MagicMock()
         mock_chat_openai.return_value = mock_llm
 
-        agent = FundAgent()
+        FundAgent()
 
         mock_chat_openai.assert_called_once()
         call_kwargs = mock_chat_openai.call_args.kwargs
@@ -1837,7 +1899,7 @@ class TestFundAgentAdvanced:
         mock_llm = MagicMock()
         mock_chat_openai.return_value = mock_llm
 
-        agent = FundAgent()
+        FundAgent()
 
         mock_chat_openai.assert_called_once()
         call_kwargs = mock_chat_openai.call_args.kwargs
@@ -1875,8 +1937,8 @@ class TestFundAgentAdvanced:
     @patch('fund_cli.ai.agent.get_config')
     def test_agent_invoke_sync(self, mock_get_config, mock_chat_openai):
         """测试同步调用Agent"""
+
         from fund_cli.ai.agent import FundAgent, reset_fund_agent
-        from langchain_core.messages import AIMessage
 
         reset_fund_agent()
 
@@ -1986,7 +2048,7 @@ class TestFundAgentSingleton:
 
     def test_get_fund_agent_creates_singleton(self):
         """测试获取Agent单例"""
-        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent, _fund_agent
+        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent
 
         reset_fund_agent()
 
@@ -2034,8 +2096,8 @@ class TestFundAgentSingleton:
 
     def test_reset_fund_agent_clears_singleton(self):
         """测试重置Agent清除单例"""
-        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent, _fund_agent
         import fund_cli.ai.agent as agent_module
+        from fund_cli.ai.agent import get_fund_agent, reset_fund_agent
 
         reset_fund_agent()
 
@@ -2145,8 +2207,9 @@ class TestFundAgentCheckpointer:
     @patch('fund_cli.ai.agent.get_config')
     def test_create_checkpointer_memory_saver(self, mock_get_config, mock_chat_openai):
         """测试创建MemorySaver"""
-        from fund_cli.ai.agent import FundAgent, reset_fund_agent
         from langgraph.checkpoint.memory import MemorySaver
+
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
 
         reset_fund_agent()
 
@@ -2170,8 +2233,9 @@ class TestFundAgentCheckpointer:
     @patch('fund_cli.ai.agent.get_config')
     def test_create_checkpointer_postgres_fallback(self, mock_get_config, mock_chat_openai):
         """测试PostgreSQL不可用时回退到MemorySaver"""
-        from fund_cli.ai.agent import FundAgent, reset_fund_agent
         from langgraph.checkpoint.memory import MemorySaver
+
+        from fund_cli.ai.agent import FundAgent, reset_fund_agent
 
         reset_fund_agent()
 
@@ -2199,8 +2263,9 @@ class TestNodesAdvanced:
 
     def test_system_node_adds_message(self):
         """测试系统节点添加消息"""
-        from fund_cli.ai.nodes import create_system_node
         from langchain_core.messages import HumanMessage
+
+        from fund_cli.ai.nodes import create_system_node
 
         node = create_system_node()
         state = {
@@ -2215,8 +2280,9 @@ class TestNodesAdvanced:
 
     def test_system_node_existing_system_message(self):
         """测试已有系统消息时不重复添加"""
-        from fund_cli.ai.nodes import create_system_node
         from langchain_core.messages import HumanMessage, SystemMessage
+
+        from fund_cli.ai.nodes import create_system_node
 
         node = create_system_node()
         state = {
@@ -2234,8 +2300,9 @@ class TestNodesAdvanced:
 
     def test_llm_node_calls_llm(self):
         """测试LLM节点调用LLM"""
+        from langchain_core.messages import AIMessage, HumanMessage
+
         from fund_cli.ai.nodes import create_llm_node
-        from langchain_core.messages import HumanMessage, AIMessage
 
         mock_llm = MagicMock()
         mock_llm_with_tools = MagicMock()
@@ -2304,8 +2371,9 @@ class TestNodesAdvanced:
 
     def test_summary_node_with_ai_message(self):
         """测试总结节点-有AI消息"""
-        from fund_cli.ai.nodes import create_summary_node
         from langchain_core.messages import AIMessage, HumanMessage
+
+        from fund_cli.ai.nodes import create_summary_node
 
         node = create_summary_node()
         state = {
@@ -2322,8 +2390,9 @@ class TestNodesAdvanced:
 
     def test_summary_node_no_ai_message(self):
         """测试总结节点-无AI消息"""
-        from fund_cli.ai.nodes import create_summary_node
         from langchain_core.messages import HumanMessage
+
+        from fund_cli.ai.nodes import create_summary_node
 
         node = create_summary_node()
         state = {
@@ -2341,8 +2410,9 @@ class TestRouterNodeAdvanced:
 
     def test_router_with_tool_calls(self):
         """测试路由节点-有工具调用"""
-        from fund_cli.ai.nodes import router_node
         from langchain_core.messages import AIMessage
+
+        from fund_cli.ai.nodes import router_node
 
         state = {
             "messages": [
@@ -2363,8 +2433,9 @@ class TestRouterNodeAdvanced:
 
     def test_router_without_tool_calls(self):
         """测试路由节点-无工具调用"""
-        from fund_cli.ai.nodes import router_node
         from langchain_core.messages import AIMessage
+
+        from fund_cli.ai.nodes import router_node
 
         state = {
             "messages": [
@@ -2386,8 +2457,9 @@ class TestRouterNodeAdvanced:
 
     def test_router_with_human_message_last(self):
         """测试路由节点-最后一条是人类消息"""
-        from fund_cli.ai.nodes import router_node
         from langchain_core.messages import AIMessage, HumanMessage
+
+        from fund_cli.ai.nodes import router_node
 
         state = {
             "messages": [
@@ -2405,8 +2477,9 @@ class TestStateStructures:
 
     def test_fund_agent_state_fields(self):
         """测试FundAgentState字段"""
-        from fund_cli.ai.state import FundAgentState
         from typing import get_type_hints
+
+        from fund_cli.ai.state import FundAgentState
 
         hints = get_type_hints(FundAgentState)
 
@@ -2421,8 +2494,9 @@ class TestStateStructures:
 
     def test_chat_state_fields(self):
         """测试ChatState字段"""
-        from fund_cli.ai.state import ChatState
         from typing import get_type_hints
+
+        from fund_cli.ai.state import ChatState
 
         hints = get_type_hints(ChatState)
 
@@ -2431,8 +2505,9 @@ class TestStateStructures:
 
     def test_analysis_state_fields(self):
         """测试AnalysisState字段"""
-        from fund_cli.ai.state import AnalysisState
         from typing import get_type_hints
+
+        from fund_cli.ai.state import AnalysisState
 
         hints = get_type_hints(AnalysisState)
 

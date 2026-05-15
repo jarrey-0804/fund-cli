@@ -1,7 +1,6 @@
 """报告验证器单元测试."""
 
-import pytest
-from fund_cli.core.report_validator import ReportValidator, ReportValidationResult
+from fund_cli.core.report_validator import ReportValidator
 
 
 class TestReportValidator:

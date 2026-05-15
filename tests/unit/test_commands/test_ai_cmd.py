@@ -4,11 +4,11 @@ AI 命令测试.
 测试 fund ai 命令的各个子命令。
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
+
 from typer.testing import CliRunner
 
-from fund_cli.commands.ai_cmd import app, _simple_interactive
+from fund_cli.commands.ai_cmd import _simple_interactive, app
 
 runner = CliRunner()
 

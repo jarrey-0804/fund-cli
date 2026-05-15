@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Reporter 报告生成器单元测试
 
@@ -22,7 +21,6 @@ import pytest
 from fund_cli.core.reporter import Reporter
 from fund_cli.core.reporters.html_reporter import HtmlReporter
 from fund_cli.core.reporters.markdown_reporter import MarkdownReporter
-
 
 # =============================================================================
 # Fixtures

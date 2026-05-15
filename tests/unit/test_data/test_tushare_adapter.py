@@ -89,7 +89,7 @@ class TestTushareAdapterGetTushare:
         monkeypatch.delenv("FUND_DATA_TUSHARE_TOKEN", raising=False)
         reload_config()
         adapter = TushareAdapter()
-        
+
         with pytest.raises(DataSourceError, match="Tushare Token 未配置"):
             adapter._get_tushare()
 
@@ -98,7 +98,7 @@ class TestTushareAdapterGetTushare:
         monkeypatch.setenv("FUND_DATA_TUSHARE_TOKEN", "test_token")
         reload_config()
         adapter = TushareAdapter()
-        
+
         with patch.dict('sys.modules', {'tushare': None}):
             with pytest.raises(DataSourceError, match="Tushare 未安装"):
                 adapter._get_tushare()
@@ -108,12 +108,12 @@ class TestTushareAdapterGetTushare:
         monkeypatch.setenv("FUND_DATA_TUSHARE_TOKEN", "test_token")
         reload_config()
         adapter = TushareAdapter()
-        
+
         # 第一次调用
         ts1 = adapter._get_tushare()
         # 第二次调用应该返回同一个实例
         ts2 = adapter._get_tushare()
-        
+
         assert ts1 is ts2
 
 
@@ -150,12 +150,12 @@ class TestTushareAdapterFundInfo:
         """测试带缓存的获取基金信息"""
         monkeypatch.setenv("FUND_DATA_TUSHARE_TOKEN", "test_token")
         reload_config()
-        
+
         mock_cache = MagicMock()
         mock_cache.get_fund_info.return_value = None  # 缓存未命中
-        
+
         adapter = TushareAdapter(cache=mock_cache)
-        
+
         mock_tushare.fund_basic.return_value = pd.DataFrame({
             "ts_code": ["000001.OF"],
             "name": ["华夏成长混合"],
@@ -165,8 +165,8 @@ class TestTushareAdapterFundInfo:
             "management": ["华夏基金"],
         })
 
-        result = adapter.get_fund_info("000001")
-        
+        adapter.get_fund_info("000001")
+
         # 验证缓存被设置
         mock_cache.set_fund_info.assert_called_once()
 
@@ -174,15 +174,15 @@ class TestTushareAdapterFundInfo:
         """测试缓存命中"""
         monkeypatch.setenv("FUND_DATA_TUSHARE_TOKEN", "test_token")
         reload_config()
-        
+
         mock_cache = MagicMock()
         cached_data = {"code": "000001", "name": "缓存数据"}
         mock_cache.get_fund_info.return_value = cached_data
-        
+
         adapter = TushareAdapter(cache=mock_cache)
-        
+
         result = adapter.get_fund_info("000001")
-        
+
         assert result == cached_data
         # 不应该调用 API
         mock_tushare.fund_basic.assert_not_called()
@@ -894,9 +894,9 @@ class TestTushareAdapterRateLimit:
     def test_rate_limit_updates_request_count(self, adapter):
         """测试限流更新请求计数"""
         initial_count = adapter._request_count
-        
+
         adapter._rate_limit()
-        
+
         assert adapter._request_count == initial_count + 1
 
 

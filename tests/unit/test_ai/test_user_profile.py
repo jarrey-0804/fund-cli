@@ -1,17 +1,15 @@
 """用户画像模块测试"""
 
-import pytest
 from fund_cli.ai.user_profile import (
-    ProfileManager,
-    RiskQuestionnaire,
-    StyleAnalyzer,
-    UserProfile,
-    RiskAssessment,
-    InvestmentPreferences,
-    RiskTolerance,
     InvestmentGoal,
     InvestmentHorizon,
     InvestmentStyle,
+    ProfileManager,
+    RiskAssessment,
+    RiskQuestionnaire,
+    RiskTolerance,
+    StyleAnalyzer,
+    UserProfile,
     create_user_profile,
 )
 

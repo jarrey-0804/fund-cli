@@ -10,7 +10,6 @@ P0 - 核心基金功能接口 (18个)
 - 基金经理 (1个)
 """
 
-from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pandas as pd

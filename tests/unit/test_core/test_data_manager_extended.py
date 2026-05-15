@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 DataManager 数据管理器补充测试
 
@@ -9,13 +8,12 @@ DataManager 数据管理器补充测试
 - 异常处理路径
 """
 
-from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
-from fund_cli.core.data_manager import DataManager, get_data_manager
+from fund_cli.core.data_manager import DataManager
 from fund_cli.data.base import DataSourceError
 
 
@@ -175,7 +173,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_company_aum()
                     mock_adapter.get_fund_company_aum.assert_called_once()
 
@@ -187,7 +185,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_aum_trend()
                     mock_adapter.get_fund_aum_trend.assert_called_once()
 
@@ -199,7 +197,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_company_aum_history(year=2024)
                     mock_adapter.get_fund_company_aum_history.assert_called_once_with(2024)
 
@@ -211,7 +209,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_scale_change()
                     mock_adapter.get_fund_scale_change.assert_called_once()
 
@@ -223,7 +221,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_holder_structure()
                     mock_adapter.get_fund_holder_structure.assert_called_once()
 
@@ -235,7 +233,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_ratings()
                     mock_adapter.get_fund_ratings.assert_called_once()
 
@@ -247,7 +245,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_rating_sh(date="20240101")
                     mock_adapter.get_fund_rating_sh.assert_called_once_with("20240101")
 
@@ -259,7 +257,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_rating_zs()
                     mock_adapter.get_fund_rating_zs.assert_called_once()
 
@@ -271,7 +269,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_rating_ja()
                     mock_adapter.get_fund_rating_ja.assert_called_once()
 
@@ -283,7 +281,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_dividends(year=2024, fund_type="股票型", page=1)
                     mock_adapter.get_fund_dividends.assert_called_once()
 
@@ -295,7 +293,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_splits()
                     mock_adapter.get_fund_splits.assert_called_once()
 
@@ -307,7 +305,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_dividend_rank()
                     mock_adapter.get_fund_dividend_rank.assert_called_once()
 
@@ -319,7 +317,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_rank_by_type(fund_type="股票型")
                     mock_adapter.get_fund_rank_by_type.assert_called_once_with("股票型")
 
@@ -331,7 +329,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_exchange_fund_rank()
                     mock_adapter.get_exchange_fund_rank.assert_called_once()
 
@@ -343,7 +341,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_money_fund_rank()
                     mock_adapter.get_money_fund_rank.assert_called_once()
 
@@ -355,7 +353,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_lcx_fund_rank()
                     mock_adapter.get_lcx_fund_rank.assert_called_once()
 
@@ -367,7 +365,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_hk_fund_rank()
                     mock_adapter.get_hk_fund_rank.assert_called_once()
 
@@ -379,7 +377,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_achievement("000001")
                     mock_adapter.get_fund_achievement.assert_called_once_with("000001")
 
@@ -391,7 +389,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_risk_analysis("000001")
                     mock_adapter.get_fund_risk_analysis.assert_called_once_with("000001")
 
@@ -403,7 +401,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_profit_probability("000001")
                     mock_adapter.get_fund_profit_probability.assert_called_once_with("000001")
 
@@ -415,7 +413,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_fund_asset_allocation("000001", date="20240101")
                     mock_adapter.get_fund_asset_allocation.assert_called_once_with("000001", "20240101")
 
@@ -427,7 +425,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_index_spot_em(category="沪深重要指数")
                     mock_adapter.get_index_spot_em.assert_called_once_with("沪深重要指数")
 
@@ -439,7 +437,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_index_spot_sina()
                     mock_adapter.get_index_spot_sina.assert_called_once()
 
@@ -451,7 +449,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_index_daily_tx("000300", start="20240101", end="20241231")
                     mock_adapter.get_index_daily_tx.assert_called_once()
 
@@ -463,7 +461,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_index_daily_em("000300")
                     mock_adapter.get_index_daily_em.assert_called_once_with("000300", None, None)
 
@@ -475,7 +473,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_index_hist("000300", period="weekly")
                     mock_adapter.get_index_hist.assert_called_once()
 
@@ -487,7 +485,7 @@ class TestP1Interfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_index_minute("000300", period="5")
                     mock_adapter.get_index_minute.assert_called_once()
 
@@ -508,7 +506,7 @@ class TestP2MacroEconomicInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_macro_leverage_ratio()
                     mock_adapter.get_macro_leverage_ratio.assert_called_once()
 
@@ -520,7 +518,7 @@ class TestP2MacroEconomicInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_enterprise_price_index()
                     mock_adapter.get_enterprise_price_index.assert_called_once()
 
@@ -532,7 +530,7 @@ class TestP2MacroEconomicInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_gdp_yearly()
                     mock_adapter.get_gdp_yearly.assert_called_once()
 
@@ -544,7 +542,7 @@ class TestP2MacroEconomicInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_cpi_yearly()
                     mock_adapter.get_cpi_yearly.assert_called_once()
 
@@ -556,7 +554,7 @@ class TestP2MacroEconomicInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_pmi_official()
                     mock_adapter.get_pmi_official.assert_called_once()
 
@@ -577,7 +575,7 @@ class TestP2InterestRateInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_china_interest_rate()
                     mock_adapter.get_china_interest_rate.assert_called_once()
 
@@ -589,7 +587,7 @@ class TestP2InterestRateInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_usa_interest_rate()
                     mock_adapter.get_usa_interest_rate.assert_called_once()
 
@@ -601,7 +599,7 @@ class TestP2InterestRateInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_shibor()
                     mock_adapter.get_shibor.assert_called_once()
 
@@ -622,7 +620,7 @@ class TestP2IndustryBoardInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_industry_boards()
                     mock_adapter.get_industry_boards.assert_called_once()
 
@@ -634,7 +632,7 @@ class TestP2IndustryBoardInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_industry_board_hist("BK0001", period="daily")
                     mock_adapter.get_industry_board_hist.assert_called_once()
 
@@ -646,7 +644,7 @@ class TestP2IndustryBoardInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_concept_boards()
                     mock_adapter.get_concept_boards.assert_called_once()
 
@@ -658,7 +656,7 @@ class TestP2IndustryBoardInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_sector_fund_flow(period="今日")
                     mock_adapter.get_sector_fund_flow.assert_called_once_with("今日")
 
@@ -679,7 +677,7 @@ class TestP2BondInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_china_us_bond_yield()
                     mock_adapter.get_china_us_bond_yield.assert_called_once()
 
@@ -691,7 +689,7 @@ class TestP2BondInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_bond_yield_curve(bond_type="国债", period="daily")
                     mock_adapter.get_bond_yield_curve.assert_called_once()
 
@@ -703,7 +701,7 @@ class TestP2BondInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_convertible_bonds()
                     mock_adapter.get_convertible_bonds.assert_called_once()
 
@@ -715,7 +713,7 @@ class TestP2BondInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_bond_hist("019547", period="daily")
                     mock_adapter.get_bond_hist.assert_called_once()
 
@@ -736,7 +734,7 @@ class TestP2ValuationInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_a_share_valuation()
                     mock_adapter.get_a_share_valuation.assert_called_once()
 
@@ -748,7 +746,7 @@ class TestP2ValuationInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_stock_valuation_lg("600519")
                     mock_adapter.get_stock_valuation_lg.assert_called_once_with("600519")
 
@@ -760,7 +758,7 @@ class TestP2ValuationInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_market_pe_lg("000300")
                     mock_adapter.get_market_pe_lg.assert_called_once_with("000300")
 
@@ -781,7 +779,7 @@ class TestP2FundFlowInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_market_fund_flow()
                     mock_adapter.get_market_fund_flow.assert_called_once()
 
@@ -793,7 +791,7 @@ class TestP2FundFlowInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_stock_fund_flow("600519", market="sh")
                     mock_adapter.get_stock_fund_flow.assert_called_once_with("600519", "sh")
 
@@ -805,7 +803,7 @@ class TestP2FundFlowInterfaces:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     dm.register_adapter("akshare", mock_adapter)
-                    
+
                     dm.get_north_fund_flow(market="北向资金")
                     mock_adapter.get_north_fund_flow.assert_called_once_with("北向资金")
 
@@ -837,7 +835,7 @@ class TestMoreInitBranches:
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch("fund_cli.core.data_manager.AKShareAdapter"):
                     with patch.dict("sys.modules", {"fund_cli.data.adapters.tushare_adapter": None}):
-                        dm = DataManager()
+                        DataManager()
                         # 应该不会崩溃
 
     def test_init_wind_import_error(self, mock_config):
@@ -848,7 +846,7 @@ class TestMoreInitBranches:
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch("fund_cli.core.data_manager.AKShareAdapter"):
                     with patch.dict("sys.modules", {"fund_cli.data.adapters.wind_adapter": None}):
-                        dm = DataManager()
+                        DataManager()
                         # 应该不会崩溃
 
 
@@ -867,7 +865,7 @@ class TestExceptionHandling:
                 with patch.object(DataManager, "_init_adapters"):
                     dm = DataManager()
                     dm._primary_source = "nonexistent"
-                    
+
                     with pytest.raises(DataSourceError, match="未配置或不可用"):
                         dm.get_adapter()
 
@@ -879,6 +877,6 @@ class TestExceptionHandling:
                     dm = DataManager()
                     dm._primary_source = "akshare"
                     # 无注册适配器
-                    
+
                     with pytest.raises(DataSourceError):
                         dm.get_fund_info("000001")
