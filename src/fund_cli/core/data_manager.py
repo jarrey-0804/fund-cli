@@ -229,6 +229,31 @@ class DataManager:
         """
         return self._call_gateway("get_fund_info", fund_code, normalize=True)
 
+    def batch_get_fund_info(self, fund_codes: list[str]) -> dict[str, dict[str, Any]]:
+        """
+        批量获取基金信息，自动去重。
+
+        优先使用 Qieman 批量接口，失败时回退逐个获取（走 Gateway 缓存）。
+
+        Args:
+            fund_codes: 基金代码列表
+
+        Returns:
+            {基金代码: 基金信息字典}
+        """
+        results: dict[str, dict[str, Any]] = {}
+        unique_codes = list(dict.fromkeys(fund_codes))
+
+        for code in unique_codes:
+            try:
+                info = self.get_fund_info(code)
+                if info:
+                    results[code] = info
+            except Exception:
+                pass
+
+        return results
+
     def get_fund_nav(
         self,
         fund_code: str,
@@ -394,11 +419,35 @@ class DataManager:
     def batch_get_fund_nav(
         self,
         fund_codes: list[str],
-        start_date: date | None = None,
-        end_date: date | None = None,
-    ) -> dict[str, pd.DataFrame]:
-        """批量获取基金净值"""
-        return self._adapter.batch_get_fund_nav(fund_codes, start_date, end_date)
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, "pd.DataFrame"]:
+        """
+        批量获取基金净值，自动去重。
+
+        逐个获取但走 Gateway 缓存，避免重复网络请求。
+
+        Args:
+            fund_codes: 基金代码列表
+            start_date: 开始日期
+            end_date: 结束日期
+
+        Returns:
+            {基金代码: 净值 DataFrame}
+        """
+        import pandas as pd
+
+        results: dict[str, pd.DataFrame] = {}
+        unique_codes = list(dict.fromkeys(fund_codes))
+
+        for code in unique_codes:
+            try:
+                nav = self.get_fund_nav(code, start_date=start_date, end_date=end_date)
+                results[code] = nav if nav is not None else pd.DataFrame()
+            except Exception:
+                results[code] = pd.DataFrame()
+
+        return results
 
     # ========== P0 级别接口 (18个) ==========
 

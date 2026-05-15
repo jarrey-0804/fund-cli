@@ -555,7 +555,7 @@ class TestDataAccessProxy:
                     mock_adapter.get_fund_rating.assert_called_once_with("000001")
 
     def test_batch_get_fund_nav_calls_adapter(self, mock_config, mock_adapter):
-        """测试 batch_get_fund_nav 调用适配器"""
+        """测试 batch_get_fund_nav 通过 get_fund_nav 逐个获取（走 Gateway 缓存）"""
         with patch("fund_cli.core.data_manager.get_config", return_value=mock_config):
             with patch("fund_cli.core.data_manager.DataCache"):
                 with patch.object(DataManager, "_init_adapters"):
@@ -564,7 +564,8 @@ class TestDataAccessProxy:
                     dm.register_adapter("akshare", mock_adapter)
 
                     dm.batch_get_fund_nav(["000001", "000002"])
-                    mock_adapter.batch_get_fund_nav.assert_called_once()
+                    # batch_get_fund_nav 现在通过 get_fund_nav 逐个获取（走 Gateway 缓存）
+                    assert mock_adapter.get_fund_nav.call_count == 2
 
 
 # =============================================================================

@@ -61,6 +61,9 @@ class AssetLookthroughAnalyzer:
         if total_mv == 0:
             return {"权益": 0, "固收": 0, "商品": 0, "现金": 0, "其他": 0}
 
+        # 预加载基金信息（消除 N+1）
+        fund_info_map = self._dm.batch_get_fund_info(fund_codes)
+
         allocation: dict[str, float] = {"权益": 0, "固收": 0, "商品": 0, "现金": 0, "其他": 0}
 
         for code in fund_codes:
@@ -69,7 +72,7 @@ class AssetLookthroughAnalyzer:
                 continue
 
             try:
-                info = self._dm.get_fund_info(code)
+                info = fund_info_map.get(code)
                 fund_type = info.get("type", "") if info else ""
                 structure = self._get_fund_asset_structure(code, fund_type)
             except Exception as e:
@@ -104,6 +107,9 @@ class AssetLookthroughAnalyzer:
         if total_mv == 0:
             return {"国内": 0, "海外": 0}
 
+        # 预加载基金信息（消除 N+1）
+        fund_info_map = self._dm.batch_get_fund_info(fund_codes)
+
         domestic_ratio = 0.0
         for code in fund_codes:
             weight = market_values.get(code, 0) / total_mv
@@ -113,7 +119,7 @@ class AssetLookthroughAnalyzer:
             ftype = (fund_types or {}).get(code, "")
             if ftype == "":
                 try:
-                    info = self._dm.get_fund_info(code)
+                    info = fund_info_map.get(code)
                     ftype = info.get("type", "") if info else ""
                 except Exception:
                     pass
@@ -336,6 +342,9 @@ class AssetLookthroughAnalyzer:
         if total_mv == 0:
             return []
 
+        # 预加载基金信息（消除 N+1）
+        fund_info_map = self._dm.batch_get_fund_info(fund_codes)
+
         manager_exposure: dict[str, dict[str, Any]] = {}
 
         for code in fund_codes:
@@ -344,7 +353,7 @@ class AssetLookthroughAnalyzer:
                 continue
 
             try:
-                info = self._dm.get_fund_info(code)
+                info = fund_info_map.get(code)
                 if info is None:
                     continue
                 manager_name = info.get("manager", info.get("基金经理", ""))

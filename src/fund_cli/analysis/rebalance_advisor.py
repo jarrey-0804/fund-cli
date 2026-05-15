@@ -50,8 +50,11 @@ class RebalanceAdvisor:
         if len(current_codes) != len(current_weights):
             raise ValueError("基金数量与权重数量不匹配")
 
+        # 预加载基金信息（消除 N+1）
+        fund_info_map = self._dm.batch_get_fund_info(current_codes)
+
         # 1. 计算当前资产配置
-        current_asset = self._compute_asset_allocation(current_codes, current_weights)
+        current_asset = self._compute_asset_allocation(current_codes, current_weights, fund_info_map)
 
         # 2. 确定目标配置
         if target_allocation is None:
@@ -63,10 +66,10 @@ class RebalanceAdvisor:
             deviation[asset_class] = current_asset.get(asset_class, 0) - target_allocation[asset_class]
 
         # 4. 生成减仓建议（超配的资产类别中，评分低的优先减仓）
-        reduction = self._generate_reduction_suggestions(current_codes, current_weights, deviation)
+        reduction = self._generate_reduction_suggestions(current_codes, current_weights, deviation, fund_info_map)
 
         # 5. 生成加仓建议（低配的资产类别）
-        addition = self._generate_addition_suggestions(deviation, target_allocation, current_codes)
+        addition = self._generate_addition_suggestions(deviation, target_allocation, current_codes, fund_info_map)
 
         # 6. 预期改善
         improvement = self._estimate_improvement(deviation)
@@ -84,13 +87,14 @@ class RebalanceAdvisor:
         self,
         fund_codes: list[str],
         weights: list[float],
+        fund_info_map: dict[str, Any],
     ) -> dict[str, float]:
         """计算当前资产配置"""
         allocation: dict[str, float] = {"权益": 0, "固收": 0, "现金": 0, "其他": 0}
 
         for code, weight in zip(fund_codes, weights, strict=False):
             try:
-                info = self._dm.get_fund_info(code)
+                info = fund_info_map.get(code)
                 fund_type = info.get("type", "") if info else ""
 
                 if "债券" in fund_type or "货币" in fund_type:
@@ -111,6 +115,7 @@ class RebalanceAdvisor:
         fund_codes: list[str],
         weights: list[float],
         deviation: dict[str, float],
+        fund_info_map: dict[str, Any],
     ) -> list[dict[str, Any]]:
         """生成减仓建议"""
         suggestions = []
@@ -120,7 +125,7 @@ class RebalanceAdvisor:
                 candidates = []
                 for code, weight in zip(fund_codes, weights, strict=False):
                     try:
-                        info = self._dm.get_fund_info(code)
+                        info = fund_info_map.get(code)
                         ftype = info.get("type", "") if info else ""
                         if self._belongs_to_asset(ftype, asset_class):
                             candidates.append({"基金代码": code, "基金名称": info.get("fund_name") or info.get("name", code), "当前权重": weight})
@@ -145,6 +150,7 @@ class RebalanceAdvisor:
         deviation: dict[str, float],
         target_allocation: dict[str, float],
         current_codes: list[str] | None = None,
+        fund_info_map: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """生成加仓建议"""
         suggestions = []
@@ -157,7 +163,7 @@ class RebalanceAdvisor:
                 if current_codes:
                     for code in current_codes:
                         try:
-                            info = self._dm.get_fund_info(code)
+                            info = (fund_info_map or {}).get(code)
                             ftype = info.get("type", "") if info else ""
                             if self._belongs_to_asset(ftype, asset_class):
                                 existing_funds.append(info.get("fund_name") or info.get("name", code))

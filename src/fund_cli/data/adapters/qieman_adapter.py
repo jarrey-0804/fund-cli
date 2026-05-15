@@ -24,6 +24,23 @@ from fund_cli.data.cache import DataCache
 
 logger = logging.getLogger(__name__)
 
+# Qieman MCP 工具缓存 TTL 映射
+_QIEMAN_TTL_MAP: dict[str, int] = {
+    # 实时数据 - 短 TTL
+    "GetETFSpot": 300,
+    "GetLOFSpot": 300,
+    "GetFundPurchaseStatus": 3600,
+    # 分析结果 - 中等 TTL
+    "DiagnoseFundPortfolio": 3600,
+    "GetFundsBackTest": 3600,
+    "GetBatchFundPerformance": 3600,
+    "getFundBrinsonIndicator": 3600,
+    "getFundCampisiIndicator": 3600,
+    "getFundMarketTimingIndicator": 3600,
+    # 默认
+    "__default__": 86400,
+}
+
 
 class QiemanAdapter(DataSourceAdapter):
     """
@@ -74,7 +91,7 @@ class QiemanAdapter(DataSourceAdapter):
         arguments: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
-        调用 MCP 工具
+        调用 MCP 工具（带缓存）
 
         Args:
             tool_name: 工具名称
@@ -87,13 +104,29 @@ class QiemanAdapter(DataSourceAdapter):
             DataSourceError: 调用失败
             DataNotFoundError: 数据不存在
         """
+        # 检查缓存
+        cache_key = None
+        if self._cache is not None:
+            cache_key = self._cache._generate_key("qieman", tool_name, arguments)
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                logger.debug("Qieman 缓存命中: %s", tool_name)
+                return cached
+
         try:
-            return self._client.call_tool(tool_name, arguments)
+            result = self._client.call_tool(tool_name, arguments)
         except QiemanMCPError as e:
             error_msg = str(e).lower()
             if "not found" in error_msg or "不存在" in error_msg:
                 raise DataNotFoundError(f"数据不存在: {e}") from e
             raise DataSourceError(f"MCP 调用失败: {e}") from e
+
+        # 写入缓存
+        if self._cache is not None and cache_key is not None:
+            ttl = _QIEMAN_TTL_MAP.get(tool_name, _QIEMAN_TTL_MAP["__default__"])
+            self._cache.set(cache_key, result, ttl=ttl)
+
+        return result
 
     def _to_dataframe(
         self,

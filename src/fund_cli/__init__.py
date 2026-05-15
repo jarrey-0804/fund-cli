@@ -12,7 +12,7 @@ warnings.filterwarnings(
     message=r".*allowed_objects.*will change.*",
 )
 
-__version__ = "3.8.1"
+__version__ = "3.9.0"
 __author__ = "jarrey-0804"
 __license__ = "MIT"
 

@@ -6,6 +6,7 @@ AKShare 数据源适配器
 
 from datetime import date, datetime
 from typing import Any
+import time
 
 import pandas as pd
 
@@ -46,6 +47,11 @@ class AKShareAdapter(DataSourceAdapter):
         super().__init__("akshare")
         self._cache = cache
         self._ak = None
+
+        # 全量基金列表内存缓存
+        self._fund_list_cache: pd.DataFrame | None = None
+        self._fund_list_cache_time: float = 0
+        self._fund_list_cache_ttl = 3600  # 1小时
 
     def _get_akshare(self):
         """延迟加载 AKShare"""
@@ -235,8 +241,15 @@ class AKShareAdapter(DataSourceAdapter):
         ak = self._get_akshare()
 
         try:
-            # 获取全部开放式基金列表
-            df = ak.fund_open_fund_daily_em()
+            # 检查内存缓存
+            now = time.monotonic()
+            if self._fund_list_cache is not None and now - self._fund_list_cache_time < self._fund_list_cache_ttl:
+                df = self._fund_list_cache.copy()
+            else:
+                # 获取全部开放式基金列表
+                df = ak.fund_open_fund_daily_em()
+                self._fund_list_cache = df
+                self._fund_list_cache_time = now
 
             # 筛选条件
             if fund_type:

@@ -279,12 +279,30 @@ class FundEvaluator:
         return None
 
     def _auto_fetch_peer_returns(self, fund_codes: list[str]) -> list[pd.Series]:
-        """自动获取同类基金的收益率序列"""
+        """获取同类基金收益率（使用批量接口）."""
+        if not fund_codes:
+            return []
+
+        # 批量获取净值
+        nav_map = self._dm.batch_get_fund_nav(fund_codes)
+
         peer_returns = []
         for code in fund_codes:
-            nav = self._auto_fetch_nav(code)
-            if nav is not None and len(nav) > 10:
-                peer_returns.append(nav.pct_change().dropna())
+            nav_df = nav_map.get(code)
+            if nav_df is None or nav_df.empty:
+                continue
+            # 提取净值列
+            nav_col = None
+            for col in ["accumulated_nav", "累计净值", "unit_nav", "单位净值"]:
+                if col in nav_df.columns:
+                    nav_col = col
+                    break
+            if nav_col is None:
+                continue
+            nav_series = nav_df.set_index("nav_date")[nav_col].squeeze()
+            if len(nav_series) > 10:
+                peer_returns.append(nav_series.pct_change().dropna())
+
         return peer_returns
 
     def _evaluate_active_fund(

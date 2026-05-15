@@ -68,27 +68,26 @@ class PortfolioNavCalculator:
         if len(fund_codes) != len(weights):
             raise ValueError(f"基金代码数量({len(fund_codes)})与权重数量({len(weights)})不匹配")
 
+        # 批量获取基金净值（消除 N+1）
+        nav_batch = self._dm.batch_get_fund_nav(fund_codes, start_date=start_date, end_date=end_date)
+
         nav_dict: dict[str, pd.Series] = {}
-        for code in fund_codes:
-            try:
-                df = self._dm.get_fund_nav(code, start_date=start_date, end_date=end_date)
-                if df is not None and not df.empty:
-                    # 优先使用累计净值，回退到单位净值（兼容中英文列名）
-                    if "accumulated_nav" in df.columns:
-                        nav_dict[code] = df["accumulated_nav"]
-                    elif "累计净值" in df.columns:
-                        nav_dict[code] = df["累计净值"]
-                    elif "unit_nav" in df.columns:
-                        nav_dict[code] = df["unit_nav"]
-                    elif "单位净值" in df.columns:
-                        nav_dict[code] = df["单位净值"]
-                    else:
-                        logger.warning(f"基金 {code} 净值数据无可用列: {df.columns.tolist()}")
-                        continue
+        for code, df in nav_batch.items():
+            if df is not None and not df.empty:
+                # 优先使用累计净值，回退到单位净值（兼容中英文列名）
+                if "accumulated_nav" in df.columns:
+                    nav_dict[code] = df["accumulated_nav"]
+                elif "累计净值" in df.columns:
+                    nav_dict[code] = df["累计净值"]
+                elif "unit_nav" in df.columns:
+                    nav_dict[code] = df["unit_nav"]
+                elif "单位净值" in df.columns:
+                    nav_dict[code] = df["单位净值"]
                 else:
-                    logger.warning(f"基金 {code} 无净值数据")
-            except Exception as e:
-                logger.warning(f"获取基金 {code} 净值失败: {e}")
+                    logger.warning(f"基金 {code} 净值数据无可用列: {df.columns.tolist()}")
+                    continue
+            else:
+                logger.warning(f"基金 {code} 无净值数据")
 
         if not nav_dict:
             raise ValueError("所有基金均无净值数据，无法计算组合净值")

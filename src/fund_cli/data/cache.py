@@ -10,6 +10,7 @@ import json
 import logging
 import random
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +72,16 @@ class DataCache:
         self._locks: dict[str, threading.Lock] = {}
         self._lock = threading.Lock()
 
+        # 命中/未命中计数器
+        self._hit_count: int = 0
+        self._miss_count: int = 0
+        self._stats_lock = threading.Lock()
+
+        # 锁防泄漏配置
+        self._locks_max_size = 1000
+        self._last_lock_cleanup = time.monotonic()
+        self._lock_cleanup_interval = 300  # 5分钟清理一次
+
         # 版本检查：如果版本不匹配，清空缓存
         self._check_version()
 
@@ -110,8 +121,19 @@ class DataCache:
         return f"{prefix}:{key_hash}"
 
     def _get_lock(self, key: str) -> threading.Lock:
-        """获取请求锁."""
+        """获取请求锁（带定期清理防泄漏）."""
         with self._lock:
+            # 定期清理过多的锁
+            now = time.monotonic()
+            if now - self._last_lock_cleanup > self._lock_cleanup_interval:
+                if len(self._locks) > self._locks_max_size:
+                    # 清理一半的锁（保留最近的）
+                    keys_to_remove = list(self._locks.keys())[: len(self._locks) // 2]
+                    for k in keys_to_remove:
+                        del self._locks[k]
+                    logger.debug("清理了 %d 个缓存锁", len(keys_to_remove))
+                self._last_lock_cleanup = now
+
             if key not in self._locks:
                 self._locks[key] = threading.Lock()
             return self._locks[key]
@@ -137,6 +159,21 @@ class DataCache:
             如果是空值缓存标记，返回 None
         """
         value = self._cache.get(key)
+
+        # 更新命中/未命中计数
+        with self._stats_lock:
+            if value is not None and value is not NULL_VALUE:
+                self._hit_count += 1
+            else:
+                self._miss_count += 1
+
+        # 记录到 MetricsExporter（不影响主流程）
+        try:
+            from fund_cli.core.metrics_exporter import get_metrics_exporter
+            is_hit = value is not None and value is not NULL_VALUE
+            get_metrics_exporter().record_cache_hit("diskcache", is_hit)
+        except Exception:
+            pass
 
         # 检查是否是空值缓存标记（使用is而不是==，避免DataFrame比较问题）
         if value is NULL_VALUE:
@@ -278,6 +315,13 @@ class DataCache:
         size_limit_mb = self.size_limit / (1024 * 1024)
         volume_mb = volume / (1024 * 1024)
 
+        with self._stats_lock:
+            hit_count = self._hit_count
+            miss_count = self._miss_count
+
+        total = hit_count + miss_count
+        hit_rate = round(hit_count / total * 100, 2) if total > 0 else 0.0
+
         return {
             "size": len(self._cache),
             "volume": volume,
@@ -286,9 +330,16 @@ class DataCache:
             "usage_percent": round(volume / self.size_limit * 100, 2) if self.size_limit > 0 else 0,
             "directory": str(self.cache_dir),
             "version": CACHE_VERSION,
-            "hit_count": getattr(self._cache, "hit_count", 0),
-            "miss_count": getattr(self._cache, "miss_count", 0),
+            "hit_count": hit_count,
+            "miss_count": miss_count,
+            "hit_rate": hit_rate,
         }
+
+    def reset_stats(self) -> None:
+        """重置命中/未命中计数器."""
+        with self._stats_lock:
+            self._hit_count = 0
+            self._miss_count = 0
 
     # ========== 便捷方法 ==========
 

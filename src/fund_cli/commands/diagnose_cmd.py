@@ -131,6 +131,11 @@ def diagnose_account(
         lines.append(f"> 分析基准期: {start or '2024-01-01'} 至 {end or '2026-05-12'}")
         lines.append("\n---\n")
 
+        # ========== 预加载数据（消除 N+1 查询）==========
+        from fund_cli.core.data_manager import get_data_manager
+        dm = get_data_manager()
+        fund_info_map = dm.batch_get_fund_info(fund_codes)
+
         # =========================================================
         # 模块一：持仓基金（优化：补充核心财务数据）
         # =========================================================
@@ -176,13 +181,11 @@ def diagnose_account(
             lines.append("| --- | --- | --- | --- | --- | --- | --- |")
 
             from fund_cli.analysis.fund_evaluation import FundEvaluator
-            from fund_cli.core.data_manager import get_data_manager
-            dm = get_data_manager()
             evaluator = FundEvaluator()
 
             for i, (code, weight) in enumerate(sorted(current_weights.items(), key=lambda x: x[1], reverse=True), 1):
                 try:
-                    info = dm.get_fund_info(code)
+                    info = fund_info_map.get(code)
                     fund_name = info.get("fund_name", info.get("name", code)) if info else code
                     # 截断名称
                     if len(fund_name) > 20:
@@ -328,7 +331,7 @@ def diagnose_account(
                             days = (nav['nav_date'].iloc[-1] - nav['nav_date'].iloc[0]).days
                             years = max(days / 365.25, 0.1)
                             ann_ret = (1 + total_ret) ** (1 / years) - 1
-                            info = dm.get_fund_info(code)
+                            info = fund_info_map.get(code)
                             name = info.get("fund_name", info.get("name", code)) if info else code
                             if len(name) > 20:
                                 name = name[:18] + "..."
@@ -556,7 +559,7 @@ def diagnose_account(
                 company_exposure = {}
                 company_funds = {}
                 for code in fund_codes:
-                    info = dm.get_fund_info(code)
+                    info = fund_info_map.get(code)
                     if info:
                         company = info.get('company', '') or info.get('management', '') or '未知'
                         fund_weight = current_weights.get(code, 0) / 100
@@ -579,7 +582,7 @@ def diagnose_account(
                 manager_exposure = {}
                 manager_funds = {}
                 for code in fund_codes:
-                    info = dm.get_fund_info(code)
+                    info = fund_info_map.get(code)
                     if info:
                         manager = info.get('manager', '') or '未知'
                         fund_weight = current_weights.get(code, 0) / 100
@@ -732,7 +735,7 @@ def diagnose_account(
                         try:
                             annual_result = tracker.track_annual_returns(code)
                             if "error" not in annual_result:
-                                info = dm.get_fund_info(code)
+                                info = fund_info_map.get(code)
                                 name = info.get("fund_name", info.get("name", code)) if info else code
                                 if len(name) > 15:
                                     name = name[:13] + "..."
@@ -777,7 +780,7 @@ def diagnose_account(
                 for code in fund_codes[:10]:  # 限制前10只
                     try:
                         result = evaluator.evaluate(code, portfolio_codes=fund_codes)
-                        info = dm.get_fund_info(code)
+                        info = fund_info_map.get(code)
                         fund_name = result.get('基金名称', info.get("fund_name", info.get("name", code)) if info else code)
                         if len(fund_name) > 25:
                             fund_name = fund_name[:23] + "..."
@@ -994,7 +997,7 @@ def diagnose_account(
                 # 输出检查结果
                 for code in fund_codes[:5]:
                     try:
-                        info = dm.get_fund_info(code)
+                        info = fund_info_map.get(code)
                         fund_name = info.get("fund_name", info.get("name", code)) if info else code
                         if len(fund_name) > 15:
                             fund_name = fund_name[:13] + "..."

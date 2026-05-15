@@ -57,6 +57,12 @@ class QiemanMCPClient:
         self.max_retries = max_retries or self.DEFAULT_MAX_RETRIES
         self._request_id = 0
         self._tools_cache: list[dict] | None = None
+        # 持久化 HTTP 客户端（连接复用）
+        self._http_client = httpx.Client(
+            base_url=self.base_url,
+            timeout=self.timeout,
+            headers=self._build_headers(),
+        )
 
     def _get_request_id(self) -> int:
         """获取下一个请求 ID"""
@@ -125,7 +131,7 @@ class QiemanMCPClient:
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
-        发送 JSON-RPC 请求
+        发送 JSON-RPC 请求（复用 HTTP 连接）
 
         Args:
             method: RPC 方法名
@@ -138,19 +144,16 @@ class QiemanMCPClient:
             QiemanMCPError: 请求失败
         """
         payload = self._build_payload(method, params)
-        headers = self._build_headers()
 
         last_error = None
         for attempt in range(self.max_retries):
             try:
-                with httpx.Client(timeout=self.timeout) as client:
-                    response = client.post(
-                        self.base_url,
-                        headers=headers,
-                        json=payload,
-                    )
-                    response.raise_for_status()
-                    return self._parse_response(response)
+                response = self._http_client.post(
+                    "/",
+                    json=payload,
+                )
+                response.raise_for_status()
+                return self._parse_response(response)
 
             except httpx.HTTPStatusError as e:
                 last_error = QiemanMCPError(
@@ -242,6 +245,19 @@ class QiemanMCPClient:
         except Exception as e:
             logger.error(f"健康检查失败: {e}")
             return False
+
+    def close(self) -> None:
+        """关闭 HTTP 客户端连接."""
+        try:
+            self._http_client.close()
+        except Exception:
+            pass
+
+    def __enter__(self) -> "QiemanMCPClient":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.close()
 
     def get_tool_info(self, tool_name: str) -> dict[str, Any] | None:
         """

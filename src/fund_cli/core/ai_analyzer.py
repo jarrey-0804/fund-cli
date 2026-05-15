@@ -8,7 +8,7 @@ AI 分析增强模块.
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -147,7 +147,10 @@ class AIAnalyzer:
 
     def __init__(self, backend: AIBackend = AIBackend.RULE_BASED, **kwargs):
         self._backend = self._create_backend(backend, **kwargs)
-        self._analysis_cache: dict[str, Any] = {}
+        # 带TTL和大小限制的分析缓存
+        self._analysis_cache: dict[str, tuple[datetime, Any]] = {}
+        self._cache_ttl = 3600  # 1小时过期
+        self._cache_max_size = 200  # 最大缓存条目数
 
     def _get_cache_key(self, fund_code: str, metrics: dict[str, Any]) -> str:
         """生成分析缓存键.
@@ -193,7 +196,11 @@ class AIAnalyzer:
         if use_cache:
             cache_key = self._get_cache_key(fund_code, metrics)
             if cache_key in self._analysis_cache:
-                return self._analysis_cache[cache_key]
+                ts, cached_result = self._analysis_cache[cache_key]
+                if datetime.now() - ts < timedelta(seconds=self._cache_ttl):
+                    return cached_result
+                else:
+                    del self._analysis_cache[cache_key]
 
         context = self._build_fund_context(
             fund_code, fund_name, metrics, holdings, asset_allocation
@@ -226,10 +233,14 @@ class AIAnalyzer:
             logger.warning("AI输出验证警告: %s", validation.issues)
             result.confidence *= validation.confidence_score
 
-        # 存入缓存
+        # 存入缓存（带大小限制）
         if use_cache:
             cache_key = self._get_cache_key(fund_code, metrics)
-            self._analysis_cache[cache_key] = result
+            # LRU 淘汰
+            if len(self._analysis_cache) >= self._cache_max_size:
+                oldest_key = next(iter(self._analysis_cache))
+                del self._analysis_cache[oldest_key]
+            self._analysis_cache[cache_key] = (datetime.now(), result)
 
         return result
 

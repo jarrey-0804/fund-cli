@@ -7,6 +7,7 @@
 import hashlib
 import json
 import logging
+from collections import OrderedDict
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from enum import Enum
@@ -55,9 +56,14 @@ class DataSourceGateway:
         self._recovery_timeout = 60  # 熔断恢复时间（秒）
         self._half_open_max_calls = 3  # 半开状态最大调用次数
 
-        # 请求缓存配置
-        self._call_cache: dict[str, tuple[datetime, Any]] = {}
+        # 请求缓存配置（OrderedDict 实现 LRU）
+        self._call_cache: OrderedDict[str, tuple[datetime, Any]] = OrderedDict()
         self._cache_ttl = 300  # 5分钟缓存
+        self._cache_max_size = 500  # 最大缓存条目数
+
+        # 缓存命中/未命中计数器
+        self._cache_hit_count: int = 0
+        self._cache_miss_count: int = 0
 
         self._load_config()
 
@@ -298,17 +304,38 @@ class DataSourceGateway:
         return hashlib.md5(raw.encode(), usedforsecurity=False).hexdigest()[:16]
 
     def _get_from_cache(self, key: str) -> Any | None:
-        """从缓存获取."""
+        """从缓存获取（LRU 命中时移到末尾）."""
         if key in self._call_cache:
             timestamp, value = self._call_cache[key]
             if datetime.now() - timestamp < timedelta(seconds=self._cache_ttl):
+                # 命中，移到末尾（标记为最近使用）
+                self._call_cache.move_to_end(key)
+                self._cache_hit_count += 1
+                try:
+                    from fund_cli.core.metrics_exporter import get_metrics_exporter
+                    get_metrics_exporter().record_cache_hit("gateway_memory", True)
+                except Exception:
+                    pass
                 return value
+            # 过期，删除
             del self._call_cache[key]
+        self._cache_miss_count += 1
+        try:
+            from fund_cli.core.metrics_exporter import get_metrics_exporter
+            get_metrics_exporter().record_cache_hit("gateway_memory", False)
+        except Exception:
+            pass
         return None
 
     def _set_cache(self, key: str, value: Any) -> None:
-        """设置缓存."""
+        """设置缓存（LRU 淘汰）."""
+        # 如果已存在，先移除（后续重新插入到末尾）
+        if key in self._call_cache:
+            del self._call_cache[key]
         self._call_cache[key] = (datetime.now(), value)
+        # LRU 淘汰：超过最大条目数时移除最旧的
+        while len(self._call_cache) > self._cache_max_size:
+            self._call_cache.popitem(last=False)
 
     def clear_cache(self) -> None:
         """清空请求缓存."""
@@ -338,6 +365,16 @@ class DataSourceGateway:
             "priority": self._priority,
             "available_adapters": self.get_available_adapters(),
             "cache_size": len(self._call_cache),
+            "cache_max_size": self._cache_max_size,
+            "cache_hit_rate": round(
+                self._cache_hit_count
+                / (self._cache_hit_count + self._cache_miss_count) * 100,
+                2,
+            )
+            if (self._cache_hit_count + self._cache_miss_count) > 0
+            else 0.0,
+            "cache_hits": self._cache_hit_count,
+            "cache_misses": self._cache_miss_count,
             "rate_limiter": rate_limit_status,
         }
 

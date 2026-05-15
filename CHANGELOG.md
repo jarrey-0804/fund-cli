@@ -5,6 +5,37 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [3.9.0] - 2026-05-15
+
+### Added - 缓存与性能优化（Sprint 2）
+
+#### 缓存核心修复
+- DataCache 增加命中/未命中计数器，`get_stats()` 返回真实 `hit_rate`
+- Qieman 适配器接入缓存读写，覆盖全部 74 个 MCP 接口
+- 差异化 TTL 映射：实时数据 300s，分析结果 3600s，基本信息 86400s
+- MetricsExporter.record_cache_hit() 接入 DataCache 和 Gateway 真实调用点
+
+#### N+1 查询消除
+- DataManager 新增 `batch_get_fund_info()` 和 `batch_get_fund_nav()` 批量接口
+- diagnose_cmd 预加载基金信息，消除 7 处 N+1 查询
+- FundEvaluator `_auto_fetch_peer_returns()` 改用批量净值获取
+- RebalanceAdvisor 预加载基金信息，消除 3 处重复获取
+- AssetLookthroughAnalyzer 预加载基金信息，消除 3 处重复获取
+- PortfolioNavCalculator 改用批量净值接口
+
+#### 内存泄漏修复
+- Gateway 内存缓存增加 LRU 淘汰（最大 500 条目）
+- DataCache `_locks` dict 增加定期清理（超过 1000 时清理一半）
+- AI 分析缓存增加 TTL（1 小时）和大小限制（200 条）
+
+#### 网络层优化
+- QiemanMCPClient HTTP 连接复用（持久化 httpx.Client）
+- search_funds 缓存全量基金列表（TTL 1 小时）
+
+#### 可观测性
+- Gateway `get_status()` 增加 `cache_hit_rate`、`cache_hits`、`cache_misses`
+- Gateway `get_status()` 增加 `cache_max_size`
+
 ## [3.8.1] - 2026-05-15
 
 ### Fixed - 技术债务清理与工程加固
